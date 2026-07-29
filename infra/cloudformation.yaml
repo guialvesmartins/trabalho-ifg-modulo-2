@@ -1,0 +1,432 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Infraestrutura completa para Pipeline de Dados e Machine Learning em E-commerce'
+
+# ============================================================
+# Parâmetros do Template
+# ============================================================
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - prod
+    Description: 'Ambiente de deploy (dev ou prod)'
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Description: 'Senha do banco de dados (mínimo 8 caracteres)'
+
+  InstanceType:
+    Type: String
+    Default: t3.medium
+    AllowedValues:
+      - t3.medium
+      - t3.large
+      - t3.xlarge
+    Description: 'Tipo da instância EC2 para o Airflow'
+
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: 'Nome do Key Pair para acesso SSH à instância EC2'
+
+# ============================================================
+# Mapeamento de AMIs por Região (Amazon Linux 2)
+# ============================================================
+Mappings:
+  RegionMap:
+    us-east-1:
+      AMI: ami-0c55b159cbfafe1f0
+    us-east-2:
+      AMI: ami-0b59bfac6be064b78
+    us-west-1:
+      AMI: ami-0bdb828fd58c52235
+    us-west-2:
+      AMI: ami-06b94666f2b0b4af3
+    sa-east-1:
+      AMI: ami-0b8d8f67fb95e3e07
+
+# ============================================================
+# Recursos
+# ============================================================
+Resources:
+
+  # ----------------------------------------------------------
+  # Bucket S3 para dados brutos (raw)
+  # ----------------------------------------------------------
+  RawDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'projeto-final-raw-${Environment}-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Bucket S3 para dados processados (processed)
+  # ----------------------------------------------------------
+  ProcessedDataBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'projeto-final-processed-${Environment}-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # VPC — Rede virtual isolada
+  # ----------------------------------------------------------
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'ProjetoFinal-VPC-${Environment}'
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Sub-rede pública — recursos com acesso à internet
+  # ----------------------------------------------------------
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub 'ProjetoFinal-PublicSubnet-${Environment}'
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Sub-rede privada — recursos sem acesso direto à internet
+  # ----------------------------------------------------------
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub 'ProjetoFinal-PrivateSubnet-${Environment}'
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Internet Gateway — permite tráfego de/para internet na VPC
+  # ----------------------------------------------------------
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub 'ProjetoFinal-IGW-${Environment}'
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Anexa o Internet Gateway à VPC
+  # ----------------------------------------------------------
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # ----------------------------------------------------------
+  # Tabela de Rotas — roteia tráfego público para o IGW
+  # ----------------------------------------------------------
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub 'ProjetoFinal-PublicRT-${Environment}'
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Rota padrão (0.0.0.0/0) apontando para o Internet Gateway
+  # ----------------------------------------------------------
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  # ----------------------------------------------------------
+  # Associação da sub-rede pública à tabela de rotas pública
+  # ----------------------------------------------------------
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # ----------------------------------------------------------
+  # Security Group — Airflow (SSH + HTTP)
+  # ----------------------------------------------------------
+  AirflowSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Security Group para a instância Airflow — permite SSH e HTTP'
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: 'SSH'
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          CidrIp: 0.0.0.0/0
+          Description: 'Airflow Web UI'
+      Tags:
+        - Key: Name
+          Value: !Sub 'ProjetoFinal-AirflowSG-${Environment}'
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # IAM Role — Acesso do EC2 aos buckets S3
+  # ----------------------------------------------------------
+  S3AccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ProjetoFinal-S3AccessRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub 'ProjetoFinal-S3AccessPolicy-${Environment}'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt RawDataBucket.Arn
+                  - !Sub '${RawDataBucket.Arn}/*'
+                  - !GetAtt ProcessedDataBucket.Arn
+                  - !Sub '${ProcessedDataBucket.Arn}/*'
+      Tags:
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # Instance Profile — vincula a role S3 à instância EC2
+  # ----------------------------------------------------------
+  S3AccessInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub 'ProjetoFinal-S3AccessProfile-${Environment}'
+      Roles:
+        - !Ref S3AccessRole
+
+  # ----------------------------------------------------------
+  # EC2 Instance — Servidor Airflow
+  # ----------------------------------------------------------
+  AirflowInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap [RegionMap, !Ref 'AWS::Region', AMI]
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref AirflowSG
+      IamInstanceProfile: !Ref S3AccessInstanceProfile
+      KeyName: !Ref KeyName
+      Tags:
+        - Key: Name
+          Value: Airflow-ProjetoFinal
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # ===============================================
+          # UserData — Instalação do Docker, Python e Ferramentas Básicas
+          # ===============================================
+          yum update -y
+
+          # Instalar utilitários básicos
+          yum install -y git htop vim curl wget unzip jq
+
+          # Instalar Docker
+          amazon-linux-extras install docker -y
+          systemctl enable docker
+          systemctl start docker
+          usermod -aG docker ec2-user
+
+          # Instalar Docker Compose
+          curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          chmod +x /usr/local/bin/docker-compose
+          ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+          # Instalar Python 3 e pip
+          yum install -y python3 python3-pip python3-devel
+
+          # Instalar bibliotecas Python comuns para pipeline de dados
+          pip3 install --upgrade pip
+          pip3 install boto3 pandas numpy scikit-learn apache-airflow psycopg2-binary sqlalchemy
+
+          # Instalar AWS CLI v2
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          ./aws/install
+          rm -rf aws awscliv2.zip
+
+          # Criar diretórios do projeto
+          mkdir -p /home/ec2-user/airflow/dags
+          mkdir -p /home/ec2-user/airflow/logs
+          mkdir -p /home/ec2-user/airflow/plugins
+          mkdir -p /home/ec2-user/data/raw
+          mkdir -p /home/ec2-user/data/processed
+
+          # Ajustar permissões
+          chown -R ec2-user:ec2-user /home/ec2-user/airflow
+          chown -R ec2-user:ec2-user /home/ec2-user/data
+
+          # Inicializar banco de metadados do Airflow
+          su - ec2-user -c 'export AIRFLOW_HOME=/home/ec2-user/airflow && airflow db init'
+
+          echo "=== UserData concluído com sucesso ===" >> /home/ec2-user/userdata.log
+
+  # ----------------------------------------------------------
+  # IAM Role — SageMaker (acesso ao S3)
+  # ----------------------------------------------------------
+  SageMakerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub 'ProjetoFinal-SageMakerRole-${Environment}'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub 'ProjetoFinal-SageMakerPolicy-${Environment}'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                  - s3:DeleteObject
+                Resource:
+                  - !GetAtt RawDataBucket.Arn
+                  - !Sub '${RawDataBucket.Arn}/*'
+                  - !GetAtt ProcessedDataBucket.Arn
+                  - !Sub '${ProcessedDataBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - cloudwatch:PutMetricData
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogStreams
+                Resource: '*'
+      Tags:
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # SageMaker Notebook Instance — Ambiente de ML
+  # ----------------------------------------------------------
+  MLNotebook:
+    Type: AWS::SageMaker::NotebookInstance
+    Properties:
+      NotebookInstanceName: !Sub 'ProjetoFinal-Notebook-${Environment}'
+      InstanceType: ml.t3.medium
+      RoleArn: !GetAtt SageMakerRole.Arn
+      VolumeSizeInGB: 20
+      Tags:
+        - Key: Name
+          Value: ML-ProjetoFinal
+        - Key: Project
+          Value: ProjetoFinal
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ----------------------------------------------------------
+  # CloudWatch Log Group — Logs centralizados da aplicação
+  # ----------------------------------------------------------
+  ApplicationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/projeto-final/${Environment}/application'
+      RetentionInDays: 30
+
+# ============================================================
+# Outputs — Valores exportados para referência
+# ============================================================
+Outputs:
+  RawBucketName:
+    Description: 'Nome do bucket S3 de dados brutos (raw)'
+    Value: !Ref RawDataBucket
+
+  ProcessedBucketName:
+    Description: 'Nome do bucket S3 de dados processados'
+    Value: !Ref ProcessedDataBucket
+
+  AirflowPublicIP:
+    Description: 'Endereço IP público da instância Airflow'
+    Value: !GetAtt AirflowInstance.PublicIp
+
+  NotebookURL:
+    Description: 'URL do SageMaker Notebook (acessar via AWS Console)'
+    Value: !Sub 'https://${AWS::Region}.console.aws.amazon.com/sagemaker/home?region=${AWS::Region}#/notebook-instances/openNotebook/${MLNotebook.NotebookInstanceName}?view=classic'
+
+  SageMakerNotebookName:
+    Description: 'Nome da instância do SageMaker Notebook'
+    Value: !Ref MLNotebook

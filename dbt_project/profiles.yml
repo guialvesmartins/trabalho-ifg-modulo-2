@@ -1,0 +1,22 @@
+projeto_final:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('DB_HOST', 'localhost') }}"
+      user: "{{ env_var('DB_USER', 'airflow') }}"
+      password: "{{ env_var('DB_PASS', 'airflow') }}"
+      port: "{{ env_var('DB_PORT', '5432') | int }}"
+      dbname: "{{ env_var('DB_NAME', 'airflow') }}"
+      schema: "{{ env_var('DB_SCHEMA', 'public') }}"
+      threads: 4
+    prod:
+      type: snowflake
+      account: "{{ env_var('DB_ACCOUNT', '') }}"
+      user: "{{ env_var('DB_USER', '') }}"
+      password: "{{ env_var('DB_PASS', '') }}"
+      role: "{{ env_var('DB_ROLE', 'ANALYST') }}"
+      database: "{{ env_var('DB_DATABASE', 'PROD_DB') }}"
+      warehouse: "{{ env_var('DB_WAREHOUSE', 'COMPUTE_WH') }}"
+      schema: "{{ env_var('DB_SCHEMA', 'PUBLIC') }}"
+      threads: 4

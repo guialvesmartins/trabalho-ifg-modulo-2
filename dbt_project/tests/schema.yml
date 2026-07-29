@@ -1,0 +1,55 @@
+version: 2
+
+models:
+  - name: dim_products
+    description: "Dimensão de produtos - SCD Type 1"
+    columns:
+      - name: product_id
+        description: "ID único do produto"
+        tests:
+          - not_null
+          - unique
+      - name: product_name
+        description: "Nome do produto"
+        tests:
+          - not_null
+      - name: rating
+        description: "Rating médio do produto (1-5)"
+        tests:
+          - not_null
+
+  - name: fact_reviews
+    description: "Fato de reviews com features NLP"
+    columns:
+      - name: review_id
+        description: "ID da review"
+        tests:
+          - not_null
+          - unique
+      - name: product_id
+        description: "FK para produto"
+        tests:
+          - not_null
+      - name: rating
+        description: "Rating atribuído (1-5)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+
+  - name: dim_categories
+    description: "Dimensão de categorias com métricas agregadas"
+    columns:
+      - name: category_name
+        description: "Nome da categoria"
+        tests:
+          - not_null
+          - unique
+
+  - name: ml_features
+    description: "Tabela final pronta para Machine Learning"
+    columns:
+      - name: rating
+        description: "Target do modelo - rating a ser previsto"
+        tests:
+          - not_null

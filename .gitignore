@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+
+# Dados (grandes - não versionar)
+data/raw/
+data/processed/
+images/products/
+
+# Ambiente
+.env
+.env.local
+.env.prod
+!.env.example
+
+# Docker
+pgdata/
+miniodata/
+metabasedata/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# dbt
+dbt_project/logs/
+dbt_project/target/
+dbt_project/dbt_packages/
+
+# Airflow
+airflow/logs/
+airflow/plugins/
+
+# Logs
+*.log
+
+# OS
+Thumbs.db
+
+# Node (PPTX generation)
+node_modules/
+package.json
+package-lock.json
+
+# Report PDFs
+report/*.pdf
+report/slides/
