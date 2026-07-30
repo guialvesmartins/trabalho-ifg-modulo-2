@@ -52,9 +52,7 @@ dbt-docs:
 	cd dbt_project && dbt docs generate && dbt docs serve
 
 ml-train:
-	python3 ml/hard_code/naive_bayes_hardcode.py
-	python3 ml/sklearn/naive_bayes_sklearn.py
-	python3 ml/evaluate.py
+	PYTHONPATH=. python3 ml/evaluate.py
 
 test:
 	python3 -m pytest tests/ -v
