@@ -186,5 +186,6 @@ Apenas 4 variaveis mudam entre dev e prod.
 
 - `FLUXO.md` — Explicacao do projeto em linguagem natural
 - `docs/ARQUITETURA_AWS.md` — Diagramas de arquitetura (dev e 100% AWS) + custos
+- `docs/RELATORIO_TECNICAS.md` — Normalizacao dos audios + comparacao detalhada hard-code vs sklearn
 - `report_analys.md` — Relatorio do ultimo treinamento (gerado por `make ml-train`)
 - `report/` — Relatorio e apresentacao final

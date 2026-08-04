@@ -1,6 +1,6 @@
 # Relatório de Análise do Treinamento — Manutenção Preditiva Industrial
 
-_Gerado automaticamente por `ml/evaluate.py` em 2026-08-03 23:40:23._
+_Gerado automaticamente por `ml/evaluate.py` em 2026-08-04 17:18:12._
 
 ## 1. Dataset
 
@@ -29,8 +29,8 @@ _Gerado automaticamente por `ml/evaluate.py` em 2026-08-03 23:40:23._
 | Precision | 0.0000 | 0.9571 | 0.9620 | 0.9744 |
 | Recall | 0.0000 | 0.7363 | 0.8352 | 0.8352 |
 | F1-Score | 0.0000 | 0.8323 | 0.8941 | 0.8994 |
-| Tempo Treino (ms) | 0.1 | 11.7 | 2694.0 | 444.5 |
-| Tempo Predição (ms) | 0.04 | 0.07 | 0.44 | 0.80 |
+| Tempo Treino (ms) | 0.2 | 20.5 | 3512.2 | 718.8 |
+| Tempo Predição (ms) | 0.09 | 0.15 | 2.22 | 0.90 |
 
 O baseline de classe majoritária atinge 89.2% de accuracy apenas por causa do desbalanceamento — mas tem recall 0 (não detecta nenhuma anomalia), o que o torna inútil para o problema. Todo modelo precisa superá-lo em recall/F1.
 
