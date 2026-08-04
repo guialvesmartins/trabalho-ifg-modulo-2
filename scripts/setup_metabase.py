@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
 Script de configuracao automatica do Metabase.
-Cria a conexao com o banco, as perguntas SQL e os dashboards via API REST.
+Cria a conexao com o banco, as perguntas SQL, os dashboards e o filtro
+analitico por modelo de maquina via API REST.
+
+Re-executavel: cards e dashboards com os mesmos nomes sao arquivados e
+recriados, refletindo o estado atual do banco.
 
 Uso: python3 scripts/setup_metabase.py
 """
 
-import requests
-import time
 import json
-import sys
 import os
+import sys
+import time
+
+import requests
 
 METABASE_URL = os.getenv("METABASE_URL", "http://localhost:3000")
 ADMIN_EMAIL = os.getenv("METABASE_ADMIN", "admin@projeto.com")
@@ -22,13 +27,25 @@ DB_USER = os.getenv("DB_USER", "airflow")
 DB_PASS = os.getenv("DB_PASS", "airflow")
 DB_NAME = os.getenv("DB_NAME", "airflow")
 
+# Filtro analitico por modelo de maquina (requisito 4.7 do projeto)
+MODEL_FILTER_PARAM_ID = "8f7a1b2c"
+MODEL_TEMPLATE_TAG = {
+    "model_id": {
+        "id": "c3d4e5f6-0000-0000-0000-000000000001",
+        "name": "model_id",
+        "display-name": "Modelo da Maquina",
+        "type": "text",
+        "required": False,
+    }
+}
+
 session = requests.Session()
 token = None
+db_id = None
 
 
 def wait_for_metabase(timeout=120):
-    """Espera o Metabase ficar disponivel."""
-    print("[1/7] Aguardando Metabase iniciar...")
+    print("[1/8] Aguardando Metabase iniciar...")
     start = time.time()
     while time.time() - start < timeout:
         try:
@@ -44,9 +61,8 @@ def wait_for_metabase(timeout=120):
 
 
 def setup_admin():
-    """Configura usuario admin se for o primeiro acesso."""
     global token
-    print("[2/7] Verificando configuracao inicial...")
+    print("[2/8] Verificando configuracao inicial...")
 
     r = session.get(f"{METABASE_URL}/api/session/properties")
     if r.status_code != 200:
@@ -66,7 +82,7 @@ def setup_admin():
                 "password": ADMIN_PASS,
             },
             "prefs": {
-                "site_name": "Projeto Final IFG",
+                "site_name": "Manutencao Preditiva Industrial",
                 "site_locale": "pt-BR",
             },
         })
@@ -92,8 +108,7 @@ def setup_admin():
 
 
 def add_database():
-    """Adiciona o PostgreSQL como fonte de dados."""
-    print("[3/7] Adicionando conexao com PostgreSQL...")
+    print("[3/8] Adicionando conexao com PostgreSQL...")
 
     payload = {
         "engine": "postgres",
@@ -123,34 +138,53 @@ def add_database():
         print(f"       ERRO: {r.text}")
         return None
 
-    db_id = r.json().get("id")
-    print(f"       Banco adicionado (ID: {db_id}).")
-    return db_id
+    new_id = r.json().get("id")
+    print(f"       Banco adicionado (ID: {new_id}).")
+    return new_id
 
 
-def sync_database(db_id):
-    """Forca o sync do banco para detectar tabelas."""
-    print("[4/7] Sincronizando schema do banco...")
-
-    r = session.post(f"{METABASE_URL}/api/database/{db_id}/sync_schema")
+def sync_database(database_id):
+    print("[4/8] Sincronizando schema do banco...")
+    r = session.post(f"{METABASE_URL}/api/database/{database_id}/sync_schema")
     if r.status_code != 200:
-        print(f"       Aviso: sync pode falhar se nao houver tabelas ainda. OK.")
+        print("       Aviso: sync pode falhar se nao houver tabelas ainda. OK.")
     else:
         print("       Schema sincronizado.")
-
     time.sleep(3)
     return True
 
 
-def create_card(name, sql, display="table", description=""):
-    """Cria uma pergunta SQL (card) no Metabase."""
+def archive_existing(card_names, dashboard_names):
+    """Arquiva cards e dashboards antigos com os mesmos nomes (re-execucao)."""
+    print("[5/8] Arquivando versoes antigas de cards/dashboards...")
+
+    r = session.get(f"{METABASE_URL}/api/card")
+    if r.status_code == 200:
+        for card in r.json():
+            if card.get("name") in card_names and not card.get("archived"):
+                session.put(f"{METABASE_URL}/api/card/{card['id']}",
+                            json={"archived": True})
+
+    r = session.get(f"{METABASE_URL}/api/dashboard")
+    if r.status_code == 200:
+        for dash in r.json():
+            if dash.get("name") in dashboard_names and not dash.get("archived"):
+                session.put(f"{METABASE_URL}/api/dashboard/{dash['id']}",
+                            json={"archived": True})
+
+
+def create_card(name, sql, display="table", description="", with_model_filter=False):
+    native = {"query": sql}
+    if with_model_filter:
+        native["template-tags"] = MODEL_TEMPLATE_TAG
+
     payload = {
         "name": name,
         "display": display,
         "description": description,
         "dataset_query": {
             "type": "native",
-            "native": {"query": sql},
+            "native": native,
             "database": db_id,
         },
         "visualization_settings": {},
@@ -159,74 +193,75 @@ def create_card(name, sql, display="table", description=""):
     r = session.post(f"{METABASE_URL}/api/card", json=payload)
     if r.status_code == 200:
         return r.json().get("id")
-    else:
-        print(f"       ERRO ao criar card '{name}': {r.text}")
-        return None
+    print(f"       ERRO ao criar card '{name}': {r.text[:200]}")
+    return None
 
 
 def create_dashboard(name, description=""):
-    """Cria um dashboard no Metabase."""
-    payload = {
-        "name": name,
-        "description": description,
-    }
+    payload = {"name": name, "description": description}
     r = session.post(f"{METABASE_URL}/api/dashboard", json=payload)
     if r.status_code == 200:
         return r.json().get("id")
-    else:
-        print(f"       ERRO ao criar dashboard '{name}': {r.text}")
-        return None
+    print(f"       ERRO ao criar dashboard '{name}': {r.text[:200]}")
+    return None
 
 
-def add_card_to_dashboard(dashboard_id, card_id):
-    """Adiciona um card a um dashboard."""
-    payload = {"cardId": card_id}
-    r = session.post(
-        f"{METABASE_URL}/api/dashboard/{dashboard_id}/cards",
-        json=payload,
-    )
-    return r.status_code == 200
+def populate_dashboard(dashboard_id, entries, with_filter=False):
+    """Adiciona cards ao dashboard via API nova (PUT dashcards); usa a API
+    antiga (POST /cards) como fallback para versoes anteriores do Metabase."""
+    parameters = []
+    if with_filter:
+        parameters = [{
+            "id": MODEL_FILTER_PARAM_ID,
+            "name": "Modelo da Maquina",
+            "slug": "modelo_da_maquina",
+            "type": "string/=",
+            "sectionId": "string",
+        }]
 
+    dashcards = []
+    row, col = 0, 0
+    for i, entry in enumerate(entries):
+        size_x = 8 if entry["display"] in ("table",) else 6
+        size_y = 4
+        if col + size_x > 24:
+            row += size_y
+            col = 0
+        mappings = []
+        if with_filter and entry.get("filterable"):
+            mappings = [{
+                "parameter_id": MODEL_FILTER_PARAM_ID,
+                "card_id": entry["card_id"],
+                "target": ["variable", ["template-tag", "model_id"]],
+            }]
+        dashcards.append({
+            "id": -(i + 1),
+            "card_id": entry["card_id"],
+            "row": row,
+            "col": col,
+            "size_x": size_x,
+            "size_y": size_y,
+            "parameter_mappings": mappings,
+        })
+        col += size_x
 
-def setup_collections():
-    """Cria as colecoes (pastas) para organizar as perguntas."""
-    print("[5/7] Criando colecoes...")
+    payload = {"dashcards": dashcards}
+    if parameters:
+        payload["parameters"] = parameters
 
-    collections = {
-        "Visao Geral": "KPIs e metricas principais do e-commerce.",
-        "Analise de Sentimento": "Analise de NLP sobre as reviews.",
-        "Analise Visual": "Features de imagem e seu impacto.",
-        "Resultados ML": "Metricas e comparacoes do modelo.",
-    }
-
-    created = {}
-    personal_id = None
-
-    r = session.get(f"{METABASE_URL}/api/collection")
+    r = session.put(f"{METABASE_URL}/api/dashboard/{dashboard_id}", json=payload)
     if r.status_code == 200:
-        for col in r.json():
-            if col.get("name") == "Our analytics":
-                personal_id = col.get("id")
-            if col.get("name") in collections:
-                created[col.get("name")] = col.get("id")
+        return True
 
-    if personal_id is None:
-        print("ERRO: Nao encontrou colecao 'Our analytics'.")
-        return created
-
-    for name, desc in collections.items():
-        if name not in created:
-            r = session.post(f"{METABASE_URL}/api/collection", json={
-                "name": name, "description": desc,
-                "parent_id": personal_id, "color": "#509EE3",
-            })
-            if r.status_code == 200:
-                created[name] = r.json().get("id")
-                print(f"       Colecao '{name}' criada.")
-            else:
-                print(f"       ERRO ao criar colecao '{name}': {r.text}")
-
-    return created
+    # Fallback: API antiga (< v0.49)
+    ok = True
+    for entry in entries:
+        r = session.post(
+            f"{METABASE_URL}/api/dashboard/{dashboard_id}/cards",
+            json={"cardId": entry["card_id"]},
+        )
+        ok = ok and r.status_code == 200
+    return ok
 
 
 def main():
@@ -243,115 +278,150 @@ def main():
 
     sync_database(db_id)
 
-    print("[6/7] Criando perguntas SQL e dashboards...")
-
+    # [[...]] = clausula opcional do Metabase: o filtro so e aplicado
+    # quando o usuario escolhe um valor no dashboard.
     cards = {
-        "KPI - Total de Produtos": {
-            "sql": "SELECT COUNT(*) AS total_produtos FROM dim_products",
+        "KPI - Total de Amostras": {
+            "sql": "SELECT COUNT(*) AS total_amostras FROM public_analytics.fact_audio_analysis",
             "display": "scalar",
-            "desc": "Quantos produtos estao cadastrados?",
+            "desc": "Total de arquivos de audio analisados.",
         },
-        "KPI - Rating Medio": {
-            "sql": "SELECT ROUND(AVG(rating)::numeric, 2) AS rating_medio FROM dim_products",
+        "KPI - Taxa de Anomalia (%)": {
+            "sql": "SELECT ROUND(100.0 * SUM(condition_binary) / COUNT(*), 1) AS pct_anomalia FROM public_analytics.fact_audio_analysis",
             "display": "scalar",
-            "desc": "Qual o rating medio de todos os produtos?",
+            "desc": "Porcentagem de maquinas com anomalia detectada.",
         },
-        "KPI - Reviews Negativas (%)": {
-            "sql": "SELECT ROUND(100.0 * COUNT(*) FILTER (WHERE rating <= 2) / COUNT(*), 1) AS pct_negativas FROM dim_products",
+        "KPI - Duracao Media (s)": {
+            "sql": "SELECT ROUND(AVG(duration_sec)::numeric, 2) AS duracao_media FROM public_analytics.fact_audio_analysis",
             "display": "scalar",
-            "desc": "Porcentagem de produtos com rating baixo.",
+            "desc": "Duracao media dos arquivos de audio.",
         },
-        "Rating por Categoria": {
-            "sql": "SELECT category_name, ROUND(AVG(rating)::numeric, 2) AS avg_rating FROM dim_categories c JOIN dim_products p ON p.category_id = c.category_id GROUP BY category_name ORDER BY avg_rating DESC",
+        "Anomalias por Modelo": {
+            "sql": "SELECT model_id, SUM(condition_binary) AS anomalias, COUNT(*) - SUM(condition_binary) AS normais FROM public_analytics.fact_audio_analysis WHERE 1=1 [[AND model_id = {{model_id}}]] GROUP BY model_id ORDER BY model_id",
             "display": "bar",
-            "desc": "Media de rating por categoria de produto.",
+            "desc": "Distribuicao de normal vs anomalia por modelo de maquina.",
+            "filter": True,
         },
-        "Top 10 Piores Produtos": {
-            "sql": "SELECT product_name, rating, rating_count, category FROM dim_products ORDER BY rating ASC, rating_count DESC LIMIT 10",
+        "Distribuicao de Condicoes": {
+            "sql": "SELECT condition, COUNT(*) AS total FROM public_analytics.fact_audio_analysis WHERE 1=1 [[AND model_id = {{model_id}}]] GROUP BY condition ORDER BY condition",
+            "display": "pie",
+            "desc": "Proporcao de maquinas normais vs com anomalia.",
+            "filter": True,
+        },
+        "Top 10 Maior RMS": {
+            "sql": "SELECT file_id, model_id, condition, ROUND(rms_mean::numeric, 6) AS rms_mean FROM public_analytics.fact_audio_analysis WHERE 1=1 [[AND model_id = {{model_id}}]] ORDER BY rms_mean DESC LIMIT 10",
             "display": "table",
-            "desc": "Produtos com pior avaliacao que precisam de atencao.",
+            "desc": "Amostras com maior energia (RMS) — possivel anomalia severa.",
+            "filter": True,
         },
-        "Polaridade por Rating": {
-            "sql": "SELECT rating, ROUND(AVG(polarity)::numeric, 3) AS avg_polarity, COUNT(*) AS qtd_reviews FROM fact_reviews GROUP BY rating ORDER BY rating",
+        "Media MFCC-1 por Modelo": {
+            "sql": "SELECT model_id, ROUND(AVG(mfcc_1_mean)::numeric, 4) AS avg_mfcc1 FROM public_analytics.fact_audio_analysis WHERE 1=1 [[AND model_id = {{model_id}}]] GROUP BY model_id ORDER BY model_id",
             "display": "bar",
-            "desc": "Relacao entre nota e sentimento do texto.",
+            "desc": "Coeficiente MFCC-1 medio por modelo de maquina.",
+            "filter": True,
         },
-        "Reviews com Dissonancia": {
-            "sql": "SELECT p.product_name, r.rating, ROUND(r.polarity::numeric, 3) AS polarity, r.review_content FROM fact_reviews r JOIN dim_products p ON p.product_id = r.product_id WHERE r.rating >= 4 AND r.polarity < 0 LIMIT 20",
-            "display": "table",
-            "desc": "Reviews com nota alta mas texto negativo.",
-        },
-        "Blur Score vs Rating": {
-            "sql": "SELECT p.product_name, ROUND(p.blur_score::numeric, 0) AS blur_score, p.rating FROM dim_products p WHERE p.blur_score IS NOT NULL ORDER BY p.blur_score DESC LIMIT 15",
-            "display": "table",
-            "desc": "Produtos com imagens borradas e seus ratings.",
-        },
-        "Brilho vs Rating": {
-            "sql": "SELECT ROUND(brightness_mean::numeric, 1) AS brightness, rating, product_name FROM dim_products WHERE brightness_mean IS NOT NULL ORDER BY brightness_mean ASC LIMIT 30",
-            "display": "scatter",
-            "desc": "Ha relacao entre brilho da imagem e rating?",
-        },
-        "Top Features TF-IDF por Rating 5": {
-            "sql": "SELECT split_part(feature, '_', 2) AS palavra, avg_valor FROM (SELECT unnest(array['tfidf_great','tfidf_excellent','tfidf_amazing','tfidf_love','tfidf_best']) AS feature) f CROSS JOIN (SELECT AVG(tfidf_great) AS tfidf_great, AVG(tfidf_excellent) AS tfidf_excellent, AVG(tfidf_amazing) AS tfidf_amazing, AVG(tfidf_love) AS tfidf_love, AVG(tfidf_best) AS tfidf_best FROM ml_features WHERE rating = 5) t CROSS JOIN LATERAL (VALUES ('tfidf_great', t.tfidf_great), ('tfidf_excellent', t.tfidf_excellent), ('tfidf_amazing', t.tfidf_amazing), ('tfidf_love', t.tfidf_love), ('tfidf_best', t.tfidf_best)) AS v(feature, avg_valor) WHERE f.feature = v.feature ORDER BY avg_valor DESC",
+        "Spectral Centroid vs Condicao": {
+            "sql": "SELECT condition, ROUND(AVG(spectral_centroid_mean)::numeric, 2) AS avg_centroid FROM public_analytics.fact_audio_analysis WHERE 1=1 [[AND model_id = {{model_id}}]] GROUP BY condition",
             "display": "bar",
-            "desc": "Palavras mais frequentes em reviews nota 5.",
+            "desc": "Centroide espectral medio para maquinas normais vs anomalas.",
+            "filter": True,
+        },
+        "Resumo por Modelo": {
+            "sql": "SELECT * FROM public_analytics.dim_machines ORDER BY model_id",
+            "display": "table",
+            "desc": "Tabela resumo com metricas por modelo de maquina.",
+        },
+        # --- Resultados do modelo de ML (tabelas geradas por ml/evaluate.py) ---
+        "KPI - Acuracia do Modelo (%)": {
+            "sql": "SELECT ROUND(100.0 * SUM(CASE WHEN y_true = pred_sklearn THEN 1 ELSE 0 END) / COUNT(*), 2) AS acuracia FROM model_predictions",
+            "display": "scalar",
+            "desc": "Acuracia do MLP sklearn no conjunto de teste.",
+        },
+        "Metricas dos Modelos": {
+            "sql": "SELECT * FROM model_metrics",
+            "display": "table",
+            "desc": "Comparacao de metricas: baselines vs MLP hard-code vs MLP sklearn.",
+        },
+        "Matriz de Confusao (Sklearn)": {
+            "sql": "SELECT CASE y_true WHEN 1 THEN 'anomalia' ELSE 'normal' END AS real, CASE pred_sklearn WHEN 1 THEN 'anomalia' ELSE 'normal' END AS predito, COUNT(*) AS total FROM model_predictions GROUP BY 1, 2 ORDER BY 1, 2",
+            "display": "table",
+            "desc": "Matriz de confusao do MLP sklearn no conjunto de teste.",
+        },
+        "Predicoes com Erro": {
+            "sql": "SELECT file_id, model_id, condition_real, CASE pred_sklearn WHEN 1 THEN 'anomalia' ELSE 'normal' END AS predito, proba_sklearn FROM model_predictions WHERE erro_sklearn = 1 ORDER BY proba_sklearn DESC",
+            "display": "table",
+            "desc": "Amostras do teste classificadas incorretamente — insumo da analise qualitativa.",
         },
     }
 
+    dashboards = {
+        "Manutencao Preditiva — Visao Geral": {
+            "desc": "KPIs e metricas principais do monitoramento industrial. Filtro por modelo de maquina.",
+            "cards": [
+                "KPI - Total de Amostras",
+                "KPI - Taxa de Anomalia (%)",
+                "KPI - Duracao Media (s)",
+                "Distribuicao de Condicoes",
+                "Anomalias por Modelo",
+            ],
+            "filter": True,
+        },
+        "Analise de Audio por Modelo": {
+            "desc": "Detalhamento das features de audio por modelo de maquina. Filtro por modelo.",
+            "cards": [
+                "Resumo por Modelo",
+                "Media MFCC-1 por Modelo",
+                "Spectral Centroid vs Condicao",
+                "Top 10 Maior RMS",
+            ],
+            "filter": True,
+        },
+        "Resultados do Modelo ML": {
+            "desc": "Metricas, matriz de confusao e erros do modelo de Machine Learning.",
+            "cards": [
+                "KPI - Acuracia do Modelo (%)",
+                "Metricas dos Modelos",
+                "Matriz de Confusao (Sklearn)",
+                "Predicoes com Erro",
+            ],
+            "filter": False,
+        },
+    }
+
+    archive_existing(set(cards), set(dashboards))
+
+    print("[6/8] Criando perguntas SQL...")
     card_ids = {}
     for name, config in cards.items():
-        cid = create_card(name, config["sql"], config["display"], config["desc"])
+        cid = create_card(
+            name, config["sql"], config["display"], config["desc"],
+            with_model_filter=config.get("filter", False),
+        )
         if cid:
             card_ids[name] = cid
             print(f"       Card '{name}' criado (ID: {cid}).")
 
-    print("[7/7] Montando dashboards...")
-
-    dashboards = {
-        "Visao Geral": {
-            "desc": "KPIs e metricas principais do e-commerce.",
-            "cards": [
-                "KPI - Total de Produtos",
-                "KPI - Rating Medio",
-                "KPI - Reviews Negativas (%)",
-                "Rating por Categoria",
-                "Top 10 Piores Produtos",
-            ],
-        },
-        "Analise de Sentimento (NLP)": {
-            "desc": "Analise das reviews com tecnicas de NLP.",
-            "cards": [
-                "Polaridade por Rating",
-                "Reviews com Dissonancia",
-            ],
-        },
-        "Analise Visual (Imagens)": {
-            "desc": "Impacto das features de imagem no rating.",
-            "cards": [
-                "Blur Score vs Rating",
-                "Brilho vs Rating",
-            ],
-        },
-        "Resultados do Modelo ML": {
-            "desc": "Metricas e analise do modelo de ML.",
-            "cards": [
-                "Top Features TF-IDF por Rating 5",
-            ],
-        },
-    }
-
+    print("[7/8] Montando dashboards...")
     for dash_name, dash_config in dashboards.items():
         dash_id = create_dashboard(dash_name, dash_config["desc"])
-        if dash_id:
-            print(f"       Dashboard '{dash_name}' criado (ID: {dash_id}).")
-            for card_name in dash_config["cards"]:
-                if card_name in card_ids:
-                    ok = add_card_to_dashboard(dash_id, card_ids[card_name])
-                    if ok:
-                        print(f"          Card '{card_name}' adicionado.")
-                    else:
-                        print(f"          ERRO ao adicionar card '{card_name}'.")
+        if not dash_id:
+            continue
+        print(f"       Dashboard '{dash_name}' criado (ID: {dash_id}).")
 
+        entries = []
+        for card_name in dash_config["cards"]:
+            if card_name in card_ids:
+                entries.append({
+                    "card_id": card_ids[card_name],
+                    "display": cards[card_name]["display"],
+                    "filterable": cards[card_name].get("filter", False),
+                })
+        ok = populate_dashboard(dash_id, entries, with_filter=dash_config["filter"])
+        status = "OK" if ok else "ERRO"
+        print(f"          {len(entries)} cards adicionados [{status}]"
+              + (" + filtro por modelo" if dash_config["filter"] else ""))
+
+    print("[8/8] Concluido.")
     print("\n========================================")
     print("Configuracao do Metabase concluida!")
     print(f"Acesse: {METABASE_URL}")

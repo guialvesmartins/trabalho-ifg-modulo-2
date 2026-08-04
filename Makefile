@@ -9,7 +9,7 @@ up:
 	@sleep 5
 	@echo "Metabase config. automatica em andamento (ver logs: make logs-setup)..."
 	@echo "Airflow:    http://localhost:8080 (admin/admin)"
-	@echo "Metabase:   http://localhost:3000 (admin@projeto.com / admin123)"
+	@echo "Metabase:   http://localhost:3000 (admin@projeto.com / ProjetoIFG2025!)"
 	@echo "MinIO API:  http://localhost:9000 (minioadmin/minioadmin)"
 	@echo "MinIO Web:  http://localhost:9001"
 
@@ -34,9 +34,11 @@ ingest:
 
 process:
 	python3 processing/process_structured.py
-	python3 processing/extract_text_features.py
-	python3 processing/extract_image_features.py
+	python3 processing/extract_audio_features.py
 	python3 processing/merge_features.py
+
+load-db:
+	python3 processing/load_to_postgres.py
 
 pipeline:
 	@echo "Disparando DAG no Airflow..."
@@ -62,6 +64,6 @@ dashboard:
 
 clean:
 	docker compose down -v
-	rm -rf data/raw/* data/processed/* images/products/*
+	rm -rf data/raw/* data/processed/*
 	rm -rf dbt_project/logs dbt_project/target
 	@echo "Ambiente limpo."

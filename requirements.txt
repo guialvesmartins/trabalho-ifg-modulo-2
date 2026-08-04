@@ -1,11 +1,10 @@
 pandas==2.2.2
 numpy==1.26.4
-vaderSentiment==3.3.2
+librosa>=0.10.2
+soundfile>=0.12.1
 scikit-learn==1.5.1
-textstat==0.7.4
-opencv-python-headless==4.10.0.84
-Pillow==10.4.0
-scikit-image==0.24.0
+sqlalchemy==2.0.30
+psycopg2-binary==2.9.9
 boto3==1.35.0
 apache-airflow==2.9.0
 apache-airflow-providers-amazon==8.20.0
@@ -13,7 +12,6 @@ apache-airflow-providers-postgres==5.10.0
 dbt-core==1.8.0
 dbt-postgres==1.8.0
 dbt-snowflake==1.8.0
-kagglehub==0.3.0
 python-dotenv==1.0.1
 PyYAML==6.0.2
 matplotlib==3.9.0

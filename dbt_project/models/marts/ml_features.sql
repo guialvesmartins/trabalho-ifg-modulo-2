@@ -1,44 +1,50 @@
-with dim_products as (
-    select * from {{ ref('dim_products') }}
+with fact_audio as (
+    select * from {{ ref('fact_audio_analysis') }}
 ),
 
-fact_reviews as (
-    select * from {{ ref('fact_reviews') }}
-),
-
-stg_images as (
-    select * from {{ ref('stg_images') }}
+dim_machines as (
+    select * from {{ ref('dim_machines') }}
 ),
 
 joined as (
     select
-        fr.review_id,
-        fr.product_id,
-        fr.rating,
-        fr.review_title,
-        fr.review_content,
-        fr.polarity,
-        fr.subjectivity,
-        fr.review_length,
-        fr.word_count,
-        si.brightness_mean,
-        si.saturation_mean,
-        si.blur_score,
-        si.edge_density,
-        si.entropy,
-        si.contrast,
-        dp.product_name,
-        dp.category,
-        dp.actual_price,
-        dp.discounted_price,
-        dp.discount_percentage,
-        dp.rating_count,
-        dp.img_link
-    from fact_reviews fr
-    left join stg_images si
-        on fr.product_id = si.product_id
-    left join dim_products dp
-        on fr.product_id = dp.product_id
+        fa.file_id,
+        fa.machine_type,
+        fa.model_id,
+        fa.condition,
+        fa.condition_binary,
+        fa.duration_sec,
+        fa.zcr_mean,
+        fa.rms_mean,
+        fa.spectral_centroid_mean,
+        fa.spectral_bandwidth_mean,
+        fa.spectral_rolloff_mean,
+        fa.mfcc_1_mean,
+        fa.mfcc_2_mean,
+        fa.mfcc_3_mean,
+        fa.mfcc_4_mean,
+        fa.mfcc_5_mean,
+        fa.mfcc_6_mean,
+        fa.mfcc_7_mean,
+        fa.mfcc_8_mean,
+        fa.mfcc_9_mean,
+        fa.mfcc_10_mean,
+        fa.mfcc_11_mean,
+        fa.mfcc_12_mean,
+        fa.mfcc_13_mean,
+        fa.mfcc_1_std,
+        fa.mfcc_2_std,
+        fa.mfcc_3_std,
+        fa.mfcc_4_std,
+        fa.mfcc_5_std,
+        dm.total_samples,
+        dm.anomaly_count,
+        dm.normal_count,
+        dm.avg_duration_sec
+    from fact_audio fa
+    left join dim_machines dm
+        on fa.machine_type = dm.machine_type
+        and fa.model_id = dm.model_id
 )
 
 select * from joined

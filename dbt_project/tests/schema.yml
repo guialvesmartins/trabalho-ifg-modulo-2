@@ -1,55 +1,73 @@
 version: 2
 
 models:
-  - name: dim_products
-    description: "Dimensão de produtos - SCD Type 1"
+  - name: stg_pump_metadata
+    description: "Staging dos metadados do dataset MIMII Pump"
     columns:
-      - name: product_id
-        description: "ID único do produto"
+      - name: file_id
+        description: "ID unico do arquivo de audio"
         tests:
           - not_null
           - unique
-      - name: product_name
-        description: "Nome do produto"
+      - name: machine_type
+        description: "Tipo de maquina"
         tests:
           - not_null
-      - name: rating
-        description: "Rating médio do produto (1-5)"
+      - name: model_id
+        description: "ID do modelo da maquina"
         tests:
           - not_null
-
-  - name: fact_reviews
-    description: "Fato de reviews com features NLP"
-    columns:
-      - name: review_id
-        description: "ID da review"
-        tests:
-          - not_null
-          - unique
-      - name: product_id
-        description: "FK para produto"
-        tests:
-          - not_null
-      - name: rating
-        description: "Rating atribuído (1-5)"
+      - name: condition
+        description: "Condicao da maquina (normal ou anomaly)"
         tests:
           - not_null
           - accepted_values:
-              values: [1, 2, 3, 4, 5]
+              values: ["normal", "anomaly"]
 
-  - name: dim_categories
-    description: "Dimensão de categorias com métricas agregadas"
+  - name: stg_audio_features
+    description: "Staging das features de audio extraidas com librosa (MFCC, espectrais, ZCR, RMS), com cast para numeric"
     columns:
-      - name: category_name
-        description: "Nome da categoria"
+      - name: file_id
+        description: "ID unico do arquivo de audio (join key com stg_pump_metadata)"
         tests:
           - not_null
           - unique
+
+  - name: dim_machines
+    description: "Dimensao de maquinas com metricas agregadas"
+    columns:
+      - name: machine_type
+        description: "Tipo de maquina (pump)"
+        tests:
+          - not_null
+      - name: model_id
+        description: "ID do modelo da maquina"
+        tests:
+          - not_null
+      - name: total_samples
+        description: "Total de amostras de audio por modelo"
+        tests:
+          - not_null
+
+  - name: fact_audio_analysis
+    description: "Fato com features de audio e condicao da maquina"
+    columns:
+      - name: file_id
+        description: "ID unico do arquivo de audio"
+        tests:
+          - not_null
+          - unique
+      - name: condition_binary
+        description: "Target binario do modelo ML (0=normal, 1=anomalia)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1]
 
   - name: ml_features
     description: "Tabela final pronta para Machine Learning"
     columns:
-      - name: rating
-        description: "Target do modelo - rating a ser previsto"
+      - name: condition_binary
+        description: "Target do modelo — se a maquina esta com anomalia"
         tests:
           - not_null

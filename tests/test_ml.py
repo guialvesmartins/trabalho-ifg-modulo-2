@@ -5,60 +5,88 @@ import pandas as pd
 import pytest
 
 
-def test_hardcode_naive_bayes_fit_predict():
-    """Hard-code NB should train and predict without errors"""
-    from ml.hard_code.naive_bayes_hardcode import HardCodedNaiveBayes
+def test_hardcode_mlp_binary_fit_predict():
+    """Hard-code MLP should train and predict binary without errors"""
+    from ml.hard_code.neural_network_hardcode import HardCodedMLP
 
-    X = pd.DataFrame({
-        'tfidf_great': [1, 0, 1],
-        'tfidf_bad': [0, 1, 0],
-        'tfidf_product': [1, 1, 0],
-        'not_tfidf_feature': [0.5, 0.3, 0.8],
-    })
-    y = np.array([5, 1, 5])
+    np.random.seed(42)
+    X = np.random.randn(200, 20)
+    y = (X[:, 0] + X[:, 1] > 0).astype(int)
 
-    model = HardCodedNaiveBayes(alpha=1.0)
+    model = HardCodedMLP(epochs=50, batch_size=32)
     model.fit(X, y)
     preds = model.predict(X)
 
-    assert len(preds) == 3
-    assert set(preds).issubset({1, 2, 3, 4, 5})
+    assert len(preds) == 200
+    assert set(preds).issubset({0, 1})
 
 
-def test_hardcode_predict_proba():
-    """predict_proba should return valid probability distribution"""
-    from ml.hard_code.naive_bayes_hardcode import HardCodedNaiveBayes
+def test_hardcode_mlp_predict_proba():
+    """predict_proba should return probabilities between 0 and 1"""
+    from ml.hard_code.neural_network_hardcode import HardCodedMLP
 
-    X = pd.DataFrame({
-        'tfidf_great': [1, 0],
-        'tfidf_bad': [0, 1],
-    })
-    y = np.array([5, 1])
+    np.random.seed(42)
+    X = np.random.randn(100, 10)
+    y = (X[:, 0] > 0).astype(int)
 
-    model = HardCodedNaiveBayes(alpha=1.0)
+    model = HardCodedMLP(epochs=30, batch_size=32)
     model.fit(X, y)
     probs = model.predict_proba(X)
 
-    assert probs.shape == (2, 5)
-    assert np.allclose(probs.sum(axis=1), 1.0)
+    assert len(probs) == 100
     assert np.all(probs >= 0) and np.all(probs <= 1)
 
 
-def test_binarize_features():
-    """_binarize_features should convert numeric to binary"""
-    from ml.hard_code.naive_bayes_hardcode import HardCodedNaiveBayes
+def test_hardcode_mlp_loss_decreases():
+    """Loss should generally decrease during training"""
+    from ml.hard_code.neural_network_hardcode import HardCodedMLP
 
-    X = pd.DataFrame({
-        'tfidf_great': [0.5, 0.0, 0.01, 0.0],
-        'tfidf_bad': [0.0, 0.8, 0.0, 0.0],
-        'regular_col': [5, 3, 8, 1],
-    })
-    y = np.array([5, 1, 5, 3])
+    np.random.seed(42)
+    X = np.random.randn(300, 10)
+    y = (X[:, 0] + X[:, 1] > 0).astype(int)
 
-    model = HardCodedNaiveBayes(alpha=1.0)
+    model = HardCodedMLP(epochs=100, batch_size=64)
     model.fit(X, y)
 
-    binarized = model._binarize_features(X)
-    assert binarized['tfidf_great'].iloc[0] == 1
-    assert binarized['tfidf_great'].iloc[1] == 0
-    assert binarized['tfidf_great'].iloc[2] == 1
+    assert len(model.loss_history) == 100
+    assert model.loss_history[0] > model.loss_history[-1]
+
+
+def test_hardcode_mlp_save_load_roundtrip(tmp_path):
+    """Modelo salvo com pickle deve reproduzir as mesmas predicoes ao carregar"""
+    from ml.hard_code.neural_network_hardcode import HardCodedMLP
+
+    np.random.seed(42)
+    X = np.random.randn(150, 12)
+    y = (X[:, 0] - X[:, 2] > 0).astype(int)
+
+    model = HardCodedMLP(epochs=30, batch_size=32)
+    model.fit(X, y)
+
+    path = tmp_path / "mlp_hardcode.pkl"
+    model.save(path)
+    loaded = HardCodedMLP.load(path)
+
+    assert np.array_equal(model.predict(X), loaded.predict(X))
+    assert np.allclose(model.predict_proba(X), loaded.predict_proba(X))
+
+
+def test_sklearn_mlp_binary():
+    """Sklearn MLP should train binary classification"""
+    from sklearn.neural_network import MLPClassifier
+    from sklearn.metrics import accuracy_score
+
+    np.random.seed(42)
+    X = np.random.randn(200, 10)
+    y = (X[:, 0] + X[:, 1] > 0).astype(int)
+
+    model = MLPClassifier(
+        hidden_layer_sizes=(32, 16),
+        max_iter=200,
+        random_state=42,
+    )
+    model.fit(X, y)
+    preds = model.predict(X)
+    acc = accuracy_score(y, preds)
+
+    assert acc > 0.5

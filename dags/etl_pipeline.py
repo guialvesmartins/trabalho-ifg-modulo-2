@@ -21,15 +21,15 @@ default_args = {
 with DAG(
     dag_id="etl_pipeline",
     default_args=default_args,
-    description="ETL Pipeline for Amazon Sales project",
+    description="ETL Pipeline — MIMII Pump Industrial Sound Classification",
     schedule="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    tags=["projeto-final", "etl"],
+    tags=["projeto-final", "etl", "mimii"],
 ) as dag:
 
     t1 = PythonOperator(
-        task_id="download_datasets",
+        task_id="download_dataset",
         python_callable=lambda: _call("ingestion.download_dataset"),
     )
 
@@ -43,19 +43,19 @@ with DAG(
         python_callable=lambda: _call("processing.process_structured"),
     )
 
-    t4a = PythonOperator(
-        task_id="extract_text_features",
-        python_callable=lambda: _call("processing.extract_text_features"),
-    )
-
-    t4b = PythonOperator(
-        task_id="extract_image_features",
-        python_callable=lambda: _call("processing.extract_image_features"),
+    t4 = PythonOperator(
+        task_id="extract_audio_features",
+        python_callable=lambda: _call("processing.extract_audio_features"),
     )
 
     t5 = PythonOperator(
         task_id="merge_features",
         python_callable=lambda: _call("processing.merge_features"),
+    )
+
+    t5b = PythonOperator(
+        task_id="load_to_postgres",
+        python_callable=lambda: _call("processing.load_to_postgres"),
     )
 
     t6 = BashOperator(
@@ -73,6 +73,4 @@ with DAG(
         python_callable=lambda: _call("ml.evaluate"),
     )
 
-    t1 >> t2 >> t3
-    t3 >> [t4a, t4b] >> t5
-    t5 >> t6 >> t7 >> t8
+    t1 >> t2 >> t3 >> t4 >> t5 >> t5b >> t6 >> t7 >> t8

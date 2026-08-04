@@ -1,146 +1,92 @@
-"""Clean structured data from raw CSV and save processed version."""
+"""Parse MIMII Pump file structure into structured CSV metadata."""
 
 import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import soundfile as sf
+
+DATA_DIR = Path("data/raw/pump")
+
+# O dataset MIMII real usa "abnormal"; normalizamos para "anomaly",
+# valor esperado pelo restante do pipeline (dbt, ML, Metabase).
+CONDITION_MAP = {"abnormal": "anomaly"}
 
 
-def clean_currency(value):
-    if pd.isna(value):
-        return np.nan
-    return float(str(value).replace("₹", "").replace(",", "").strip())
+def normalize_condition(condition):
+    return CONDITION_MAP.get(condition, condition)
 
 
-def clean_percentage(value):
-    if pd.isna(value):
-        return np.nan
-    return float(str(value).replace("%", "").strip()) / 100
+def parse_mimii_structure(data_dir):
+    rows = []
+    wav_files = sorted(data_dir.rglob("*.wav"))
 
+    for wav_path in wav_files:
+        relative = str(wav_path.relative_to(data_dir))
 
-def clean_rating_count(value):
-    if pd.isna(value):
-        return np.nan
-    return int(str(value).replace(",", "").strip())
+        try:
+            parts = Path(relative).parts
+            machine_type = parts[0]
+            model_id = parts[1]
+            condition = normalize_condition(parts[2])  # "normal" ou "anomaly"
+            filename = parts[3]
+        except IndexError:
+            print(f"  WARNING: Unexpected path structure: {relative}")
+            continue
 
+        info = sf.info(str(wav_path))
+        duration = info.duration
+        sample_rate = info.samplerate
+        channels = info.channels
 
-def load_raw_data(path):
-    return pd.read_csv(path)
+        file_id = f"{machine_type}_{model_id}_{condition}_{Path(filename).stem}"
 
+        rows.append(
+            {
+                "file_id": file_id,
+                "machine_type": machine_type,
+                "model_id": model_id,
+                "condition": condition,
+                "filename": filename,
+                "file_path": relative,
+                "duration_sec": round(duration, 4),
+                "sample_rate": sample_rate,
+                "channels": channels,
+            }
+        )
 
-def clean_data(df):
-    df = df.copy()
-
-    if "discounted_price" in df.columns:
-        df["discounted_price"] = df["discounted_price"].apply(clean_currency)
-
-    if "actual_price" in df.columns:
-        df["actual_price"] = df["actual_price"].apply(clean_currency)
-
-    if "discount_percentage" in df.columns:
-        df["discount_percentage"] = df["discount_percentage"].apply(clean_percentage)
-
-    if "rating_count" in df.columns:
-        df["rating_count"] = df["rating_count"].apply(clean_rating_count)
-
-    if "product_id" not in df.columns:
-        df["product_id"] = df.index.astype(str)
-        df["product_id"] = "prod_" + df["product_id"]
-    else:
-        df["product_id"] = df["product_id"].astype(str)
-
-    df = df.drop_duplicates(subset=["product_name", "product_id"], keep="first")
-
-    if "rating" in df.columns:
-        before_drop = len(df)
-        df = df.dropna(subset=["rating"])
-        df["rating"] = df["rating"].astype(int)
-        nulls_removed = before_drop - len(df)
-    else:
-        nulls_removed = 0
-
-    return df, nulls_removed
-
-
-def add_derived_features(df):
-    df = df.copy()
-
-    if "actual_price" in df.columns:
-        df["log_price"] = np.log1p(df["actual_price"])
-
-    if "rating_count" in df.columns:
-        df["log_rating_count"] = np.log1p(df["rating_count"])
-
-    if "actual_price" in df.columns and "discounted_price" in df.columns:
-        df["price_difference"] = df["actual_price"] - df["discounted_price"]
-
-    if "discount_percentage" in df.columns:
-
-        def bucketize(pct):
-            if pd.isna(pct):
-                return "unknown"
-            if pct < 0.20:
-                return "low"
-            if pct <= 0.50:
-                return "medium"
-            return "high"
-
-        df["discount_bucket"] = df["discount_percentage"].apply(bucketize)
-
-    return df
-
-
-def encode_categorical(df):
-    if "category" in df.columns:
-        cat_dummies = pd.get_dummies(df["category"], prefix="cat_", dtype=int)
-        df = pd.concat([df, cat_dummies], axis=1)
-    return df
-
-
-def save_processed(df, path):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    df.to_csv(path, index=False)
+    return rows
 
 
 def main():
-    raw_path = os.path.join("data", "raw", "amazon_sales.csv")
-    processed_path = os.path.join("data", "processed", "products_clean.csv")
+    print("=== MIMII Pump Structured Data Extraction ===")
 
-    original_cols = None
+    if not DATA_DIR.exists():
+        print(f"ERROR: {DATA_DIR} not found. Run download_dataset.py first.")
+        return
 
-    if not os.path.exists(raw_path):
-        alt_paths = [
-            "data/amazon_sales.csv",
-            "data/amazon.csv",
-            "data/products.csv",
-        ]
-        for alt in alt_paths:
-            if os.path.exists(alt):
-                raw_path = alt
-                break
+    rows = parse_mimii_structure(DATA_DIR)
+    print(f"Parsed {len(rows)} audio files.")
 
-    df_raw = load_raw_data(raw_path)
-    original_rows = len(df_raw)
-    original_cols = df_raw.columns.tolist()
+    df = pd.DataFrame(rows)
 
-    df_clean, nulls_removed = clean_data(df_raw)
-    df_featured = add_derived_features(df_clean)
-    df_encoded = encode_categorical(df_featured)
+    df["condition_binary"] = np.where(df["condition"] == "anomaly", 1, 0)
+    df["model_id_encoded"] = df["model_id"].str.extract(r"(\d+)").astype(int)
 
-    final_rows = len(df_encoded)
-    final_cols = df_encoded.columns.tolist()
-    columns_added = [c for c in final_cols if c not in original_cols]
+    output_dir = Path("data/processed")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / "pump_metadata.csv"
+    df.to_csv(output_path, index=False)
 
-    save_processed(df_encoded, processed_path)
-
-    print("=== Structured Data Processing Summary ===")
-    print(f"Original rows: {original_rows}")
-    print(f"Final rows:    {final_rows}")
-    print(f"Nulls removed: {nulls_removed}")
-    print(f"Columns added: {len(columns_added)}")
-    for col in columns_added:
-        print(f"  - {col}")
-    print(f"Output saved to: {processed_path}")
+    print(f"\n=== Structured Data Summary ===")
+    print(f"Total files:     {len(df)}")
+    print(f"Machine types:   {df['machine_type'].unique().tolist()}")
+    print(f"Models:          {sorted(df['model_id'].unique())}")
+    print(f"Conditions:      {df['condition'].value_counts().to_dict()}")
+    print(f"Mean duration:   {df['duration_sec'].mean():.2f}s")
+    print(f"Sample rate:     {df['sample_rate'].iloc[0]} Hz")
+    print(f"Output saved to: {output_path}")
 
 
 if __name__ == "__main__":

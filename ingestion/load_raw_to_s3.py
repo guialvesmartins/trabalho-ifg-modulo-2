@@ -1,19 +1,19 @@
+"""Upload MIMII pump WAV files to S3/MinIO."""
+
 import os
 from pathlib import Path
 
 import boto3
-import pandas as pd
-import requests
-from dotenv import load_dotenv
+from botocore.config import Config
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
+load_dotenv(find_dotenv())
 
 S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://localhost:9000")
 S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "minioadmin")
 S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "minioadmin")
 BUCKET_NAME = "raw"
-MAX_IMAGES = 1000
-PROGRESS_INTERVAL = 50
+DATA_DIR = Path("data/raw/pump")
 
 
 def get_s3_client():
@@ -22,7 +22,7 @@ def get_s3_client():
         endpoint_url=S3_ENDPOINT,
         aws_access_key_id=S3_ACCESS_KEY,
         aws_secret_access_key=S3_SECRET_KEY,
-        use_path_style_endpoint=True,
+        config=Config(s3={"addressing_style": "path"}),
     )
 
 
@@ -36,85 +36,43 @@ def ensure_bucket(s3_client):
         print(f"Bucket creation skipped or failed: {e}")
 
 
-def upload_csvs(s3_client, raw_dir):
-    csv_files = list(raw_dir.glob("*.csv"))
-    if not csv_files:
-        print("No CSV files found in data/raw/")
+def upload_wavs(s3_client):
+    if not DATA_DIR.exists():
+        print(f"Data directory {DATA_DIR} not found. Run download_dataset.py first.")
         return
 
-    for csv_file in csv_files:
-        print(f"Uploading {csv_file.name}...")
+    wav_files = list(DATA_DIR.rglob("*.wav"))
+    if not wav_files:
+        print("No .wav files found.")
+        return
+
+    total = len(wav_files)
+    print(f"Uploading {total} .wav files to S3 bucket '{BUCKET_NAME}'...")
+
+    for idx, wav_file in enumerate(wav_files):
+        relative_path = str(wav_file.relative_to(DATA_DIR))
+        s3_key = f"pump/{relative_path}"
+
         try:
             s3_client.upload_file(
-                str(csv_file),
+                str(wav_file),
                 BUCKET_NAME,
-                csv_file.name,
-            )
-            print(f"  {csv_file.name} uploaded successfully.")
-        except Exception as e:
-            print(f"  Error uploading {csv_file.name}: {e}")
-
-
-def download_image(url, timeout=10):
-    try:
-        response = requests.get(url, timeout=timeout)
-        response.raise_for_status()
-        return response.content
-    except Exception:
-        return None
-
-
-def process_images(s3_client, raw_dir):
-    sales_file = raw_dir / "amazon_sales.csv"
-    if not sales_file.exists():
-        print(f"{sales_file} not found. Skipping image upload.")
-        return
-
-    print(f"Reading {sales_file}...")
-    df = pd.read_csv(sales_file)
-
-    if "img_link" not in df.columns:
-        print("Column 'img_link' not found. Skipping image upload.")
-        return
-
-    urls = df["img_link"].dropna().unique()
-    urls = urls[:MAX_IMAGES]
-
-    print(f"Processing up to {len(urls)} images...")
-
-    for idx, url in enumerate(urls):
-        image_data = download_image(url)
-        if image_data is None:
-            print(f"  [{idx}] Failed to download: {url}")
-            continue
-
-        s3_key = f"images/{idx}.jpg"
-
-        try:
-            s3_client.put_object(
-                Bucket=BUCKET_NAME,
-                Key=s3_key,
-                Body=image_data,
-                ContentType="image/jpeg",
+                s3_key,
             )
         except Exception as e:
-            print(f"  [{idx}] Error uploading {s3_key}: {e}")
+            print(f"  [{idx}/{total}] Error uploading {relative_path}: {e}")
             continue
 
-        if (idx + 1) % PROGRESS_INTERVAL == 0:
-            print(f"  Progress: {idx + 1}/{len(urls)} images processed.")
+        if (idx + 1) % 1000 == 0:
+            print(f"  Progress: {idx + 1}/{total} files uploaded.")
 
-    print(f"Image upload complete. Processed {len(urls)} images.")
+    print(f"Upload complete. {total} files uploaded to '{BUCKET_NAME}/pump/'.")
 
 
 def main():
     s3_client = get_s3_client()
     ensure_bucket(s3_client)
-
-    raw_dir = Path("data/raw")
-    upload_csvs(s3_client, raw_dir)
-    process_images(s3_client, raw_dir)
-
+    upload_wavs(s3_client)
     print("Done.")
 
 

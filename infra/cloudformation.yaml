@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Infraestrutura completa para Pipeline de Dados e Machine Learning em E-commerce'
+Description: 'Infraestrutura para Pipeline de Dados e ML — Manutencao Preditiva Industrial com Som (MIMII Pump)'
 
 # ============================================================
 # Parâmetros do Template
