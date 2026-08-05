@@ -151,6 +151,18 @@
   pre{background:#0b1f3a; color:#cfe0f5; border-radius:12px; padding:16px; overflow-x:auto; margin:10px 0;}
   pre code{background:none; border:none; color:#cfe0f5; padding:0;}
 
+  /* ---------- Mini steps (resumo do DAG) ---------- */
+  .mini-steps{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px;}
+  .mini-step{display:flex; gap:11px; background:var(--bg); border:1px solid var(--line);
+    border-radius:10px; padding:12px 13px;}
+  .mini-step .n{flex:0 0 26px; height:26px; border-radius:7px;
+    background:linear-gradient(135deg,#0f6fde,#0e9f8e); color:#fff; font-weight:700; font-size:12.5px;
+    display:flex; align-items:center; justify-content:center;}
+  .mini-step .t{min-width:0;}
+  .mini-step b{font-size:12.5px; display:block;}
+  .mini-step .tool{font-family:Consolas,"Courier New",monospace; font-size:10.5px; color:var(--brand-2);}
+  .mini-step p{font-size:11.5px; color:var(--muted); margin-top:3px;}
+
   /* ---------- Footer ---------- */
   footer{margin-top:20px; text-align:center; color:var(--muted); font-size:12px;}
 
@@ -159,6 +171,7 @@
     aside{width:100%; flex:0 0 auto; height:auto; position:static;}
     .hero .stats{grid-template-columns:repeat(2,1fr);}
     .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr;}
+    .mini-steps{grid-template-columns:1fr;}
     main{padding:0 16px 60px;}
   }
 </style>
@@ -430,6 +443,19 @@
         </g>
       </svg>
       <p style="font-size:12.5px; color:var(--muted); margin-top:8px">Scripts em <code>ingestion/</code>, <code>processing/</code> e <code>ml/</code> são reutilizados diretamente pelas tasks (PythonOperator) e pelo Makefile.</p>
+
+      <h4 style="margin:20px 0 4px; font-size:14px">Cada etapa, em uma frase</h4>
+      <div class="mini-steps">
+        <div class="mini-step"><span class="n">1</span><span class="t"><b>Baixar dados</b><span class="tool">download_dataset.py</span><p>Baixa os áudios de bombas reais do Zenodo (~7,9 GB), com retomada se a conexão cair.</p></span></div>
+        <div class="mini-step"><span class="n">2</span><span class="t"><b>Subir p/ armazenamento</b><span class="tool">load_raw_to_s3.py</span><p>Guarda os .wav no MinIO (dev) ou no Amazon S3 (prod) — só muda uma variável.</p></span></div>
+        <div class="mini-step"><span class="n">3</span><span class="t"><b>Extrair metadados</b><span class="tool">process_structured.py</span><p>Etiqueta cada som: qual bomba, normal ou anomalia (cria o alvo do modelo).</p></span></div>
+        <div class="mini-step"><span class="n">4</span><span class="t"><b>Som → números</b><span class="tool">extract_audio_features.py</span><p>Converte cada áudio em 92 features (MFCC, espectrais, energia) com librosa.</p></span></div>
+        <div class="mini-step"><span class="n">5</span><span class="t"><b>Juntar tudo</b><span class="tool">merge_features.py</span><p>Une metadados + features em uma tabela única (4.205 linhas × 103 colunas).</p></span></div>
+        <div class="mini-step"><span class="n">6</span><span class="t"><b>Carregar no banco</b><span class="tool">load_to_postgres.py</span><p>Salva a tabela no PostgreSQL (prod: Snowflake) para o dbt transformar.</p></span></div>
+        <div class="mini-step"><span class="n">7</span><span class="t"><b>Transformar (dbt)</b><span class="tool">dbt run</span><p>Organiza em camadas: staging → dim/fact → mart <code>ml_features</code>, pronto para o ML.</p></span></div>
+        <div class="mini-step"><span class="n">8</span><span class="t"><b>Validar qualidade</b><span class="tool">dbt test</span><p>Roda 16 testes (file_id único, condition válida…); se falhar, o pipeline para.</p></span></div>
+        <div class="mini-step"><span class="n">9</span><span class="t"><b>Treinar e avaliar</b><span class="tool">ml/evaluate.py</span><p>Treina o MLP hard-code × sklearn, compara baselines e gera o relatório final.</p></span></div>
+      </div>
     </div>
 
     <h3 style="margin:20px 0 6px; font-size:16px">Modelagem dbt (Star-schema simplificado)</h3>
