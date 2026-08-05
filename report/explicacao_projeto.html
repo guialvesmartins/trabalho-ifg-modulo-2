@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manutenção Preditiva Industrial com Som — Guia da Solução</title>
+<style>
+  :root{
+    --bg:#f5f7fb; --card:#ffffff; --ink:#1a2332; --muted:#5b6b82;
+    --line:#e3e8f0; --brand:#0f6fde; --brand-2:#0a3d91; --teal:#0e9f8e;
+    --amber:#e8a20c; --red:#d64545; --green:#1e9e5a; --soft:#e8f0fe;
+    --shadow:0 2px 10px rgba(16,42,84,.08);
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth; scroll-padding-top:80px;}
+  body{
+    font-family:"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6;
+  }
+  a{color:var(--brand); text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* ---------- Layout ---------- */
+  .shell{display:flex; min-height:100vh;}
+
+  /* ---------- Sidebar ---------- */
+  aside{
+    width:268px; flex:0 0 268px; position:sticky; top:0; height:100vh;
+    background:#0b1f3a; color:#cfe0f5; overflow-y:auto; padding:22px 14px;
+    z-index:50;
+  }
+  aside .brand{display:flex; align-items:center; gap:10px; margin:0 6px 18px;}
+  aside .brand .logo{
+    width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#0f6fde,#0e9f8e);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:17px;
+  }
+  aside .brand b{color:#fff; font-size:15px; line-height:1.25; display:block;}
+  aside .brand small{color:#8fa9c9; font-size:11px;}
+  nav a{
+    display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:9px;
+    color:#bcd0ea; font-size:13.5px; margin-bottom:2px; transition:.15s;
+  }
+  nav a .n{
+    width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.09);
+    display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:0 0 22px;
+  }
+  nav a:hover{background:rgba(255,255,255,.08); color:#fff; text-decoration:none;}
+  nav a.active{background:linear-gradient(135deg,#0f6fde,#0e9f8e); color:#fff;}
+  nav a.active .n{background:rgba(255,255,255,.2);}
+  aside .foot{margin-top:18px; padding:12px; border-top:1px solid rgba(255,255,255,.12); font-size:11px; color:#8fa9c9;}
+
+  /* ---------- Main ---------- */
+  main{flex:1; min-width:0; padding:0 34px 80px;}
+
+  /* ---------- Hero ---------- */
+  .hero{
+    margin:26px 0 34px; padding:42px 40px; border-radius:var(--radius);
+    background:linear-gradient(135deg,#0b2f6b 0%, #0f6fde 55%, #0e9f8e 100%);
+    color:#fff; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .hero::after{
+    content:""; position:absolute; right:-80px; top:-80px; width:320px;height:320px;
+    border-radius:50%; background:rgba(255,255,255,.08);
+  }
+  .hero h1{font-size:30px; line-height:1.25; max-width:820px;}
+  .hero p{max-width:760px; color:#dce9fb; margin-top:10px;}
+  .hero .badges{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;}
+  .hero .badge{background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.25);
+    padding:5px 12px; border-radius:20px; font-size:12px;}
+  .hero .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-top:26px;}
+  .hero .stat{background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.22);
+    border-radius:12px; padding:14px;}
+  .hero .stat b{display:block; font-size:24px;}
+  .hero .stat span{font-size:12px; color:#dce9fb;}
+
+  /* ---------- Section ---------- */
+  section{margin-bottom:52px;}
+  .sec-head{display:flex; align-items:center; gap:14px; margin-bottom:8px;}
+  .sec-head .ico{
+    width:42px;height:42px;border-radius:11px;flex:0 0 42px;
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+    background:var(--soft); border:1px solid var(--line);
+  }
+  .sec-head h2{font-size:23px;}
+  .sec-sub{color:var(--muted); font-size:14px; margin-bottom:20px; max-width:900px;}
+
+  /* ---------- Cards & grids ---------- */
+  .grid{display:grid; gap:16px;}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr);}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr);}
+  .grid.cols-4{grid-template-columns:repeat(4,1fr);}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; box-shadow:var(--shadow);}
+  .card h3{font-size:15.5px; margin-bottom:6px; display:flex; align-items:center; gap:8px;}
+  .card p{font-size:13.5px; color:var(--muted);}
+  .card .tag{font-size:11px; font-weight:700; padding:2px 9px; border-radius:12px; white-space:nowrap;}
+  .tag.blue{background:var(--soft); color:var(--brand-2);}
+  .tag.teal{background:#e3f6f3; color:#0c7c70;}
+  .tag.amber{background:#fdf3dc; color:#9c6b00;}
+  .tag.red{background:#fdecec; color:#b03a3a;}
+  .tag.green{background:#e4f6ec; color:#157a45;}
+
+  /* ---------- Tables ---------- */
+  .tbl-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px; background:var(--card);}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th,td{padding:10px 13px; text-align:left; border-bottom:1px solid var(--line);}
+  th{background:#f0f4fa; font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted);}
+  tr:last-child td{border-bottom:none;}
+  td b{color:var(--ink);}
+  .num{text-align:right; font-variant-numeric:tabular-nums;}
+
+  /* ---------- Status pills ---------- */
+  .pill{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:600;
+    padding:3px 11px; border-radius:20px;}
+  .pill.done{background:#e4f6ec; color:#157a45;}
+  .pill.partial{background:#fdf3dc; color:#9c6b00;}
+  .pill.todo{background:#fdecec; color:#b03a3a;}
+  .pill .dot{width:8px;height:8px;border-radius:50%; background:currentColor;}
+
+  /* ---------- Progress bars ---------- */
+  .bar{height:10px; border-radius:6px; background:#e6ebf3; overflow:hidden; margin-top:6px;}
+  .bar>i{display:block; height:100%; border-radius:6px;
+    background:linear-gradient(90deg,#0f6fde,#0e9f8e);}
+  .pillar{display:flex; align-items:center; justify-content:space-between; font-size:13px; margin-top:10px;}
+  .pillar .lbl{font-weight:600;}
+  .pillar .pct{color:var(--brand-2); font-weight:700;}
+
+  /* ---------- Callout ---------- */
+  .callout{border-left:4px solid var(--brand); background:var(--soft); border-radius:0 12px 12px 0;
+    padding:14px 18px; margin:16px 0;}
+  .callout.teal{border-color:var(--teal); background:#e3f6f3;}
+  .callout.amber{border-color:var(--amber); background:#fdf3dc;}
+  .callout.red{border-color:var(--red); background:#fdecec;}
+  .callout b{display:block; margin-bottom:2px;}
+
+  /* ---------- Accordion ---------- */
+  details{border:1px solid var(--line); border-radius:12px; background:var(--card); margin-bottom:10px;
+    box-shadow:var(--shadow); overflow:hidden;}
+  details summary{cursor:pointer; padding:13px 18px; font-weight:600; font-size:14px; list-style:none;
+    display:flex; align-items:center; gap:10px;}
+  details summary::-webkit-details-marker{display:none;}
+  details summary::before{content:"▸"; color:var(--brand); transition:.15s; font-size:12px;}
+  details[open] summary::before{transform:rotate(90deg);}
+  details .body{padding:2px 18px 16px; font-size:13.5px; color:var(--muted);}
+  details .body b{color:var(--ink);}
+
+  /* ---------- Code ---------- */
+  code{background:#eef2f8; border:1px solid var(--line); border-radius:5px; padding:1px 6px;
+    font-family:Consolas,"Courier New",monospace; font-size:12.5px; color:#0a3d91;}
+  pre{background:#0b1f3a; color:#cfe0f5; border-radius:12px; padding:16px; overflow-x:auto; margin:10px 0;}
+  pre code{background:none; border:none; color:#cfe0f5; padding:0;}
+
+  /* ---------- Footer ---------- */
+  footer{margin-top:20px; text-align:center; color:var(--muted); font-size:12px;}
+
+  @media (max-width:960px){
+    .shell{flex-direction:column;}
+    aside{width:100%; flex:0 0 auto; height:auto; position:static;}
+    .hero .stats{grid-template-columns:repeat(2,1fr);}
+    .grid.cols-2,.grid.cols-3,.grid.cols-4{grid-template-columns:1fr;}
+    main{padding:0 16px 60px;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ================= SIDEBAR ================= -->
+<aside>
+  <div class="brand">
+    <div class="logo">PF</div>
+    <div><b>Manutenção Preditiva<br>com Som</b><small>IFG · Pós-IA · Módulo 2</small></div>
+  </div>
+  <nav id="nav">
+    <a href="#visao"><span class="n">1</span>Visão Geral</a>
+    <a href="#problema"><span class="n">2</span>Problema de Negócio</a>
+    <a href="#dados"><span class="n">3</span>Os Dados (Dados)</a>
+    <a href="#features"><span class="n">4</span>Extração de Features</a>
+    <a href="#elt"><span class="n">5</span>Pipeline ELT</a>
+    <a href="#ml"><span class="n">6</span>Modelo de ML</a>
+    <a href="#cloud"><span class="n">7</span>Cloud Computing</a>
+    <a href="#dashboard"><span class="n">8</span>Dashboard Metabase</a>
+    <a href="#status"><span class="n">9</span>Status de Desenvolvimento</a>
+    <a href="#conceitos"><span class="n">10</span>Conceitos & Reprodução</a>
+  </nav>
+  <div class="foot">
+    Guia elaborado para a apresentação final<br>
+    Fonte: README, FLUXO.md, report_analys.md,<br>
+    docs/ARQUITETURA_AWS.md e código-fonte.
+  </div>
+</aside>
+
+<!-- ================= MAIN ================= -->
+<main>
+
+  <!-- ---------- 1. VISÃO GERAL ---------- -->
+  <section id="visao">
+    <div class="hero">
+      <h1>Pipeline de Dados em Nuvem para Aprendizagem de Máquina — Manutenção Preditiva Industrial com Som</h1>
+      <p>Um sistema de Inteligência Artificial que escuta o som de bombas industriais em uma fábrica e responde automaticamente:
+      <b style="color:#fff">"esta bomba está operando com anomalia?"</b></p>
+      <div class="badges">
+        <span class="badge">🔊 Áudio industrial (MIMII)</span>
+        <span class="badge">🤖 MLP hard-code + sklearn</span>
+        <span class="badge">☁️ AWS + Snowflake + dbt + Airflow</span>
+        <span class="badge">📊 Dashboard Metabase</span>
+      </div>
+      <div class="stats">
+        <div class="stat"><b>4.205</b><span>clipes de áudio reais</span></div>
+        <div class="stat"><b>96</b><span>features numéricas por clip</span></div>
+        <div class="stat"><b>97,98%</b><span>acurácia do MLP (sklearn)</span></div>
+        <div class="stat"><b>8.321</b><span>parâmetros treináveis da rede</span></div>
+      </div>
+    </div>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <h3><span class="tag blue">Pilar 1</span> Modelagem de Dados</h3>
+        <p>Coleta, organização e transformação de dados estruturados (metadados) e não estruturados (áudio) em atributos tabulares prontos para análise e ML.</p>
+      </div>
+      <div class="card">
+        <h3><span class="tag teal">Pilar 2</span> Aprendizagem de Máquina</h3>
+        <p>Rede neural MLP implementada <b>do zero (NumPy)</b> e comparada com a <b>scikit-learn</b> — métricas, matrizes de confusão e relatório automático.</p>
+      </div>
+      <div class="card">
+        <h3><span class="tag amber">Pilar 3</span> Cloud Computing</h3>
+        <p>Arquitetura em nuvem (S3, EC2, SageMaker, CloudWatch) provisionada por CloudFormation, com switch dev→prod por variáveis de ambiente.</p>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <b>Decisão apoiada</b>
+      O engenheiro de manutenção industrial decide: <i>"Devo parar esta bomba para manutenção agora?"</i> — evitando paradas não programadas e manutenções desnecessárias.
+    </div>
+  </section>
+
+  <!-- ---------- 2. PROBLEMA ---------- -->
+  <section id="problema">
+    <div class="sec-head"><div class="ico">🏭</div><h2>O Problema de Negócio</h2></div>
+    <p class="sec-sub">Indústria 4.0 / Manutenção Preditiva: transformar som em decisão de manutenção.</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>🎯 Domínio</h3>
+        <p>Uma fábrica opera <b>dezenas de bombas industriais 24/7</b>. Quando uma bomba falha sem aviso, a linha para: produção interrompida e reparo emergencial caro. Quando paramos a bomba "por via das dúvidas", perdemos produção à toa.</p>
+      </div>
+      <div class="card">
+        <h3>👷 Tomador de decisão</h3>
+        <p>O <b>engenheiro de manutenção</b>. Ele precisa saber, com antecedência, quais bombas estão se comportando de forma anômala para planejar a parada no momento certo.</p>
+      </div>
+      <div class="card">
+        <h3>❓ Pergunta que o sistema responde</h3>
+        <p><b>"Esta bomba está operando com anomalia?"</b> — uma classificação binária: <span class="tag green">normal</span> ou <span class="tag red">anomalia</span> (contaminação, vazamento, desbalanceamento).</p>
+      </div>
+      <div class="card">
+        <h3>💰 Impacto esperado</h3>
+        <p>• Redução de <b>paradas não programadas</b><br>• Redução de <b>manutenções desnecessárias</b><br>• Aumento da <b>vida útil</b> dos equipamentos<br>• Economia em <b>reparos emergenciais</b></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- 3. DADOS ---------- -->
+  <section id="dados">
+    <div class="sec-head"><div class="ico">📀</div><h2>Os Dados — MIMII Pump</h2></div>
+    <p class="sec-sub">O projeto integra <b>dados estruturados</b> e <b>dados não estruturados</b> (áudio) do dataset MIMII (Hitachi / Toyota Research, licença CC BY-SA 4.0, DCASE 2019).</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>📊 Dados estruturados</h3>
+        <p>Extraídos dos <b>caminhos dos arquivos</b> e do cabeçalho WAV pelo nosso pipeline (nada é pré-fornecido):</p>
+        <div class="tbl-wrap" style="margin-top:10px">
+          <table>
+            <tr><th>Campo</th><th>Significado</th></tr>
+            <tr><td><code>machine_type</code></td><td>Tipo de máquina (pump)</td></tr>
+            <tr><td><code>model_id</code></td><td>Modelo da bomba (id_00/02/04/06)</td></tr>
+            <tr><td><code>condition</code></td><td>normal / anomaly (target)</td></tr>
+            <tr><td><code>duration_sec</code></td><td>Duração (10 s)</td></tr>
+            <tr><td><code>sample_rate</code></td><td>16 kHz</td></tr>
+            <tr><td><code>channels</code></td><td>8 canais (array de microfones)</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🔊 Dados não estruturados</h3>
+        <p><b>4.205 arquivos <code>.wav</code></b> (7,87 GB) de bombas operando em fábrica real, misturados com ruído real de fábrica a <b>0 dB SNR</b> (cenário difícil).</p>
+        <ul style="font-size:13.5px; color:var(--muted); margin-top:8px; padding-left:18px">
+          <li>Clipes de 10 s · 16 bits · mono (downmix)</li>
+          <li>4 modelos de bomba diferentes</li>
+          <li>Ruído de fábrica incluído (realismo)</li>
+          <li>Fonte: Zenodo (<code>records/3384388</code>)</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin:22px 0 6px; font-size:16px">Distribuição das classes (desbalanceamento ~8:1)</h3>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>🍩 Normal × Anomalia</h3>
+        <!-- CSS donut chart -->
+        <div style="display:flex; align-items:center; gap:24px; margin-top:8px">
+          <div style="width:150px;height:150px;border-radius:50%;
+            background:conic-gradient(#1e9e5a 0 89.2%, #d64545 89.2% 100%);
+            display:flex;align-items:center;justify-content:center; flex:0 0 150px">
+            <div style="width:92px;height:92px;border-radius:50%;background:#fff;
+              display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <b style="font-size:19px">89,2%</b><span style="font-size:11px;color:var(--muted)">normal</span>
+            </div>
+          </div>
+          <div style="font-size:13px; color:var(--muted)">
+            <div style="margin-bottom:8px"><span class="pill done">normal</span> 3.749 clips</div>
+            <div><span class="pill todo">anomaly</span> 456 clips (10,8%)</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🏷️ Clips por modelo de bomba</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th>Modelo</th><th class="num">Normal</th><th class="num">Anomalia</th><th class="num">Total</th></tr>
+            <tr><td>id_00</td><td class="num">1.006</td><td class="num">143</td><td class="num">1.149</td></tr>
+            <tr><td>id_02</td><td class="num">1.005</td><td class="num">111</td><td class="num">1.116</td></tr>
+            <tr><td>id_04</td><td class="num">702</td><td class="num">100</td><td class="num">802</td></tr>
+            <tr><td>id_06</td><td class="num">1.036</td><td class="num">102</td><td class="num">1.138</td></tr>
+            <tr><td><b>Total</b></td><td class="num"><b>3.749</b></td><td class="num"><b>456</b></td><td class="num"><b>4.205</b></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <b>Detalhe de nomenclatura</b> O dataset real usa <code>abnormal</code>; o pipeline normaliza para <code>anomaly</code> (<code>CONDITION_MAP</code>) para todo o restante do fluxo (dbt, ML, Metabase).
+    </div>
+  </section>
+
+  <!-- ---------- 4. FEATURES ---------- -->
+  <section id="features">
+    <div class="sec-head"><div class="ico">🎛️</div><h2>Da Onda Sonora às Features Tabulares</h2></div>
+    <p class="sec-sub">Etapa de <b>processamento e extração de atributos</b> (requisito 4.3): o áudio bruto é transformado em números que um modelo tabular entende — 100% autoral, com <code>librosa</code>.</p>
+
+    <!-- Pipeline SVG -->
+    <div class="card" style="padding:20px">
+      <svg viewBox="0 0 980 150" role="img" aria-label="Fluxo de extração de features" style="width:100%;height:auto">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#0f6fde"/>
+          </marker>
+        </defs>
+        <g font-family="Segoe UI" font-size="12">
+          <rect x="10" y="35" width="150" height="70" rx="12" fill="#0b2f6b" stroke="#0b2f6b"/>
+          <text x="85" y="62" fill="#fff" text-anchor="middle" font-weight="700">.wav</text>
+          <text x="85" y="80" fill="#cfe0f5" text-anchor="middle">PCM 16-bit · 8 ch</text>
+          <text x="85" y="95" fill="#cfe0f5" text-anchor="middle">10 s · 16 kHz</text>
+
+          <rect x="230" y="35" width="190" height="70" rx="12" fill="#0f6fde"/>
+          <text x="325" y="60" fill="#fff" text-anchor="middle" font-weight="700">librosa.load()</text>
+          <text x="325" y="78" fill="#dce9fb" text-anchor="middle">mono=True · sr=16000</text>
+          <text x="325" y="95" fill="#dce9fb" text-anchor="middle">downmix 8→1 · [−1,1]</text>
+
+          <rect x="490" y="20" width="200" height="100" rx="12" fill="#0e9f8e"/>
+          <text x="590" y="48" fill="#fff" text-anchor="middle" font-weight="700">Extração (librosa)</text>
+          <text x="590" y="66" fill="#d9f4f0" text-anchor="middle">MFCC 40 (média + std)</text>
+          <text x="590" y="83" fill="#d9f4f0" text-anchor="middle">Espectrais (5 + 7 contraste)</text>
+          <text x="590" y="100" fill="#d9f4f0" text-anchor="middle">ZCR + RMS</text>
+
+          <rect x="760" y="35" width="200" height="70" rx="12" fill="#e8a20c"/>
+          <text x="860" y="62" fill="#fff" text-anchor="middle" font-weight="700">92 features / clip</text>
+          <text x="860" y="80" fill="#fff7e6" text-anchor="middle">+ metadados = 96</text>
+
+          <line x1="162" y1="70" x2="228" y2="70" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr)"/>
+          <line x1="422" y1="70" x2="488" y2="70" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr)"/>
+          <line x1="692" y1="70" x2="758" y2="70" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr)"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="grid cols-3" style="margin-top:16px">
+      <div class="card">
+        <h3>🎵 MFCC <span class="tag blue">80 features</span></h3>
+        <p>40 coeficientes Mel-Frequency Cepstral × (média, desvio). Capturam o <b>"timbre"</b> do som industrial — são as features mais discriminativas do modelo.</p>
+      </div>
+      <div class="card">
+        <h3>📈 Espectrais <span class="tag teal">12 features</span></h3>
+        <p><code>centroid</code> (grave/agudo), <code>bandwidth</code>, <code>rolloff</code> (85% da energia) e 7 bandas de <code>contrast</code> entre picos e vales.</p>
+      </div>
+      <div class="card">
+        <h3>⚡ Energia & ritmo <span class="tag amber">2 features</span></h3>
+        <p><code>zcr_mean</code> (zero-crossing rate) e <code>rms_mean</code> (energia). A energia é intencionalmente <b>não normalizada</b> — ela é um sinal de anomalia.</p>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <b>Rastreabilidade</b> Cada linha da tabela final carrega um <code>file_id</code> (ex.: <code>pump_id_02_anomaly_00000078</code>) que liga o áudio bruto → features → tabelas dbt → predição no <code>predictions.csv</code>. É o elo do requisito 5.3.
+    </div>
+  </section>
+
+  <!-- ---------- 5. ELT ---------- -->
+  <section id="elt">
+    <div class="sec-head"><div class="ico">🔁</div><h2>Pipeline ELT — Airflow + dbt + Postgres/Snowflake</h2></div>
+    <p class="sec-sub">Toda a solução é orquestrada por um <b>DAG do Apache Airflow</b> (9 tasks) e modelada com <b>dbt</b> (5 modelos, 16 testes) sobre a base analítica.</p>
+
+    <div class="card" style="padding:22px">
+      <h3 style="margin-bottom:12px">DAG <code>etl_pipeline</code> — execução sequencial</h3>
+      <svg viewBox="0 0 980 120" role="img" aria-label="DAG Airflow com 9 tasks" style="width:100%;height:auto">
+        <defs>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#0f6fde"/>
+          </marker>
+        </defs>
+        <g font-family="Segoe UI" font-size="10.5">
+          <g>
+            <rect x="8"  y="30" width="96"  height="54" rx="10" fill="#0b2f6b"/><text x="56"  y="62" fill="#fff" text-anchor="middle">Download</text>
+            <rect x="116" y="30" width="92"  height="54" rx="10" fill="#0f6fde"/><text x="162" y="55" fill="#fff" text-anchor="middle">Upload</text><text x="162" y="72" fill="#dce9fb" text-anchor="middle">S3/MinIO</text>
+            <rect x="220" y="30" width="96"  height="54" rx="10" fill="#0e9f8e"/><text x="268" y="62" fill="#fff" text-anchor="middle">Metadados</text>
+            <rect x="328" y="30" width="92"  height="54" rx="10" fill="#0e9f8e"/><text x="374" y="55" fill="#fff" text-anchor="middle">Features</text><text x="374" y="72" fill="#d9f4f0" text-anchor="middle">áudio</text>
+            <rect x="432" y="30" width="88"  height="54" rx="10" fill="#0e9f8e"/><text x="476" y="62" fill="#fff" text-anchor="middle">Merge</text>
+            <rect x="532" y="30" width="110" height="54" rx="10" fill="#0f6fde"/><text x="587" y="55" fill="#fff" text-anchor="middle">Carga</text><text x="587" y="72" fill="#dce9fb" text-anchor="middle">PostgreSQL</text>
+            <rect x="654" y="30" width="80"  height="54" rx="10" fill="#e8a20c"/><text x="694" y="62" fill="#fff" text-anchor="middle">dbt run</text>
+            <rect x="746" y="30" width="80"  height="54" rx="10" fill="#e8a20c"/><text x="786" y="62" fill="#fff" text-anchor="middle">dbt test</text>
+            <rect x="838" y="30" width="132" height="54" rx="10" fill="#d64545"/><text x="904" y="55" fill="#fff" text-anchor="middle">Treino /</text><text x="904" y="72" fill="#fff" text-anchor="middle">Avaliação ML</text>
+            <line x1="104" y1="57" x2="114" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="208" y1="57" x2="218" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="316" y1="57" x2="326" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="420" y1="57" x2="430" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="520" y1="57" x2="530" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="642" y1="57" x2="652" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="734" y1="57" x2="744" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+            <line x1="826" y1="57" x2="836" y2="57" stroke="#0f6fde" stroke-width="2" marker-end="url(#arr2)"/>
+          </g>
+        </g>
+      </svg>
+      <p style="font-size:12.5px; color:var(--muted); margin-top:8px">Scripts em <code>ingestion/</code>, <code>processing/</code> e <code>ml/</code> são reutilizados diretamente pelas tasks (PythonOperator) e pelo Makefile.</p>
+    </div>
+
+    <h3 style="margin:20px 0 6px; font-size:16px">Modelagem dbt (Star-schema simplificado)</h3>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>🗂️ Camadas dos modelos</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th>Camada</th><th>Modelo</th><th>Tipo</th></tr>
+            <tr><td>Staging</td><td><code>stg_pump_metadata</code></td><td>view · limpeza/dedup</td></tr>
+            <tr><td>Staging</td><td><code>stg_audio_features</code></td><td>view · cast numeric</td></tr>
+            <tr><td>Dimensions</td><td><code>dim_machines</code></td><td>table · agrega por modelo</td></tr>
+            <tr><td>Facts</td><td><code>fact_audio_analysis</code></td><td>table · join completo</td></tr>
+            <tr><td>Marts</td><td><code>ml_features</code></td><td>table · pronto p/ ML e dashboard</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>✅ 16 testes de qualidade</h3>
+        <p><code>not_null</code> em <code>file_id</code>, <code>condition</code>, <code>condition_binary</code>, <code>total_samples</code>…</p>
+        <p><code>unique</code> em <code>file_id</code> (staging e facts)</p>
+        <p><code>accepted_values</code>: <code>condition ∈ {normal, anomaly}</code> e <code>condition_binary ∈ {0, 1}</code></p>
+        <p style="margin-top:8px">Todos documentados com <code>description</code> em <code>dbt_project/tests/schema.yml</code>.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <b>Dev → prod sem mudar código</b> O <code>profiles.yml</code> do dbt define dois targets: <b>dev</b> (PostgreSQL, mock) e <b>prod</b> (Snowflake real). A seleção usa <code>env_var()</code> — a mesma regra vale para o <code>boto3</code>, que troca o <code>endpoint_url</code> entre MinIO e S3.
+    </div>
+  </section>
+
+  <!-- ---------- 6. ML ---------- -->
+  <section id="ml">
+    <div class="sec-head"><div class="ico">🧠</div><h2>Modelo de Aprendizagem de Máquina — MLP</h2></div>
+    <p class="sec-sub">Tarefa: <b>classificação binária</b> — P(anomalia) a partir de 96 features. A exigência do projeto foi implementar o modelo <b>duas vezes</b>: do zero (NumPy) e com biblioteca (sklearn), e comparar.</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>🏗️ Arquitetura da rede</h3>
+        <svg viewBox="0 0 520 300" role="img" aria-label="Arquitetura MLP 96-64-32-1" style="width:100%;height:auto">
+          <g font-family="Segoe UI" font-size="11">
+            <g fill="#0f6fde">
+              <circle cx="60"  cy="60"  r="9"/><circle cx="60"  cy="105" r="9"/><circle cx="60"  cy="150" r="9"/>
+              <circle cx="60"  cy="195" r="9"/><circle cx="60"  cy="240" r="9"/>
+              <text x="60" y="275" fill="#0a3d91" text-anchor="middle" font-weight="700">Entrada</text>
+              <text x="60" y="288" fill="#5b6b82" text-anchor="middle">96 features</text>
+            </g>
+            <g fill="#0e9f8e">
+              <circle cx="200" cy="45"  r="8"/><circle cx="200" cy="90"  r="8"/><circle cx="200" cy="135" r="8"/>
+              <circle cx="200" cy="180" r="8"/><circle cx="200" cy="225" r="8"/>
+              <circle cx="200" cy="270" r="8" fill="#fff" stroke="#0e9f8e" stroke-width="2"/>
+              <text x="200" y="293" fill="#0c7c70" text-anchor="middle" font-weight="700">Hidden 1 · ReLU</text>
+              <text x="200" y="306" fill="#5b6b82" text-anchor="middle">64 neurônios</text>
+            </g>
+            <g fill="#e8a20c">
+              <circle cx="340" cy="60"  r="8"/><circle cx="340" cy="105" r="8"/><circle cx="340" cy="150" r="8"/>
+              <circle cx="340" cy="195" r="8"/><circle cx="340" cy="240" r="8"/>
+              <text x="340" y="275" fill="#9c6b00" text-anchor="middle" font-weight="700">Hidden 2 · ReLU</text>
+              <text x="340" y="288" fill="#5b6b82" text-anchor="middle">32 neurônios</text>
+            </g>
+            <g>
+              <circle cx="470" cy="150" r="11" fill="#d64545"/>
+              <text x="470" y="190" fill="#b03a3a" text-anchor="middle" font-weight="700">Saída</text>
+              <text x="470" y="204" fill="#5b6b82" text-anchor="middle">1 · Sigmoid</text>
+            </g>
+            <g stroke="#c9d6ea" stroke-width="1">
+              <line x1="70" y1="105" x2="192" y2="90"/>
+              <line x1="70" y1="150" x2="192" y2="135"/>
+              <line x1="70" y1="150" x2="192" y2="180"/>
+              <line x1="208" y1="90"  x2="332" y2="105"/>
+              <line x1="208" y1="180" x2="332" y2="150"/>
+              <line x1="348" y1="150" x2="458" y2="150"/>
+            </g>
+          </g>
+        </svg>
+        <p style="font-size:12.5px; color:var(--muted)">ReLU nas ocultas · Sigmoid na saída · Binary Cross-Entropy · <b>8.321 parâmetros</b> treináveis.</p>
+      </div>
+      <div class="card">
+        <h3>⚔️ Hard-code × Biblioteca</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th></th><th>Hard-Code</th><th>Sklearn</th></tr>
+            <tr><td>Implementação</td><td><b>NumPy puro</b></td><td><code>MLPClassifier</code></td></tr>
+            <tr><td>Otimizador</td><td>SGD + momento</td><td>Adam</td></tr>
+            <tr><td>lr</td><td>0,01</td><td>0,001 (adaptativo)</td></tr>
+            <tr><td>Épocas</td><td>300 (fixas)</td><td>~58 (parada cedo)</td></tr>
+            <tr><td>Regularização</td><td>nenhuma</td><td>L2 (alpha=1e-4)</td></tr>
+            <tr><td>Tempo treino</td><td>~3.512 ms</td><td>~719 ms</td></tr>
+          </table>
+        </div>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:8px">Forward/backprop/SGD do hard-code implementados 100% com operações matriciais — sem autograd/TensorFlow/PyTorch.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:22px 0 6px; font-size:16px">Métricas no teste (841 amostras: 750 normal, 91 anomalia)</h3>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>📊 Resultado dos 4 modelos</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th>Métrica</th><th class="num">Majoritária</th><th class="num">Reg.Log.</th><th class="num">Hard-Code</th><th class="num">Sklearn</th></tr>
+            <tr><td>Accuracy</td><td class="num">89,18%</td><td class="num">96,79%</td><td class="num">97,86%</td><td class="num"><b>97,98%</b></td></tr>
+            <tr><td>Precision</td><td class="num">0%</td><td class="num">95,71%</td><td class="num">96,20%</td><td class="num"><b>97,44%</b></td></tr>
+            <tr><td>Recall</td><td class="num">0%</td><td class="num">73,63%</td><td class="num"><b>83,52%</b></td><td class="num"><b>83,52%</b></td></tr>
+            <tr><td>F1-Score</td><td class="num">0</td><td class="num">0,832</td><td class="num">0,894</td><td class="num"><b>0,899</b></td></tr>
+          </table>
+        </div>
+        <div class="callout amber" style="margin-top:12px">
+          <b>Por que o baseline majoritário engana</b> Ele acerta 89,18% apenas prevendo sempre "normal" — mas <b>recall 0</b>: não detecta nenhuma anomalia. Por isso a banca avalia recall/F1 da classe anomalia, não só accuracy.
+        </div>
+      </div>
+      <div class="card">
+        <h3>🔢 Matriz de confusão (MLP sklearn)</h3>
+        <div style="display:grid; grid-template-columns:auto 1fr; gap:8px; align-items:center; margin-top:8px">
+          <div style="font-size:11px; color:var(--muted); writing-mode:vertical-rl; transform:rotate(180deg); justify-self:start">Real ↓ · Predito →</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px">
+            <div style="text-align:center">
+              <div style="background:#e4f6ec; border:1px solid #c6e8d5; border-radius:10px; padding:16px"><b style="font-size:20px">748</b><br><span style="font-size:11px">normal ✓</span></div>
+            </div>
+            <div style="text-align:center">
+              <div style="background:#fdecec; border:1px solid #f5c9c9; border-radius:10px; padding:16px"><b style="font-size:20px">2</b><br><span style="font-size:11px">FP · parada desnecessária</span></div>
+            </div>
+            <div style="text-align:center">
+              <div style="background:#fdecec; border:1px solid #f5c9c9; border-radius:10px; padding:16px"><b style="font-size:20px">15</b><br><span style="font-size:11px">FN · falha não vista</span></div>
+            </div>
+            <div style="text-align:center">
+              <div style="background:#e4f6ec; border:1px solid #c6e8d5; border-radius:10px; padding:16px"><b style="font-size:20px">76</b><br><span style="font-size:11px">anomalia ✓</span></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:10px">Os <b>15 falsos negativos</b> são o erro dominante: anomalias sutis mascaradas pelo ruído de fábrica (0 dB SNR).</p>
+      </div>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card">
+        <h3>⭐ Features mais discriminativas</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th>Feature</th><th class="num">Diferença normal→anomalia</th></tr>
+            <tr><td><code>mfcc_35_mean</code></td><td class="num">−1954%</td></tr>
+            <tr><td><code>mfcc_31_mean</code></td><td class="num">−612%</td></tr>
+            <tr><td><code>mfcc_10_mean</code></td><td class="num">+483%</td></tr>
+            <tr><td><code>mfcc_3_mean</code></td><td class="num">−407%</td></tr>
+          </table>
+        </div>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:8px">Os <b>MFCCs</b> (perfil timbral) superam as features espectrais agregadas na separação das classes.</p>
+      </div>
+      <div class="card">
+        <h3>📦 Artefatos gerados</h3>
+        <p>• <code>model_comparison.csv</code> — métricas de todos os modelos<br>
+        • <code>predictions.csv</code> — predição por amostra (rastreabilidade)<br>
+        • <code>hardcode_cm.png</code> / <code>sklearn_cm.png</code> — matrizes<br>
+        • <code>models/*.pkl</code> — <code>mlp_sklearn_pipeline.pkl</code>, <code>mlp_hardcode.pkl</code>, <code>scaler.pkl</code>, <code>feature_names.pkl</code><br>
+        • <code>report_analys.md</code> — relatório automático completo</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- 7. CLOUD ---------- -->
+  <section id="cloud">
+    <div class="sec-head"><div class="ico">☁️</div><h2>Cloud Computing — dev local × 100% AWS</h2></div>
+    <p class="sec-sub">O ambiente local (Docker) espelha a arquitetura de nuvem. A troca dev→prod usa apenas <b>4 variáveis de ambiente</b> — sem mudança de código. Infraestrutura 100% AWS provisionada por <b>CloudFormation</b>.</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>🖥️ Desenvolvimento (local — Docker Compose)</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th>Papel</th><th>Local</th><th>Prod</th></tr>
+            <tr><td>Object storage</td><td>MinIO</td><td><b>AWS S3</b></td></tr>
+            <tr><td>Base analítica</td><td>PostgreSQL 16</td><td><b>Snowflake</b></td></tr>
+            <tr><td>Orquestração</td><td>Airflow (Docker)</td><td>Airflow em <b>EC2</b></td></tr>
+            <tr><td>ML</td><td>Python local</td><td><b>SageMaker</b></td></tr>
+            <tr><td>Dashboard</td><td>Metabase</td><td>Metabase em <b>ECS</b></td></tr>
+            <tr><td>Logs</td><td>stdout</td><td><b>CloudWatch</b></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>🔐 Variáveis que fazem o switch</h3>
+        <pre style="margin:8px 0 0"><code># dev (.env.local)                    # prod (.env.prod)
+S3_ENDPOINT=http://minio:9000          S3_ENDPOINT=https://s3.amazonaws.com
+S3_ACCESS_KEY=minioadmin               S3_ACCESS_KEY=&lt;aws_key&gt;
+DB_TYPE=postgres                       DB_TYPE=snowflake
+DB_HOST=localhost                      DB_ACCOUNT=&lt;snowflake_account&gt;</code></pre>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:8px"><code>boto3</code> troca o <code>endpoint_url</code>; o dbt troca o target via <code>env_var()</code>.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:20px 0 6px; font-size:16px">Arquitetura 100% AWS (template CloudFormation)</h3>
+    <div class="card" style="padding:20px">
+      <svg viewBox="0 0 980 360" role="img" aria-label="Arquitetura 100% AWS" style="width:100%;height:auto">
+        <g font-family="Segoe UI" font-size="11">
+          <rect x="10" y="10" width="960" height="240" rx="16" fill="none" stroke="#0f6fde" stroke-dasharray="6 4"/>
+          <text x="30" y="32" fill="#0a3d91" font-weight="700">AWS · VPC 10.0.0.0/16 · us-east-1</text>
+
+          <rect x="40" y="55" width="430" height="80" rx="12" fill="#e8f0fe" stroke="#c3d7f5"/>
+          <text x="60" y="78" fill="#0a3d91" font-weight="700">Sub-rede pública 10.0.1.0/24</text>
+          <rect x="60" y="90" width="190" height="36" rx="9" fill="#0b2f6b"/>
+          <text x="155" y="113" fill="#fff" text-anchor="middle">EC2 t3.medium · Airflow</text>
+          <rect x="265" y="90" width="185" height="36" rx="9" fill="#e8a20c"/>
+          <text x="357" y="113" fill="#fff" text-anchor="middle">Security Group (22, 8080)</text>
+
+          <rect x="510" y="55" width="430" height="80" rx="12" fill="#e3f6f3" stroke="#b7e2dc"/>
+          <text x="530" y="78" fill="#0c7c70" font-weight="700">Sub-rede privada 10.0.2.0/24</text>
+          <rect x="530" y="90" width="390" height="36" rx="9" fill="#0e9f8e"/>
+          <text x="725" y="113" fill="#fff" text-anchor="middle">Recursos internos (banco / processamento)</text>
+
+          <rect x="40" y="155" width="270" height="70" rx="12" fill="#fff" stroke="#0f6fde"/>
+          <text x="175" y="180" fill="#0a3d91" text-anchor="middle" font-weight="700">S3 raw</text>
+          <text x="175" y="196" fill="#5b6b82" text-anchor="middle">projeto-final-raw</text>
+          <text x="175" y="211" fill="#5b6b82" text-anchor="middle">.wav brutos · versionado</text>
+
+          <rect x="330" y="155" width="270" height="70" rx="12" fill="#fff" stroke="#0e9f8e"/>
+          <text x="465" y="180" fill="#0c7c70" text-anchor="middle" font-weight="700">S3 processed</text>
+          <text x="465" y="196" fill="#5b6b82" text-anchor="middle">projeto-final-processed</text>
+          <text x="465" y="211" fill="#5b6b82" text-anchor="middle">CSVs + modelos .pkl</text>
+
+          <rect x="620" y="155" width="300" height="70" rx="12" fill="#fff" stroke="#d64545"/>
+          <text x="770" y="180" fill="#b03a3a" text-anchor="middle" font-weight="700">SageMaker Notebook</text>
+          <text x="770" y="196" fill="#5b6b82" text-anchor="middle">ml.t3.medium · treino MLP</text>
+          <text x="770" y="211" fill="#5b6b82" text-anchor="middle">exporta .pkl → S3</text>
+
+          <rect x="40" y="250" width="430" height="60" rx="12" fill="#fff" stroke="#0f6fde"/>
+          <text x="255" y="275" fill="#0a3d91" text-anchor="middle" font-weight="700">Snowflake (SaaS · external stage via S3)</text>
+          <text x="255" y="292" fill="#5b6b82" text-anchor="middle">staging → dim/fact → mart (dbt)</text>
+
+          <rect x="500" y="250" width="430" height="60" rx="12" fill="#fff" stroke="#e8a20c"/>
+          <text x="715" y="275" fill="#9c6b00" text-anchor="middle" font-weight="700">Metabase (ECS Fargate) + CloudWatch</text>
+          <text x="715" y="292" fill="#5b6b82" text-anchor="middle">dashboards · logs centralizados (30 dias)</text>
+
+          <g stroke="#0f6fde" stroke-width="1.5" fill="none">
+            <line x1="255" y1="126" x2="175" y2="153"/>
+            <line x1="255" y1="126" x2="465" y2="153"/>
+            <line x1="465" y1="225" x2="770" y2="225"/>
+            <line x1="465" y1="250" x2="255" y2="250"/>
+            <line x1="175" y1="225" x2="255" y2="248"/>
+            <line x1="255" y1="310" x2="715" y2="310"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:16px">
+      <div class="card">
+        <h3>🧩 Recursos do CloudFormation</h3>
+        <p>• <b>S3</b>: buckets raw e processed com versioning<br>
+        • <b>VPC</b>: 10.0.0.0/16, sub-redes pública/privada, IGW<br>
+        • <b>EC2 t3.medium</b>: Airflow + scripts (UserData)<br>
+        • <b>IAM</b>: roles de menor privilégio (EC2→S3, SageMaker→S3)<br>
+        • <b>SageMaker</b>: Notebook ml.t3.medium (20 GB)<br>
+        • <b>CloudWatch</b>: log group com retenção de 30 dias</p>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:6px">Deploy com um comando: <code>aws cloudformation deploy ...</code></p>
+      </div>
+      <div class="card">
+        <h3>💲 Custos aproximados (uso acadêmico, ~176 h/mês)</h3>
+        <div class="tbl-wrap" style="margin-top:8px">
+          <table>
+            <tr><th>Serviço</th><th class="num">US$/mês</th></tr>
+            <tr><td>S3 Standard (~10 GB)</td><td class="num">~0,25</td></tr>
+            <tr><td>EC2 t3.medium (Airflow)</td><td class="num">~7,30</td></tr>
+            <tr><td>EBS gp3 30 GB</td><td class="num">~2,40</td></tr>
+            <tr><td>SageMaker Notebook (20 h)</td><td class="num">~1,00</td></tr>
+            <tr><td>ECS Fargate (Metabase)</td><td class="num">~9,00</td></tr>
+            <tr><td>CloudWatch Logs</td><td class="num">~0,50</td></tr>
+            <tr><td><b>Subtotal AWS</b></td><td class="num"><b>~20,50</b></td></tr>
+            <tr><td>Snowflake X-Small (SaaS)</td><td class="num">~20,00</td></tr>
+            <tr><td><b>Total</b></td><td class="num"><b>~40,50</b></td></tr>
+          </table>
+        </div>
+        <p style="font-size:12.5px; color:var(--muted); margin-top:6px">Detalhamento completo em <code>docs/ARQUITETURA_AWS.md</code>. Desligar fora do horário é a principal alavanca de economia.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- 8. DASHBOARD ---------- -->
+  <section id="dashboard">
+    <div class="sec-head"><div class="ico">📈</div><h2>Dashboard Metabase — Visualização da Informação</h2></div>
+    <p class="sec-sub">Três dashboards criados automaticamente por <code>scripts/setup_metabase.py</code> (via API REST, re-executável) com <b>filtro analítico por modelo de máquina</b> — requisito 4.7.</p>
+
+    <div class="grid cols-3">
+      <div class="card">
+        <h3>1️⃣ Visão Geral</h3>
+        <p>• KPI total de amostras<br>
+        • KPI taxa de anomalia (%)<br>
+        • KPI duração média<br>
+        • Distribuição normal × anomalia<br>
+        • Anomalias por modelo</p>
+      </div>
+      <div class="card">
+        <h3>2️⃣ Análise de Áudio por Modelo</h3>
+        <p>• Resumo por modelo<br>
+        • MFCC-1 médio por modelo<br>
+        • Spectral centroid normal × anomalia<br>
+        • Top 10 maior RMS (energia)</p>
+      </div>
+      <div class="card">
+        <h3>3️⃣ Resultados do Modelo ML</h3>
+        <p>• KPI acurácia do MLP<br>
+        • Métricas comparadas (baselines × MLPs)<br>
+        • Matriz de confusão<br>
+        • Predições com erro (análise qualitativa)</p>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <b>Como o dashboard apoia a decisão</b> O engenheiro identifica qual modelo de bomba concentra anomalias, filtra o modelo de interesse, prioriza amostras de maior energia (RMS) para inspeção e consulta a confiabilidade do classificador (recall de anomalia) antes de agendar uma parada.
+    </div>
+    <div class="callout">
+      <b>Filtro analítico</b> Os dashboards 1 e 2 têm parâmetro de dashboard mapeado via template-tag <code>{{model_id}}</code> nas queries SQL (cláusula opcional <code>[[AND model_id = {{model_id}}]]</code>).
+    </div>
+  </section>
+
+  <!-- ---------- 9. STATUS ---------- -->
+  <section id="status">
+    <div class="sec-head"><div class="ico">📋</div><h2>Status de Desenvolvimento vs. Especificações</h2></div>
+    <p class="sec-sub">Checklist mapeado a partir do PDF de especificação do módulo ("Projeto Final Integrado: Pipeline de Dados em Nuvem para Aprendizagem de Máquina").</p>
+
+    <div class="grid cols-3" style="margin-bottom:16px">
+      <div class="card">
+        <div class="pillar"><span class="lbl">📊 Dados</span><span class="pct">~90%</span></div>
+        <div class="bar"><i style="width:90%"></i></div>
+        <p style="margin-top:6px; font-size:12.5px">Fontes, pipeline e modelagem dbt completos. Snowflake real pendente de execução/evidência.</p>
+      </div>
+      <div class="card">
+        <div class="pillar"><span class="lbl">🤖 ML</span><span class="pct">~100%</span></div>
+        <div class="bar"><i style="width:100%"></i></div>
+        <p style="margin-top:6px; font-size:12.5px">Hard-code + sklearn, baselines, métricas, análise qualitativa e exportação — tudo executado.</p>
+      </div>
+      <div class="card">
+        <div class="pillar"><span class="lbl">☁️ Cloud</span><span class="pct">~75%</span></div>
+        <div class="bar"><i style="width:75%"></i></div>
+        <p style="margin-top:6px; font-size:12.5px">Template, diagramas e custos prontos; deploy real em conta AWS pendente (acadêmico).</p>
+      </div>
+    </div>
+
+    <div class="card" style="padding:20px">
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>#</th><th>Requisito do PDF</th><th>Status</th><th>Evidência</th></tr>
+          <tr><td>1</td><td>Fontes de dados estruturados + não estruturados</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td>MIMII: metadados (paths) + <code>.wav</code></td></tr>
+          <tr><td>2</td><td>Pipeline reprodutível (ingestão → carga)</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>ingestion/</code> + <code>processing/</code>, Makefile</td></tr>
+          <tr><td>3</td><td>Modelagem analítica (Snowflake, dbt, boas práticas)</td><td><span class="pill partial"><span class="dot"></span>Parcial</span></td><td>dbt (5 modelos, 16 testes) em Postgres; Snowflake só perfil</td></tr>
+          <tr><td>4</td><td>Tarefa de ML definida</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td>Classificação binária normal × anomalia</td></tr>
+          <tr><td>5</td><td>Preparação + baseline</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td>Split estratificado, scaler, Dummy/LogReg</td></tr>
+          <tr><td>6</td><td>Hard-code + biblioteca + comparação</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>HardCodedMLP</code> × <code>MLPClassifier</code></td></tr>
+          <tr><td>7</td><td>Serviços AWS (armazenar/processar/disponibilizar)</td><td><span class="pill partial"><span class="dot"></span>Parcial</span></td><td>CloudFormation completo; deploy real não executado</td></tr>
+          <tr><td>8</td><td>Integrar nuvem ao pipeline (S3, EC2, contêineres…)</td><td><span class="pill partial"><span class="dot"></span>Parcial</span></td><td>MinIO simula S3 no dev; S3/AWS em template</td></tr>
+          <tr><td>9</td><td>Aspectos práticos (arquitetura, monitoramento, custos)</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>docs/ARQUITETURA_AWS.md</code> (diagramas + custos)</td></tr>
+          <tr><td>—</td><td>ELT (Airflow + dbt + banco analítico)</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td>DAG 9 tasks · carga · dbt run/test</td></tr>
+          <tr><td>—</td><td>CloudFormation YAML</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>infra/cloudformation.yaml</code> (432 linhas)</td></tr>
+          <tr><td>—</td><td>Dashboard + filtro analítico</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td>3 dashboards Metabase + <code>{{model_id}}</code></td></tr>
+          <tr><td>—</td><td>Métricas (acc, prec, recall, F1, matriz)</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>report_analys.md</code> + CSVs</td></tr>
+          <tr><td>—</td><td>Avaliação qualitativa (acertos, erros, causas, riscos)</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>report_analys.md</code>, <code>report/relatorio.md</code></td></tr>
+          <tr><td>—</td><td>Rastreabilidade dado bruto → predição</td><td><span class="pill done"><span class="dot"></span>Completo</span></td><td><code>file_id</code> → <code>predictions.csv</code></td></tr>
+          <tr><td>—</td><td>Evidências de execução (prints/logs)</td><td><span class="pill todo"><span class="dot"></span>Pendente</span></td><td>Adicionar screenshots/logs ao repo</td></tr>
+        </table>
+      </div>
+      <div class="callout amber" style="margin-top:14px">
+        <b>Próximos passos recomendados</b> (1) rodar o pipeline em conta AWS real com Snowflake e registrar evidências; (2) adicionar prints/logs de execução ao repositório; (3) estender para fan/slider/valve; (4) deploy do pickle no SageMaker + monitoramento de drift.
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------- 10. CONCEITOS & REPRODUÇÃO ---------- -->
+  <section id="conceitos">
+    <div class="sec-head"><div class="ico">📚</div><h2>Conceitos-chave & Como Reproduzir</h2></div>
+    <p class="sec-sub">Cards didáticos com os conceitos centrais da solução (clique para expandir) e o passo a passo de reprodução.</p>
+
+    <div class="grid cols-2" style="margin-bottom:8px">
+      <div>
+        <details><summary>MFCC — Mel-Frequency Cepstral Coefficients</summary>
+          <div class="body">Transformam o sinal de áudio em um "retrato" do timbre. Passos: janela → FFT → <b>escala mel</b> (resolução perceptual do ouvido) → <b>log</b> (compressão de faixa dinâmica) → <b>DCT</b> (decorrelação). Os 40 coeficientes resultantes resumem a forma espectral. O log torna o modelo robusto a variação de volume (ganho multiplicativo vira deslocamento aditivo).</div>
+        </details>
+        <details><summary>ELT × ETL</summary>
+          <div class="body">No <b>ETL</b> os dados são transformados <i>antes</i> de carregar; no <b>ELT</b> são carregados crus na base analítica e transformados <i>dentro</i> dela. Este projeto é ELT: o pipeline carrega <code>ml_features_raw</code> no banco e o <b>dbt</b> executa as transformações (staging → dim/fact → mart) via SQL versionado.</div>
+        </details>
+        <details><summary>dbt — data build tool</summary>
+          <div class="body">Ferramenta de <b>transformação</b> no banco: cada modelo é um <code>.sql</code> versionado, com dependências declaradas (<code>ref()</code>), materialização configurável (view/table) e <b>testes de qualidade</b>. O dbt também gera documentação e a árvore de linhagem dos dados.</div>
+        </details>
+        <details><summary>MLP e backpropagation</summary>
+          <div class="body">O <b>Multilayer Perceptron</b> é uma rede de camadas totalmente conectadas. No <b>forward pass</b> os dados fluem entrada→saída; na <b>loss</b> (binary cross-entropy) medimos o erro; no <b>backpropagation</b> usamos a regra da cadeia para calcular os gradientes e atualizar pesos via <b>SGD</b>. O projeto implementa tudo com NumPy.</div>
+        </details>
+        <details><summary>SGD + momento × Adam</summary>
+          <div class="body"><b>SGD com momento</b>: atualiza pesos na direção do gradiente com "inércia" (momento 0,9), lr fixo. <b>Adam</b>: mantém médias exponenciais do gradiente e do quadrado do gradiente, adaptando a taxa por parâmetro. É por isso que o sklearn converge mais rápido (~58 épocas) e a <b>função de custo não-convexa</b> leva a mínimos equivalentes porém ligeiramente diferentes.</div>
+        </details>
+        <details><summary>StandardScaler e vazamento de dados</summary>
+          <div class="body">Padroniza cada feature para média 0 e desvio 1 (z-score). Crítico para o MLP (inicialização He assume entradas padronizadas). <b>Nunca ajustar no teste</b>: o scaler é treinado apenas no split de treino e depois aplicado no teste, evitando <i>data leakage</i>. O scaler é exportado para a inferência em produção.</div>
+        </details>
+      </div>
+      <div>
+        <details><summary>Split estratificado</summary>
+          <div class="body">Como o dataset é desbalanceado (~8:1), um split aleatório poderia deixar o teste sem (ou com poucas) anomalias. <code>train_test_split(stratify=y)</code> garante que <b>treino e teste preservem a proporção</b> das classes (750 normal / 91 anomalia no teste).</div>
+        </details>
+        <details><summary>Baseline de classe majoritária</summary>
+          <div class="body">Modelo "ingênuo" que sempre prevê a classe mais frequente (normal). Serve de <b>piso</b>: qualquer modelo útil precisa superá-lo. No projeto ele acerta 89,18% de accuracy mas <b>recall 0</b> — prova de que accuracy isolada engana em dados desbalanceados.</div>
+        </details>
+        <details><summary>Snowflake + external stage</summary>
+          <div class="body">Snowflake é um data warehouse SaaS (colunar). Os CSVs processados ficam no S3 e são carregados via <b>external stage + COPY INTO</b> — o Snowflake lê o S3 sem copiar para dentro do banco primeiro. O dbt com target <code>snowflake</code> executa as transformações direto no warehouse.</div>
+        </details>
+        <details><summary>CloudFormation / IaC</summary>
+          <div class="body"><b>Infrastructure as Code</b>: a infraestrutura AWS é descrita em um template YAML versionado e provisionada por um comando — reprodutível e auditável. O template do projeto define VPC, sub-redes, S3, EC2, IAM (menor privilégio), SageMaker e CloudWatch.</div>
+        </details>
+        <details><summary>DAG no Airflow</summary>
+          <div class="body"><b>Directed Acyclic Graph</b> — o "fluxograma" do pipeline: tarefas (nodes) com dependências (arestas) sem ciclos. O Airflow agenda e re-executa o DAG (<code>schedule="@daily"</code>), registra logs, e permite disparo manual (<code>airflow dags trigger etl_pipeline</code>).</div>
+        </details>
+        <details><summary>Rastreabilidade <code>file_id</code></summary>
+          <div class="body">Cada áudio gera um <code>file_id</code> determinístico (<code>pump_id_02_anomaly_00000078</code>) que percorre todo o pipeline: parse → features → merge → tabela <code>ml_features_raw</code> → modelos dbt → <code>predictions.csv</code>. É o que permite voltar do erro de uma predição até o áudio bruto original.</div>
+        </details>
+      </div>
+    </div>
+
+    <h3 style="margin:16px 0 6px; font-size:16px">Como reproduzir o projeto do zero</h3>
+    <div class="card">
+      <pre><code># 1. Sobe containers (Postgres, MinIO, Airflow, Metabase)
+make up
+
+# 2. Baixa o dataset do Zenodo (7,87 GB, com resume) e sobe para o MinIO/S3
+make ingest
+
+# 3. Extrai metadados + features de áudio + merge → ml_features.csv
+make process
+
+# 4. Carrega o CSV no PostgreSQL
+make load-db
+
+# 5. Roda as transformações dbt e os testes de qualidade
+make dbt-run
+make dbt-test
+
+# 6. Treina e avalia os modelos (hard-code vs sklearn)
+make ml-train
+
+# 7. Roda os testes unitários
+make test</code></pre>
+      <p style="font-size:12.5px; color:var(--muted)">Alternativa: disparar tudo pelo Airflow via <code>make pipeline</code> (executa o DAG de 9 tasks). Documentação completa em <code>README.md</code> e <code>FLUXO.md</code>.</p>
+    </div>
+
+    <div class="callout red">
+      <b>Pontos fortes para a banca</b> (1) rede neural hard-code do zero com NumPy — sem frameworks de deep learning; (2) comparação justa com a mesma arquitetura no sklearn (98,9% das decisões concordam); (3) dataset real de fábrica com ruído (0 dB SNR); (4) pipeline 100% reprodutível com Docker; (5) dev→prod trocando apenas variáveis de ambiente.
+    </div>
+  </section>
+
+  <footer>
+    Guia da solução — Projeto Final Integrado IFG · Pós-IA · Módulo 2 · Gerado a partir do código-fonte e relatórios do repositório.
+  </footer>
+</main>
+</div>
+
+<script>
+// Scrollspy: destaca o item ativo da navegação
+(function(){
+  var nav = document.getElementById('nav');
+  var links = nav.querySelectorAll('a');
+  var map = {};
+  links.forEach(function(l){
+    var id = l.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) map[id] = el;
+  });
+  var ids = Object.keys(map);
+  function onScroll(){
+    var pos = window.scrollY + 120;
+    var current = ids[0];
+    for (var i = 0; i < ids.length; i++){
+      if (map[ids[i]].offsetTop <= pos) current = ids[i];
+    }
+    links.forEach(function(l){
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
