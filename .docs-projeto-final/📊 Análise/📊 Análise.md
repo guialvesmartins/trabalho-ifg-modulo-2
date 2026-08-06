@@ -23,6 +23,7 @@ aliases:
 
 %% Registros serão adicionados automaticamente pelo agente abaixo desta linha %%
 
+- [[2026-08-04 - Guia Visual HTML da Solucao]] — Guia didático em HTML autocontido (10 seções, infográficos SVG) para apresentação à banca + status por pilar
 - [[2025-07-29 - Migracao Naive Bayes para Rede Neural MLP]] — Substituição do Naive Bayes por Rede Neural MLP com NLP simplificado (4 features)
 - [[2025-07-03 - Implementacao Completa do Fluxo]] — Implementação de todos os 45+ arquivos do projeto: Docker, ingestão, processamento, dbt, Airflow, ML, CloudFormation, testes e documentação
 - [[2025-07-03 - Configuracao Automatica do Metabase]] — Script de setup automático do Metabase via API, com 4 dashboards e 10 perguntas SQL pré-configuradas
