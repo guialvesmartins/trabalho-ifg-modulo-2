@@ -7,11 +7,13 @@ USER root
 # gcc + libpq-dev: necessarios para compilar o psycopg2 (dependencia do dbt-postgres)
 # libsndfile1: backend de leitura de audio do soundfile/librosa
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev libsndfile1 \
+    && apt-get install -y --no-install-recommends gcc libc6-dev libpq-dev libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
 USER airflow
-# Camadas separadas: uma falha de rede nao perde o progresso das anteriores
-RUN pip install --no-cache-dir --retries 10 --timeout 60 scikit-learn matplotlib
-RUN pip install --no-cache-dir --retries 10 --timeout 60 librosa soundfile tqdm python-dotenv
+# Camadas separadas: uma falha de rede nao perde o progresso das anteriores.
+# "numpy<2" fixado: o pandas/pyarrow da imagem oficial foi compilado contra
+# numpy 1.x — deixar o pip subir para numpy 2 quebra o import em runtime.
+RUN pip install --no-cache-dir --retries 10 --timeout 60 "numpy<2" scikit-learn matplotlib
+RUN pip install --no-cache-dir --retries 10 --timeout 60 "numpy<2" librosa soundfile tqdm python-dotenv
 RUN pip install --no-cache-dir --retries 10 --timeout 60 dbt-core==1.8.0 dbt-postgres==1.8.0

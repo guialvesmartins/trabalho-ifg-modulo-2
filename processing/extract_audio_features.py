@@ -5,7 +5,9 @@ milhares de arquivos de 10s com 8 canais, e a extracao sequencial
 levaria horas.
 """
 
+import multiprocessing
 import os
+from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -88,19 +90,36 @@ def main():
     wav_files = sorted(DATA_DIR.rglob("*.wav"))
     total = len(wav_files)
     n_workers = max(1, (os.cpu_count() or 2) - 1)
-    print(f"Found {total} .wav files. Using {n_workers} workers.")
+
+    # Dentro do Airflow (LocalExecutor) a task roda em processo daemonico,
+    # que nao pode criar processos filhos — nesse caso usa threads (numpy/
+    # BLAS libera o GIL, entao ainda ha paralelismo real na extracao).
+    use_threads = multiprocessing.current_process().daemon
+    modo = "threads" if use_threads else "processos"
+    print(f"Found {total} .wav files. Using {n_workers} workers ({modo}).")
 
     rows = []
-    with Pool(processes=n_workers) as pool:
-        for status, relative, payload in tqdm(
-            pool.imap_unordered(process_file, wav_files, chunksize=8),
-            total=total,
-            desc="Extracting features",
-        ):
-            if status == "error":
-                print(f"  Error processing {relative}: {payload}")
-                continue
-            rows.append(payload)
+    if use_threads:
+        with ThreadPoolExecutor(max_workers=n_workers) as executor:
+            results = executor.map(process_file, wav_files)
+            for status, relative, payload in tqdm(
+                results, total=total, desc="Extracting features"
+            ):
+                if status == "error":
+                    print(f"  Error processing {relative}: {payload}")
+                    continue
+                rows.append(payload)
+    else:
+        with Pool(processes=n_workers) as pool:
+            for status, relative, payload in tqdm(
+                pool.imap_unordered(process_file, wav_files, chunksize=8),
+                total=total,
+                desc="Extracting features",
+            ):
+                if status == "error":
+                    print(f"  Error processing {relative}: {payload}")
+                    continue
+                rows.append(payload)
 
     df = pd.DataFrame(rows).sort_values("file_id").reset_index(drop=True)
 
