@@ -7,6 +7,16 @@ from airflow.operators.python import PythonOperator
 
 def _call(module_path, func_name="main"):
     import importlib
+    import os
+    import sys
+
+    # Os modulos do projeto usam caminhos relativos (data/raw, data/processed),
+    # entao a task precisa rodar a partir da raiz do projeto montada no container.
+    project_dir = os.getenv("PROJECT_DIR", "/opt/airflow/project")
+    if os.path.isdir(project_dir):
+        os.chdir(project_dir)
+        if project_dir not in sys.path:
+            sys.path.insert(0, project_dir)
 
     mod = importlib.import_module(module_path)
     getattr(mod, func_name)()
@@ -19,13 +29,13 @@ default_args = {
 }
 
 with DAG(
-    dag_id="etl_pipeline",
+    dag_id="elt_pipeline",
     default_args=default_args,
-    description="ETL Pipeline — MIMII Pump Industrial Sound Classification",
+    description="elt Pipeline — MIMII Pump Industrial Sound Classification",
     schedule="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
-    tags=["projeto-final", "etl", "mimii"],
+    tags=["projeto-final", "elt", "mimii"],
 ) as dag:
 
     t1 = PythonOperator(

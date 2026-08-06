@@ -46,9 +46,20 @@ services:
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      # Mesma chave em webserver e scheduler — sem ela cada container gera uma
+      # aleatoria e o webserver recebe 403 ao buscar logs das tasks (porta 8793)
+      AIRFLOW__WEBSERVER__SECRET_KEY: "projeto-final-ifg-2025-chave-compartilhada"
+      PYTHONPATH: /opt/airflow/project
+      PROJECT_DIR: /opt/airflow/project
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       S3_ENDPOINT: http://minio:9000
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: airflow
+      DB_PASS: airflow
+      DB_NAME: airflow
+      DB_SCHEMA: public
     volumes:
       - ./dags:/opt/airflow/dags
       - ./:/opt/airflow/project
@@ -70,7 +81,12 @@ services:
       - ./:/opt/airflow/project
 
   airflow-scheduler:
-    image: apache/airflow:2.9.0
+    # Com LocalExecutor as tasks rodam neste container — imagem customizada
+    # com as libs do pipeline (audio, ML, dbt) ja instaladas
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
+    image: pf-airflow-pipeline:2.9.0
     container_name: pf-airflow-scheduler
     depends_on:
       postgres:
