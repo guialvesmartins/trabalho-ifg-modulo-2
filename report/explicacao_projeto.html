@@ -495,40 +495,105 @@
     <div class="grid cols-2">
       <div class="card">
         <h3>🏗️ Arquitetura da rede</h3>
-        <svg viewBox="0 0 520 300" role="img" aria-label="Arquitetura MLP 96-64-32-1" style="width:100%;height:auto">
+        <svg viewBox="0 0 520 330" role="img" aria-label="Arquitetura MLP 96-64-32-1" style="width:100%;height:auto">
           <g font-family="Segoe UI" font-size="11">
-            <g fill="#0f6fde">
-              <circle cx="60"  cy="60"  r="9"/><circle cx="60"  cy="105" r="9"/><circle cx="60"  cy="150" r="9"/>
-              <circle cx="60"  cy="195" r="9"/><circle cx="60"  cy="240" r="9"/>
-              <text x="60" y="275" fill="#0a3d91" text-anchor="middle" font-weight="700">Entrada</text>
-              <text x="60" y="288" fill="#5b6b82" text-anchor="middle">96 features</text>
-            </g>
-            <g fill="#0e9f8e">
-              <circle cx="200" cy="45"  r="8"/><circle cx="200" cy="90"  r="8"/><circle cx="200" cy="135" r="8"/>
-              <circle cx="200" cy="180" r="8"/><circle cx="200" cy="225" r="8"/>
-              <circle cx="200" cy="270" r="8" fill="#fff" stroke="#0e9f8e" stroke-width="2"/>
-              <text x="200" y="293" fill="#0c7c70" text-anchor="middle" font-weight="700">Hidden 1 · ReLU</text>
-              <text x="200" y="306" fill="#5b6b82" text-anchor="middle">64 neurônios</text>
-            </g>
-            <g fill="#e8a20c">
-              <circle cx="340" cy="60"  r="8"/><circle cx="340" cy="105" r="8"/><circle cx="340" cy="150" r="8"/>
-              <circle cx="340" cy="195" r="8"/><circle cx="340" cy="240" r="8"/>
-              <text x="340" y="275" fill="#9c6b00" text-anchor="middle" font-weight="700">Hidden 2 · ReLU</text>
-              <text x="340" y="288" fill="#5b6b82" text-anchor="middle">32 neurônios</text>
-            </g>
-            <g>
-              <circle cx="470" cy="150" r="11" fill="#d64545"/>
-              <text x="470" y="190" fill="#b03a3a" text-anchor="middle" font-weight="700">Saída</text>
-              <text x="470" y="204" fill="#5b6b82" text-anchor="middle">1 · Sigmoid</text>
-            </g>
+            <!-- conexões: entrada -> oculta 1 (25), oculta 1 -> oculta 2 (25), oculta 2 -> saída (5) -->
             <g stroke="#c9d6ea" stroke-width="1">
-              <line x1="70" y1="105" x2="192" y2="90"/>
-              <line x1="70" y1="150" x2="192" y2="135"/>
-              <line x1="70" y1="150" x2="192" y2="180"/>
-              <line x1="208" y1="90"  x2="332" y2="105"/>
-              <line x1="208" y1="180" x2="332" y2="150"/>
-              <line x1="348" y1="150" x2="458" y2="150"/>
+              <line x1="81" y1="38" x2="197" y2="38"/>
+              <line x1="81" y1="38" x2="197" y2="88"/>
+              <line x1="81" y1="38" x2="197" y2="138"/>
+              <line x1="81" y1="38" x2="197" y2="188"/>
+              <line x1="81" y1="38" x2="197" y2="238"/>
+              <line x1="81" y1="88" x2="197" y2="38"/>
+              <line x1="81" y1="88" x2="197" y2="88"/>
+              <line x1="81" y1="88" x2="197" y2="138"/>
+              <line x1="81" y1="88" x2="197" y2="188"/>
+              <line x1="81" y1="88" x2="197" y2="238"/>
+              <line x1="81" y1="138" x2="197" y2="38"/>
+              <line x1="81" y1="138" x2="197" y2="88"/>
+              <line x1="81" y1="138" x2="197" y2="138"/>
+              <line x1="81" y1="138" x2="197" y2="188"/>
+              <line x1="81" y1="138" x2="197" y2="238"/>
+              <line x1="81" y1="188" x2="197" y2="38"/>
+              <line x1="81" y1="188" x2="197" y2="88"/>
+              <line x1="81" y1="188" x2="197" y2="138"/>
+              <line x1="81" y1="188" x2="197" y2="188"/>
+              <line x1="81" y1="188" x2="197" y2="238"/>
+              <line x1="81" y1="238" x2="197" y2="38"/>
+              <line x1="81" y1="238" x2="197" y2="88"/>
+              <line x1="81" y1="238" x2="197" y2="138"/>
+              <line x1="81" y1="238" x2="197" y2="188"/>
+              <line x1="81" y1="238" x2="197" y2="238"/>
+              <line x1="213" y1="38" x2="330" y2="38"/>
+              <line x1="213" y1="38" x2="330" y2="88"/>
+              <line x1="213" y1="38" x2="330" y2="138"/>
+              <line x1="213" y1="38" x2="330" y2="188"/>
+              <line x1="213" y1="38" x2="330" y2="238"/>
+              <line x1="213" y1="88" x2="330" y2="38"/>
+              <line x1="213" y1="88" x2="330" y2="88"/>
+              <line x1="213" y1="88" x2="330" y2="138"/>
+              <line x1="213" y1="88" x2="330" y2="188"/>
+              <line x1="213" y1="88" x2="330" y2="238"/>
+              <line x1="213" y1="138" x2="330" y2="38"/>
+              <line x1="213" y1="138" x2="330" y2="88"/>
+              <line x1="213" y1="138" x2="330" y2="138"/>
+              <line x1="213" y1="138" x2="330" y2="188"/>
+              <line x1="213" y1="138" x2="330" y2="238"/>
+              <line x1="213" y1="188" x2="330" y2="38"/>
+              <line x1="213" y1="188" x2="330" y2="88"/>
+              <line x1="213" y1="188" x2="330" y2="138"/>
+              <line x1="213" y1="188" x2="330" y2="188"/>
+              <line x1="213" y1="188" x2="330" y2="238"/>
+              <line x1="213" y1="238" x2="330" y2="38"/>
+              <line x1="213" y1="238" x2="330" y2="88"/>
+              <line x1="213" y1="238" x2="330" y2="138"/>
+              <line x1="213" y1="238" x2="330" y2="188"/>
+              <line x1="213" y1="238" x2="330" y2="238"/>
+              <line x1="346" y1="38" x2="460" y2="138"/>
+              <line x1="346" y1="88" x2="460" y2="138"/>
+              <line x1="346" y1="138" x2="460" y2="138"/>
+              <line x1="346" y1="188" x2="460" y2="138"/>
+              <line x1="346" y1="238" x2="460" y2="138"/>
             </g>
+            <!-- entrada: 96 features -->
+            <g fill="#0f6fde">
+              <circle cx="72" cy="38" r="9"/>
+              <circle cx="72" cy="88" r="9"/>
+              <circle cx="72" cy="138" r="9"/>
+              <circle cx="72" cy="188" r="9"/>
+              <circle cx="72" cy="238" r="9"/>
+            </g>
+            <text x="72" y="268" fill="#5b6b82" text-anchor="middle" font-size="15">⋮</text>
+            <text x="72" y="294" fill="#0a3d91" text-anchor="middle" font-weight="700">Entrada</text>
+            <text x="72" y="308" fill="#5b6b82" text-anchor="middle">96 features</text>
+            <!-- oculta 1: 64 neurônios, ReLU -->
+            <g fill="#0e9f8e">
+              <circle cx="205" cy="38" r="8"/>
+              <circle cx="205" cy="88" r="8"/>
+              <circle cx="205" cy="138" r="8"/>
+              <circle cx="205" cy="188" r="8"/>
+              <circle cx="205" cy="238" r="8"/>
+            </g>
+            <text x="205" y="268" fill="#5b6b82" text-anchor="middle" font-size="15">⋮</text>
+            <text x="205" y="294" fill="#0c7c70" text-anchor="middle" font-weight="700">Oculta 1 · ReLU</text>
+            <text x="205" y="308" fill="#5b6b82" text-anchor="middle">64 neurônios</text>
+            <!-- oculta 2: 32 neurônios, ReLU -->
+            <g fill="#e8a20c">
+              <circle cx="338" cy="38" r="8"/>
+              <circle cx="338" cy="88" r="8"/>
+              <circle cx="338" cy="138" r="8"/>
+              <circle cx="338" cy="188" r="8"/>
+              <circle cx="338" cy="238" r="8"/>
+            </g>
+            <text x="338" y="268" fill="#5b6b82" text-anchor="middle" font-size="15">⋮</text>
+            <text x="338" y="294" fill="#9c6b00" text-anchor="middle" font-weight="700">Oculta 2 · ReLU</text>
+            <text x="338" y="308" fill="#5b6b82" text-anchor="middle">32 neurônios</text>
+            <!-- saída: 1 neurônio, sigmoid -->
+            <g>
+              <circle cx="471" cy="138" r="11" fill="#d64545"/>
+            </g>
+            <text x="471" y="178" fill="#b03a3a" text-anchor="middle" font-weight="700">Saída</text>
+            <text x="471" y="192" fill="#5b6b82" text-anchor="middle">1 · Sigmoid</text>
           </g>
         </svg>
         <p style="font-size:12.5px; color:var(--muted)">ReLU nas ocultas · Sigmoid na saída · Binary Cross-Entropy · <b>8.321 parâmetros</b> treináveis.</p>
