@@ -23,6 +23,7 @@ aliases:
 
 %% Registros serão adicionados automaticamente pelo agente abaixo desta linha %%
 
+- [[2026-08-10 - Apresentacao Final Deck Dark 12 Slides]] — Deck final dark (12 slides, 4 locutores) regenerado para a apresentação de 10 min
 - [[2026-08-05 - Recriacao da Apresentacao]] — Deck `apresentacao.pptx` recriado para o projeto MIMII Pump (12 slides, speaker notes, validação XSD aprovada)
 - [[2026-08-04 - Guia Visual HTML da Solucao]] — Guia didático em HTML autocontido (10 seções, infográficos SVG) para apresentação à banca + status por pilar
 - [[2025-07-29 - Migracao Naive Bayes para Rede Neural MLP]] — Substituição do Naive Bayes por Rede Neural MLP com NLP simplificado (4 features)
