@@ -35,6 +35,11 @@ with DAG(
     schedule="@daily",
     start_date=datetime(2025, 1, 1),
     catchup=False,
+    # Execucoes simultaneas gravam nos mesmos caminhos (data/raw/0_dB_pump.zip
+    # e data/processed/*.csv) e corrompem o resultado — ja aconteceu quando um
+    # disparo manual cruzou com o agendado da meia-noite. Sem esta trava, dois
+    # cliques em "Trigger" bastam para quebrar o pipeline.
+    max_active_runs=1,
     tags=["projeto-final", "elt", "mimii"],
 ) as dag:
 

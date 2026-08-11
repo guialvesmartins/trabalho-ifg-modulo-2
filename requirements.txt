@@ -1,3 +1,13 @@
+# Dependencias para rodar os scripts localmente (make ingest/process/ml-train/test).
+#
+# O Airflow NAO entra aqui de proposito: ele roda nos containers, e a imagem e
+# construida pelo Dockerfile.airflow, que instala as libs por conta propria.
+# Alem disso apache-airflow==2.9.0 exige sqlalchemy<2.0, o que conflita com o
+# sqlalchemy==2.0.30 usado pelos scripts — a lista ficava insatisfazivel e o
+# `pip install -r requirements.txt` falhava por completo.
+#
+# Requer Python < 3.13: apache-airflow 2.9.0 declara requires_python <3.13 e os
+# pins de numpy/pandas abaixo nao tem wheel para 3.13.
 pandas==2.2.2
 numpy==1.26.4
 librosa>=0.10.2
@@ -6,9 +16,7 @@ scikit-learn==1.5.1
 sqlalchemy==2.0.30
 psycopg2-binary==2.9.9
 boto3==1.35.0
-apache-airflow==2.9.0
-apache-airflow-providers-amazon==8.20.0
-apache-airflow-providers-postgres==5.10.0
+requests>=2.31.0
 dbt-core==1.8.0
 dbt-postgres==1.8.0
 dbt-snowflake==1.8.0

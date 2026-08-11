@@ -44,7 +44,10 @@ token = None
 db_id = None
 
 
-def wait_for_metabase(timeout=120):
+# 420s: no primeiro boot o Metabase roda as migracoes do proprio banco e so
+# entao responde 200 em /api/health. Com 120s o container metabase-setup
+# desistia e saia com erro em todo `make up` a frio.
+def wait_for_metabase(timeout=420):
     print("[1/8] Aguardando Metabase iniciar...")
     start = time.time()
     while time.time() - start < timeout:

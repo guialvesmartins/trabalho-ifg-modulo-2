@@ -42,7 +42,7 @@ load-db:
 
 pipeline:
 	@echo "Disparando DAG no Airflow..."
-	docker compose exec airflow-webserver airflow dags trigger etl_pipeline
+	docker compose exec airflow-webserver airflow dags trigger elt_pipeline
 
 dbt-run:
 	cd dbt_project && dbt run
