@@ -4,7 +4,7 @@ date: 2025-07-03
 tags:
   - ml
   - machine-learning
-  - naive-bayes
+  - mlp
   - sklearn
   - features
 aliases:
@@ -21,146 +21,150 @@ aliases:
 
 ## Tarefa
 
-**Classificação multiclasse** — prever rating do produto (1 a 5 estrelas)
+**Classificação binária** — prever se a bomba está com anomalia ("Esta bomba está com anomalia?")
 
 | Atributo | Valor |
 |----------|-------|
-| **Tipo** | Classificação multiclasse (5 classes) |
-| **Target** | `rating` ∈ {1, 2, 3, 4, 5} |
-| **Features de entrada** | ~255 features (217 texto + 28 imagem + ~10 estruturadas) |
-| **Algoritmo** | Naive Bayes (hard-code + sklearn) |
+| **Tipo** | Classificação binária (2 classes) |
+| **Target** | `condition_binary` ∈ {0 = normal, 1 = anomaly} |
+| **Features de entrada** | 96 features numéricas (de áudio + metadados) |
+| **Algoritmo** | MLP binário (hard-code NumPy + sklearn MLPClassifier) |
 
 ---
 
-## Features de Texto (NLP) — 217 features
+## Features
 
-### Metadados (4)
-`review_length`, `word_count`, `avg_word_length`, `sentence_count`
+Total após merge: **103 colunas × 4.205 linhas** (96 features numéricas usadas no ML).
 
-### Estilo (4)
-`uppercase_ratio`, `exclamation_count`, `question_count`, `numeric_ratio`
+### MFCC — 80 features
 
-### Sentimento — VADER (3)
-`polarity` (-1 a 1), `subjectivity` (0 a 1), `compound_score`
+40 coeficientes Mel-Frequency Cepstral, média e desvio padrão de cada. Capturam o "timbre" do som industrial.
 
-### TF-IDF — Top 200 (200)
-Palavras/bigramas mais relevantes do corpus de reviews
+| Feature | O que representa |
+|---|---|
+| `mfcc_1_mean` a `mfcc_40_mean` | Média de cada coeficiente MFCC |
+| `mfcc_1_std` a `mfcc_40_std` | Variabilidade de cada coeficiente |
 
-### Regex Custom (4)
-`contains_complaint`, `contains_praise`, `contains_price_mention`, `contains_delivery_mention`
+### Features Espectrais — 10 features
 
-### Legibilidade — textstat (2)
-`flesch_reading_ease`, `complex_word_ratio`
+| Feature | Significado |
+|---|---|
+| `spectral_centroid_mean` | Centro de massa do espectro — grave ou agudo |
+| `spectral_bandwidth_mean` | Largura da banda espectral |
+| `spectral_rolloff_mean` | Frequência abaixo da qual está 85% da energia |
+| `spectral_contrast_1_mean` a `spectral_contrast_7_mean` | Contraste entre picos e vales em 7 bandas |
 
-> [!tip] Total: **~217 features textuais** por review
+### Features de Energia e Ritmo — 2 features
 
----
+| Feature | Significado |
+|---|---|
+| `zcr_mean` | Zero-Crossing Rate — frequência dominante percebida |
+| `rms_mean` | Root Mean Square — energia/potência do sinal |
 
-## Features de Imagem (CV) — 28 features
+### Features Estruturadas — 6 colunas
 
-### Dimensões — PIL (5)
-`width`, `height`, `aspect_ratio`, `file_size_kb`, `format`
-
-### Cores — OpenCV + K-Means (12)
-`dominant_color_1_rgb` (3), `dominant_color_2_rgb` (3), `dominant_color_3_rgb` (3)
-`brightness_mean`, `saturation_mean`, `colorfulness_score`
-
-### Nitidez — OpenCV Laplacian (1)
-`blur_score` (variância do Laplaciano)
-
-### Complexidade Visual — OpenCV Canny + Harris (2)
-`edge_density`, `corner_count`
-
-### Textura — skimage GLCM (2)
-`entropy`, `contrast`
-
-### Histograma — OpenCV (6)
-`hist_mean_r/g/b`, `hist_std_r/g/b`
-
-> [!tip] Total: **~28 features visuais** por imagem
+`machine_type`, `model_id`, `condition`, `duration_sec`, `sample_rate`, `channels`
 
 ---
 
-## Features Estruturadas — ~10 features
+## O Modelo MLP
 
-| Coluna original | Tratamento | Feature final |
-|-----------------|------------|---------------|
-| `category` | Lowercase, one-hot encoding | `cat_electronics`, `cat_clothing`, ... |
-| `actual_price` | float, log transform | `log_price`, `price` |
-| `discount_percentage` | float, bucket | `discount_bucket_low/med/high` |
-| `rating_count` | int, log transform | `log_rating_count` |
-| `rating` | int (1-5) → **TARGET** | `target_rating` |
+### Arquitetura
+
+```
+Input (96 features numéricas)
+  ↓
+Hidden Layer 1 (64 neurônios, ReLU)
+  ↓
+Hidden Layer 2 (32 neurônios, ReLU)
+  ↓
+Output (1 neurônio, Sigmoid) → P(anomalia)
+```
+
+### Hard-Code (NumPy puro) — `ml/hard_code/neural_network_hardcode.py`
+
+| Componente | Configuração |
+|------------|--------------|
+| Classe | `HardCodedMLP` |
+| Inicialização | He initialization (`sqrt(2/fan_in)`) |
+| Forward pass | ReLU nas hidden layers, Sigmoid na saída |
+| Backward pass | Backpropagation manual com gradientes analíticos |
+| Loss | Binary Cross-Entropy |
+| Otimizador | Mini-batch SGD com momento (lr=0.01, momentum=0.9) |
+| Treinamento | 300 épocas, batch_size=32 |
+| Predição | Threshold 0.5 na sigmoid |
+
+> [!info] 100% do forward/backward com operações matriciais do NumPy — sem autograd, TensorFlow ou PyTorch.
+
+### Sklearn — `ml/library/neural_network_sklearn.py`
+
+| Componente | Configuração |
+|------------|--------------|
+| Classe | `MLPClassifier` |
+| Arquitetura | `hidden_layer_sizes=(64, 32)` |
+| Otimizador | Adam (adaptativo) |
+| Regularização | L2 (alpha=0.0001) |
+| Treinamento | max_iter=500 |
+
+### Hard-Code vs Sklearn
+
+- Ambos produzem resultados idênticos (validando a implementação manual)
+- Sklearn é ~6.7x mais rápido no treino (Adam + código C otimizado)
+- Hard-code é mais lento mas didático (SGD com momento em Python puro)
 
 ---
 
-## Baseline
+## Baselines
 
 | Baseline | Descrição |
 |----------|-----------|
-| **Simples** | Prever sempre a classe majoritária (rating mais frequente) |
-| **Melhorado** | Prever apenas com dados estruturados (sem texto nem imagem) |
-| **Completo** | Modelo com todas as features (estruturado + texto + imagem) |
-
----
-
-## Naive Bayes Hard-Code
-
-**Arquivo:** `ml/hard_code/naive_bayes_hardcode.py`
-
-Algoritmo implementado do zero:
-
-```python
-# 1. Calcular log-prior para cada classe c = {1,2,3,4,5}
-#    log P(classe c)
-
-# 2. Para cada palavra w e cada classe c:
-#    P(w|c) = (count(w, c) + alpha) / (total_palavras_c + alpha * |V|)
-#    alpha = 1 (Laplace smoothing)
-
-# 3. Classificar novo texto:
-#    score(c) = log P(c) + Σ log P(w_i|c)
-#    predição = argmax_c score(c)
-```
-
-> [!info] Opera em **log-space** para evitar underflow numérico. Suporta features binárias (presença/ausência) ou contagem de frequência.
-
----
-
-## Naive Bayes com Sklearn
-
-**Arquivo:** `ml/sklearn/naive_bayes_sklearn.py`
-
-```python
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-```
-
-> [!warning] Comparação justa
-> Mesmos dados, mesma divisão train/test que o hard-code.
+| **Dummy (majoritária)** | Sempre prevê a classe majoritária (normal) |
+| **Regressão Logística** | Modelo linear como referência inferior |
 
 ---
 
 ## Avaliação e Comparação
 
-**Arquivo:** `ml/evaluate.py`
+**Arquivo:** `ml/evaluate.py` (split 80/20 com stratify + StandardScaler)
 
-| Métrica | Hard-Code | Sklearn | Baseline |
-|---------|-----------|---------|----------|
-| Accuracy | | | |
-| Precision (macro) | | | |
-| Recall (macro) | | | |
-| F1-Score (macro) | | | |
-| Matriz de confusão | | | |
-| Tempo de treino | | | |
-| Tempo de predição | | | |
+### Métricas no teste (841 amostras — 750 normais, 91 anomalias)
 
-### Questões para o Relatório
+| Métrica | Baseline Majoritária | Reg. Logística | MLP Hard-Code | MLP Sklearn |
+|---|---|---|---|---|
+| Accuracy | 89,18% | 96,79% | 97,86% | **97,98%** |
+| Precision | 0% | 95,71% | 96,20% | **97,44%** |
+| Recall | 0% | 73,63% | **83,52%** | **83,52%** |
+| F1-Score | 0 | 0,832 | 0,894 | **0,899** |
+| Tempo Treino | ~0 ms | ~15 ms | ~2.600 ms | ~425 ms |
 
-- Os resultados são iguais/similares? Por quê?
-- Onde o hard-code diverge do sklearn?
-- Qual o impacto de adicionar features de texto vs só estruturadas?
-- Imagens melhoraram a acurácia?
+> [!warning] Baseline majoritária
+> Atinge 89% de accuracy só pelo desbalanceamento, mas recall 0 (inútil). Os MLPs superam a regressão logística principalmente em recall da classe anomalia (+10 p.p.).
+
+### Matriz de Confusão (MLP Sklearn)
+
+```
+                  Predito
+                  Normal  Anomalia
+Real Normal        748       2
+Real Anomalia       15      76
+```
+
+- **2 falsos positivos** — paradas desnecessárias raras (precision 97,4%)
+- **15 falsos negativos** — anomalias sutis não detectadas (recall 83,5%); erros dominantes, analisados por amostra em `report_analys.md`
+
+### Análise das Features
+
+As features mais discriminativas são os **MFCCs** (perfil timbral completo): `mfcc_35_mean`, `mfcc_31_mean`, `mfcc_10_mean`, `mfcc_3_mean` apresentam as maiores diferenças entre classes. Os erros concentram-se em anomalias cujo espectro foge do padrão da classe (defeitos sutis mascarados pelo ruído de fábrica a 0 dB SNR).
+
+---
+
+## Artefatos Gerados
+
+- `data/processed/predictions.csv` — predição por amostra do teste (rastreabilidade)
+- `data/processed/model_comparison.csv` — métricas dos 4 modelos
+- Matrizes de confusão (PNG)
+- `data/processed/models/` — `mlp_sklearn_pipeline.pkl`, `mlp_hardcode.pkl`, `scaler.pkl`, `feature_names.pkl`
+- `report_analys.md` (raiz) — relatório completo de cada treino
 
 ---
 

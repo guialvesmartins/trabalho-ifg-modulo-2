@@ -26,7 +26,7 @@ graph TD
         PG[PostgreSQL :5432\nSnowflake Mock]
         AF[Airflow :8080]
         MB[Metabase :3000]
-        PY[Python Scripts\ningest, NLP, ML, CV]
+        PY[Python Scripts\ningest, process, ML]
         DBT[dbt-core\nvia Airflow/CLI]
     end
 
@@ -46,7 +46,7 @@ graph TD
 | MinIO | `minio/minio:latest` | 9000, 9001 |
 | Airflow | `apache/airflow:2.9.0` | 8080 |
 | Metabase | `metabase/metabase:latest` | 3000 |
-| Python (app) | `python:3.11-slim` (custom) | — |
+| metabase-setup | `python:3.11-slim` | — |
 
 ---
 
@@ -57,7 +57,7 @@ Apenas **S3** e **Snowflake** são serviços externos reais. O restante permanec
 ```mermaid
 graph TD
     subgraph "AWS Cloud"
-        S3[AWS S3\nraw/ processed/ images/]
+        S3[AWS S3\nraw/]
     end
 
     subgraph "Snowflake Cloud"
@@ -89,7 +89,7 @@ graph TD
 ```mermaid
 graph TD
     subgraph "AWS Cloud"
-        S3_CF[S3\nraw/ processed/ images/]
+        S3_CF[S3\nraw/]
         GLUE[Glue Crawler]
         ATH[Athena]
         EC2[EC2\nAirflow]
@@ -126,10 +126,7 @@ S3_ENDPOINT=http://minio:9000
 S3_ACCESS_KEY=minioadmin
 S3_SECRET_KEY=minioadmin
 DB_TYPE=postgres
-DB_HOST=postgres
-DB_USER=airflow
-DB_PASS=airflow
-DB_NAME=airflow
+DB_HOST=localhost
 ```
 
 ### `.env.prod` (Produção)
@@ -140,9 +137,4 @@ S3_ACCESS_KEY=<aws_access_key>
 S3_SECRET_KEY=<aws_secret_key>
 DB_TYPE=snowflake
 DB_ACCOUNT=<snowflake_account>
-DB_USER=<snowflake_user>
-DB_PASS=<snowflake_pass>
-DB_WAREHOUSE=COMPUTE_WH
-DB_DATABASE=PROD_DB
-DB_SCHEMA=PUBLIC
 ```

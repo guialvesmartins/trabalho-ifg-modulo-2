@@ -24,68 +24,68 @@ aliases:
 
 ## 4.2 — Conjuntos de Dados
 
-- [ ] Pelo menos 1 fonte de dados estruturados → `amazon_sales.csv`
-- [ ] Pelo menos 1 fonte de dados não estruturados → Texto (reviews) + Imagens
-- [ ] Dados suficientes para treino e teste → ~1400 produtos + ~35k reviews + ~500-1000 imagens
-- [ ] Documentação da origem e campos → [[02-Datasets]] + `README.md`
+- [x] Pelo menos 1 fonte de dados estruturados → metadados dos paths MIMII (`pump_metadata.csv`)
+- [x] Pelo menos 1 fonte de dados não estruturados → clipes `.wav` de bombas industriais
+- [x] Dados suficientes para treino e teste → 4.205 clipes MIMII (3.749 normal + 456 anomalia)
+- [x] Documentação da origem e campos → [[02-Datasets]] + `README.md`
 
 ---
 
 ## 4.3 — Processamento e Extração de Atributos
 
-- [ ] Limpeza de dados estruturados → `process_structured.py`
-- [ ] Extração de features de texto (NLP) → `extract_text_features.py`
-- [ ] Extração de features de imagem (CV) → `extract_image_features.py`
-- [ ] Merge final → `merge_features.py`
+- [x] Limpeza de dados estruturados → `process_structured.py` (parse de paths, dedup, tipagem)
+- [x] Extração de features de áudio → `extract_audio_features.py` (librosa: MFCC, spectral, ZCR, RMS)
+- [x] Merge final → `merge_features.py` (LEFT JOIN por `file_id`)
+- [x] Carga no banco → `load_to_postgres.py` (tabela `ml_features_raw`)
 
 ---
 
 ## 4.4 — Pipeline ELT (Airflow + dbt + Snowflake)
 
-- [ ] DAG funcional no Airflow → `dags/etl_pipeline.py`
-- [ ] Carga no banco (Postgres/Snowflake) → dbt + profiles
-- [ ] Modelos staging, dimensions, facts, marts → 8 modelos em 4 camadas
-- [ ] Pelo menos 2 testes dbt → 4 testes (not_null, unique, accepted_values)
-- [ ] Documentação dos modelos → `schema.yml`
-- [ ] Tabela final para ML → `ml_features`
-- [ ] Fatos para dashboard → `fact_reviews` + `fact_sales`
+- [x] DAG funcional no Airflow → `dags/etl_pipeline.py` (8 tasks sequenciais)
+- [x] Carga no banco (Postgres/Snowflake) → dbt + profiles
+- [x] Modelos staging, dimensions, facts, marts → 5 modelos em 4 camadas
+- [x] Pelo menos 2 testes dbt → 16 testes (not_null, unique, accepted_values)
+- [x] Documentação dos modelos → `schema.yml`
+- [x] Tabela final para ML → `ml_features`
+- [x] Fatos para dashboard → `fact_audio_analysis` + `dim_machines`
 
 ---
 
 ## 4.5 — Armazenamento e Processamento em Nuvem
 
-- [ ] Pelo menos 1 serviço AWS → S3 (usado em prod)
-- [ ] Organização em camadas → `raw/`, `processed/`, `images/`
-- [ ] CloudFormation YAML → `infra/cloudformation.yaml`
-- [ ] Diagrama arquitetural → `infra/architecture_diagram.png`
+- [x] Pelo menos 1 serviço AWS → S3 (usado em prod)
+- [x] Organização em camadas → `raw/pump/` no bucket
+- [x] CloudFormation YAML → `infra/cloudformation.yaml`
+- [x] Diagrama arquitetural → `docs/ARQUITETURA_AWS.md`
 
 ---
 
 ## 4.6 — Aprendizagem de Máquina
 
-- [ ] Tarefa definida → Classificação multiclasse (1-5 estrelas)
-- [ ] Baseline → Classe majoritária + modelo só com estruturados
-- [ ] Hard-code → `naive_bayes_hardcode.py` (Naive Bayes do zero)
-- [ ] Biblioteca Python → `naive_bayes_sklearn.py` (MultinomialNB)
-- [ ] Comparação → `evaluate.py` com métricas lado a lado
-- [ ] Métricas → Accuracy, Precision, Recall, F1, Matriz de Confusão
+- [x] Tarefa definida → Classificação binária (normal vs anomalia)
+- [x] Baseline → DummyClassifier (majoritária) + Regressão Logística
+- [x] Hard-code → `neural_network_hardcode.py` (MLP do zero com NumPy)
+- [x] Biblioteca Python → `neural_network_sklearn.py` (MLPClassifier)
+- [x] Comparação → `evaluate.py` com métricas lado a lado
+- [x] Métricas → Accuracy, Precision, Recall, F1, Matriz de Confusão
 
 ---
 
 ## 4.7 — Visualização (Metabase)
 
-- [ ] Indicadores principais → KPIs de vendas e satisfação
-- [ ] Visualização dos dados tratados → Distribuições, análises
-- [ ] Visualização dos resultados do modelo → Matriz de confusão, métricas
-- [ ] Pelo menos 1 filtro → Categoria, preço, desconto, rating
+- [x] Indicadores principais → KPIs (total, taxa de anomalia, duração média)
+- [x] Visualização dos dados tratados → Distribuições, análise por modelo
+- [x] Visualização dos resultados do modelo → Matriz de confusão, métricas
+- [x] Pelo menos 1 filtro → Modelo de máquina (`{{model_id}}`)
 
 ---
 
 ## 7 — Entregáveis Finais
 
-- [ ] Repositório Git → README, scripts, dbt, DAGs, ML, CloudFormation
-- [ ] Apresentação → Todos os 4 integrantes
-- [ ] Relatório → Documentação completa (`report/relatorio.md`)
+- [x] Repositório Git → README, scripts, dbt, DAGs, ML, CloudFormation
+- [x] Apresentação → Todos os 4 integrantes
+- [x] Relatório → Documentação completa (`report_analys.md` + `README.md`)
 
 ---
 
@@ -93,14 +93,14 @@ aliases:
 
 | Seção | Itens | Concluídos | Pendentes |
 |-------|-------|------------|-----------|
-| 4.2 — Datasets | 4 | 0 | 4 |
-| 4.3 — Processamento | 4 | 0 | 4 |
-| 4.4 — Pipeline ELT | 7 | 0 | 7 |
-| 4.5 — Nuvem | 4 | 0 | 4 |
-| 4.6 — ML | 6 | 0 | 6 |
-| 4.7 — Visualização | 4 | 0 | 4 |
-| 7 — Entregáveis | 3 | 0 | 3 |
-| **TOTAL** | **32** | **0** | **32** |
+| 4.2 — Datasets | 4 | 4 | 0 |
+| 4.3 — Processamento | 4 | 4 | 0 |
+| 4.4 — Pipeline ELT | 7 | 7 | 0 |
+| 4.5 — Nuvem | 4 | 4 | 0 |
+| 4.6 — ML | 6 | 6 | 0 |
+| 4.7 — Visualização | 4 | 4 | 0 |
+| 7 — Entregáveis | 3 | 3 | 0 |
+| **TOTAL** | **32** | **32** | **0** |
 
-> [!todo] Progresso
-> `0/32` itens concluídos — iniciar pela [[08-Cronograma#Semana 1|Semana 1]].
+> [!success] Progresso
+> `32/32` itens concluídos — projeto finalizado e pronto para apresentação.

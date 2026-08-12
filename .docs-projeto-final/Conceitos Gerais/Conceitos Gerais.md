@@ -27,10 +27,9 @@ aliases:
 
 - [[Conceito - DAG no Airflow]] — O que é uma DAG, para que serve o Airflow e como implementamos no projeto
 - [[Conceito - Pipeline ELT]] — Extract, Load, Transform: o fluxo completo dos dados, da origem ao dashboard
-- [[Conceito - Naive Bayes]] — O algoritmo de classificação, Laplace Smoothing, log-space e a implementação hard-code vs sklearn
+- [[Conceito - Rede Neural MLP]] — Forward pass, backpropagation, ativações e a implementação hard-code vs sklearn
 - [[Conceito - dbt e Modelagem]] — Schema estrela, dimensões e fatos, como o dbt organiza e testa os dados
-- [[Conceito - NLP e TF-IDF]] — Como extrair significado de texto: VADER, TF-IDF, regex e features customizadas
-- [[Conceito - Visao Computacional]] — Como extrair informação de imagens: OpenCV, nitidez, cores e textura
+- [[Conceito - MFCC e Features de Audio]] — Como transformar som em números: MFCC, features espectrais, ZCR e RMS com librosa
 
 ---
 

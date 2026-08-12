@@ -23,18 +23,17 @@ DAG significa *Directed Acyclic Graph* (Grafo Direcionado Acíclico). No Apache 
 Nossa DAG tem 8 tarefas encadeadas:
 
 ```
-[1] Baixar datasets        → sempre primeiro
+[1] Baixar MIMII           → sempre primeiro
 [2] Upload pro MinIO/S3    → depende do [1]
-[3] Limpar dados           → depende do [2]
-[4a] Extrair NLP    ┐
-[4b] Extrair CV      ┘     → ambas dependem do [3], rodam em PARALELO
-[5] Juntar features        → depende das duas ([4a] E [4b])
-[6] Rodar dbt              → depende do [5]
-[7] Testar dbt             → depende do [6]
+[3] Extrair metadados      → depende do [2]
+[4] Extrair features áudio → depende do [3]
+[5] Juntar features        → depende do [4]
+[6] Carregar no Postgres   → depende do [5]
+[7] Rodar dbt              → depende do [6]
 [8] Treinar ML             → depende do [7]
 ```
 
-As tarefas 4a (NLP) e 4b (CV) rodam em paralelo porque são independentes entre si — uma não precisa da outra. Isso acelera o pipeline.
+As tarefas são **sequenciais** — cada etapa depende dos dados produzidos pela anterior (a extração de features precisa dos metadados, o merge precisa das duas, e assim por diante).
 
 Cada tarefa usa `PythonOperator` (chama script Python) ou `BashOperator` (roda comando no terminal, como `dbt run`).
 

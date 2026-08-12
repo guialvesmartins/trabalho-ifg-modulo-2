@@ -54,5 +54,4 @@ Arquivos alterados:
 
 - [[06-Machine-Learning]]
 - [[05-Modelagem-dbt]]
-- [[Conceito - Naive Bayes]]
-- [[Conceito - NLP e TF-IDF]]
+- [[Conceito - Rede Neural MLP]]

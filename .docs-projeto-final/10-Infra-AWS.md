@@ -24,7 +24,7 @@ aliases:
 
 | Recurso AWS | Propósito | Tipo CF |
 |-------------|-----------|---------|
-| **S3 Bucket** | Armazenamento raw/processed/images | `AWS::S3::Bucket` |
+| **S3 Bucket** | Armazenamento raw/processed | `AWS::S3::Bucket` |
 | **EC2 Instance** | Airflow (t3.medium) | `AWS::EC2::Instance` |
 | **ECS Cluster** | Cluster para tasks dbt + Python | `AWS::ECS::Cluster` |
 | **ECS Task Definition** | Definição das tasks de processamento | `AWS::ECS::TaskDefinition` |
@@ -46,7 +46,7 @@ aliases:
 ```mermaid
 graph TD
     subgraph "AWS Cloud"
-        S3_AWS["S3\nraw/ processed/ images/"]
+        S3_AWS["S3\nraw/pump/"]
         GLUE["Glue Crawler"]
         ATHENA["Athena"]
         EC2_AWS["EC2\nAirflow"]
@@ -86,7 +86,7 @@ graph TD
 
 ## Diagrama da Arquitetura
 
-O diagrama visual deve ser gerado como `infra/architecture_diagram.png` e mostrar:
+O diagrama completo (dev e 100% AWS) com registro de custos está documentado em `docs/ARQUITETURA_AWS.md` e mostra:
 
 1. Fluxo de dados (Ingest → Process → Transform → ML → Dashboard)
 2. Serviços AWS envolvidos

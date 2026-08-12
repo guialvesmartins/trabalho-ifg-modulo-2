@@ -21,12 +21,18 @@ aliases:
 
 | Campo | Descrição |
 |-------|-----------|
-| **Domínio** | E-commerce / Marketplace |
-| **Tomador de decisão** | Gerente de Produto e Operações |
-| **Decisão apoiada** | Identificar quais produtos precisam de intervenção (qualidade, logística, preço, apresentação visual) |
-| **Fontes de dados** | Dados de vendas (estruturado) + Reviews textuais (não estruturado) + Imagens de produtos (não estruturado) |
-| **Tarefa de ML** | Classificação multiclasse — prever o rating (1 a 5 estrelas) combinando features textuais, visuais e estruturadas |
-| **Resultado esperado** | Sistema que classifica automaticamente o nível de satisfação e identifica os fatores que mais impactam a nota |
+| **Domínio** | Indústria 4.0 / Manutenção Preditiva |
+| **Tomador de decisão** | Engenheiro de manutenção industrial |
+| **Decisão apoiada** | "Esta bomba industrial está operando com anomalia? Devo parar para manutenção?" |
+| **Fontes de dados** | Metadados dos arquivos de áudio (estruturado) + Clipes `.wav` 16 kHz de bombas industriais (não estruturado) |
+| **Tarefa de ML** | Classificação binária — prever se a bomba está `normal` ou com `anomalia` (contaminação, vazamento, desbalanceamento) |
+| **Resultado esperado** | Sistema que analisa o som de cada bomba e classifica automaticamente, reduzindo paradas não programadas e manutenções desnecessárias |
+
+**Impacto esperado:**
+- Redução de paradas não programadas (detecta anomalia antes da falha)
+- Redução de manutenções desnecessárias (não para máquina normal)
+- Aumento da vida útil dos equipamentos
+- Economia em custos de reparo emergencial
 
 ---
 
@@ -34,9 +40,9 @@ aliases:
 
 | Dataset | Fonte | Tamanho |
 |---------|-------|---------|
-| Amazon Sales Dataset | [Kaggle](https://www.kaggle.com/datasets/karkavelrajaj/amazon-sales-dataset) | ~1.400 produtos |
-| Amazon Product Reviews | [Kaggle](https://www.kaggle.com/datasets/arhamrumi/amazon-product-reviews) | ~35.000 reviews |
-| Imagens de produtos | Coluna `img_link` do Dataset 1 | ~500-1000 imagens |
+| MIMII Dataset — Pump | [Zenodo](https://zenodo.org/records/3384388) | ~7,87 GB (4.205 clipes) |
+
+MIMII = *Malfunctioning Industrial Machine Investigation and Inspection* (Hitachi, Ltd. / Toyota Research, DCASE 2019, [arXiv:1909.09347](https://arxiv.org/abs/1909.09347)).
 
 > [!info] Detalhes completos
 > Ver [[02-Datasets]] para o dicionário de dados completo.
@@ -47,9 +53,8 @@ aliases:
 
 | Tipo | Fonte | Features Geradas |
 |------|-------|------------------|
-| **Estruturado** | `amazon_sales.csv` | Preço, desconto, categoria, rating_count |
-| **Texto (NLP)** | `review_content`, `review_title` | ~217 features (VADER, TF-IDF, metadados) |
-| **Imagem (CV)** | `img_link` | ~28 features (cores, nitidez, textura, bordas) |
+| **Estruturado** | Paths dos `.wav` (`pump/id_XX/normal|abnormal/*.wav`) | `machine_type`, `model_id`, `condition`, `duration_sec`, `sample_rate`, `channels` |
+| **Áudio (não estruturado)** | Clipes `.wav` 16 kHz | 92 features (MFCC, spectral, ZCR, RMS) via librosa |
 
 > [!info] Features detalhadas
 > Ver [[06-Machine-Learning#Features]] para a lista completa.
@@ -70,7 +75,7 @@ aliases:
 ## 5. Pipeline (8 Etapas)
 
 ```
-Download Datasets → Upload S3 → Process Structured → [NLP ∥ CV] → Merge → dbt → ML Train
+Download MIMII → Upload S3 → Metadados → Features de Áudio → Merge → Carga Postgres → dbt → ML
 ```
 
 > [!info] Pipeline detalhado
@@ -84,13 +89,12 @@ Download Datasets → Upload S3 → Process Structured → [NLP ∥ CV] → Merg
 |--------|-------------|
 | **Orquestração** | Apache Airflow 2.9 |
 | **Storage** | MinIO (dev) / AWS S3 (prod) |
-| **Processamento** | Python (pandas, numpy, sklearn, OpenCV) |
-| **NLP** | VADER, TF-IDF, textstat |
-| **CV** | OpenCV, Pillow, scikit-image |
+| **Processamento** | Python (pandas, numpy, librosa, soundfile, scikit-learn) |
+| **Áudio** | librosa, soundfile |
 | **Data Warehouse** | PostgreSQL (dev) / Snowflake (prod) |
 | **Transformação** | dbt-core 1.8 |
 | **Dashboard** | Metabase |
-| **ML** | Naive Bayes (hard-code + sklearn MultinomialNB) |
+| **ML** | MLP binário (hard-code NumPy + sklearn MLPClassifier) |
 | **Infra** | Docker, CloudFormation |
 
 ---

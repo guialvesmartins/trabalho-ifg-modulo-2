@@ -26,32 +26,32 @@ aliases:
 
 **Objetivo:** Ambiente Docker funcional
 
-- [ ] `docker-compose.yml` criado e funcional
-- [ ] PostgreSQL rodando na porta 5432
-- [ ] MinIO rodando nas portas 9000/9001
-- [ ] Airflow rodando na porta 8080
-- [ ] Metabase rodando na porta 3000
-- [ ] `Dockerfile` customizado com Python 3.11 + requirements.txt
-- [ ] `.env.local` configurado
-- [ ] `Makefile` com comandos básicos (`up`, `down`, `logs`)
+- [x] `docker-compose.yml` criado e funcional
+- [x] PostgreSQL rodando na porta 5432
+- [x] MinIO rodando nas portas 9000/9001
+- [x] Airflow rodando na porta 8080
+- [x] Metabase rodando na porta 3000
+- [x] `Dockerfile` customizado com Python 3.11 + requirements.txt (librosa, soundfile, sqlalchemy, psycopg2-binary)
+- [x] `.env.local` configurado
+- [x] `Makefile` com comandos básicos (`up`, `down`, `logs`)
 
 > [!tip] Verificação
 > `make up` deve subir todos os serviços sem erros.
 
 ---
 
-## Semana 2 — Datasets + Ingestão
+## Semana 2 — Dataset + Ingestão
 
 **Objetivo:** Dados disponíveis no S3/MinIO
 
-- [ ] `download_dataset.py` funcional (Kaggle → `data/raw/`)
-- [ ] `load_raw_to_s3.py` funcional (CSVs + imagens → MinIO)
-- [ ] ~500-1000 imagens baixadas das URLs
-- [ ] Estrutura `raw/` no bucket organizada
-- [ ] `make ingest` funcional
+- [x] `download_dataset.py` funcional (Zenodo → `data/raw/pump/`)
+- [x] `load_raw_to_s3.py` funcional (.wav → MinIO/S3 `raw/pump/`)
+- [x] Download com retomada (HTTP Range)
+- [x] Remoção de dados sintéticos legados (`model_id_XX/`)
+- [x] `make ingest` funcional
 
 > [!tip] Verificação
-> `aws s3 ls s3://raw/ --endpoint-url http://localhost:9000` deve listar os arquivos.
+> `aws s3 ls s3://raw/pump/ --endpoint-url http://localhost:9000` deve listar os arquivos.
 
 ---
 
@@ -59,14 +59,14 @@ aliases:
 
 **Objetivo:** Features extraídas e merge finalizado
 
-- [ ] `process_structured.py` — limpeza (nulos, dedup, padronização)
-- [ ] `extract_text_features.py` — NLP (~217 features)
-- [ ] `extract_image_features.py` — CV (~28 features)
-- [ ] `merge_features.py` — JOIN final
-- [ ] Testes unitários passando (`make test`)
+- [x] `process_structured.py` — metadados dos paths + `condition_binary`
+- [x] `extract_audio_features.py` — librosa (MFCC, spectral, ZCR, RMS — 92 features)
+- [x] `merge_features.py` — JOIN por `file_id`
+- [x] `load_to_postgres.py` — CSV → `public.ml_features_raw`
+- [x] Testes unitários passando (`make test`)
 
 > [!tip] Verificação
-> `processed/ml_features.csv` deve existir no bucket com ~255 colunas.
+> `data/processed/ml_features.csv` deve existir com 103 colunas.
 
 ---
 
@@ -74,13 +74,13 @@ aliases:
 
 **Objetivo:** Projeto dbt completo com testes
 
-- [ ] 3 modelos staging (`stg_products`, `stg_reviews`, `stg_images`)
-- [ ] 2 dimensões (`dim_products`, `dim_categories`)
-- [ ] 2 fatos (`fact_reviews`, `fact_sales`)
-- [ ] 1 mart (`ml_features`)
-- [ ] 4 testes dbt passando (`dbt test`)
-- [ ] `schema.yml` documentado
-- [ ] `make dbt-run` e `make dbt-test` funcionais
+- [x] 2 modelos staging (`stg_pump_metadata`, `stg_audio_features`)
+- [x] 1 dimensão (`dim_machines`)
+- [x] 1 fato (`fact_audio_analysis`)
+- [x] 1 mart (`ml_features`)
+- [x] 16 testes dbt passando (`dbt test`)
+- [x] `schema.yml` documentado
+- [x] `make dbt-run` e `make dbt-test` funcionais
 
 > [!tip] Verificação
 > `dbt test` deve retornar 0 falhas.
@@ -91,11 +91,10 @@ aliases:
 
 **Objetivo:** DAG orquestrando pipeline completo
 
-- [ ] `dags/etl_pipeline.py` com 8 tarefas encadeadas
-- [ ] Tarefas NLP e CV rodando em paralelo
-- [ ] `PythonOperator` para scripts Python
-- [ ] `BashOperator` para dbt
-- [ ] DAG visível e executável no Airflow (localhost:8080)
+- [x] `dags/etl_pipeline.py` com 8 tarefas encadeadas
+- [x] `PythonOperator` para scripts Python
+- [x] `BashOperator` para dbt
+- [x] DAG visível e executável no Airflow (localhost:8080)
 
 > [!tip] Verificação
 > Disparar DAG manualmente → todas as tarefas verdes.
@@ -104,15 +103,15 @@ aliases:
 
 ## Semana 6 — Machine Learning
 
-**Objetivo:** Naive Bayes implementado e avaliado
+**Objetivo:** MLP implementado e avaliado
 
-- [ ] `naive_bayes_hardcode.py` — algoritmo do zero
-- [ ] `naive_bayes_sklearn.py` — MultinomialNB do sklearn
-- [ ] `evaluate.py` — comparação com métricas
-- [ ] Baseline (classe majoritária) calculada
-- [ ] Baseline melhorada (só estruturadas) calculada
-- [ ] Matriz de confusão para ambos os modelos
-- [ ] Comparação lado a lado documentada
+- [x] `neural_network_hardcode.py` — MLP do zero (NumPy, backprop, SGD + momento)
+- [x] `neural_network_sklearn.py` — MLPClassifier do sklearn
+- [x] `evaluate.py` — comparação com métricas
+- [x] Baseline majoritária (DummyClassifier) calculada
+- [x] Regressão Logística calculada
+- [x] Matriz de confusão para os modelos
+- [x] Comparação lado a lado documentada (`report_analys.md`)
 
 > [!tip] Verificação
 > `make ml-train` deve imprimir tabela comparativa.
@@ -121,17 +120,16 @@ aliases:
 
 ## Semana 7 — Dashboard
 
-**Objetivo:** Metabase com 4 páginas configuradas
+**Objetivo:** Metabase com 3 dashboards configurados
 
-- [ ] Página 1: KPIs e visão geral
-- [ ] Página 2: Análise de sentimento (NLP)
-- [ ] Página 3: Análise visual (imagens)
-- [ ] Página 4: Resultados do modelo ML
-- [ ] Filtros globais configurados
-- [ ] Queries documentadas em `dashboard/metabase_questions.md`
+- [x] Dashboard 1: Visão Geral (KPIs, distribuição, anomalias por modelo)
+- [x] Dashboard 2: Análise de Áudio por Modelo
+- [x] Dashboard 3: Resultados do Modelo ML (métricas, matriz de confusão)
+- [x] Filtro por modelo de máquina (template-tag `{{model_id}}`)
+- [x] `scripts/setup_metabase.py` re-executável
 
 > [!tip] Verificação
-> As 4 páginas devem estar acessíveis em http://localhost:3000.
+> Os 3 dashboards devem estar acessíveis em http://localhost:3000.
 
 ---
 
@@ -139,13 +137,13 @@ aliases:
 
 **Objetivo:** Documentação final e apresentação
 
-- [ ] `cloudformation.yaml` completo e validado
-- [ ] `architecture_diagram.png` gerado
-- [ ] `relatorio.md` finalizado
-- [ ] `apresentacao.pptx` pronta (todos integrantes)
-- [ ] `README.md` completo com instruções de uso
-- [ ] `make test` passando em todos os módulos
-- [ ] Repositório Git organizado e limpo
+- [x] `cloudformation.yaml` completo e validado
+- [x] `docs/ARQUITETURA_AWS.md` (diagramas dev e 100% AWS + registro de custos)
+- [x] `report_analys.md` finalizado
+- [x] `apresentacao.pptx` pronta (todos integrantes)
+- [x] `README.md` completo com instruções de uso
+- [x] `make test` passando em todos os módulos
+- [x] Repositório Git organizado e limpo
 
 > [!tip] Verificação
 > Checklist completo do [[09-Checklist-Entrega]] com todos os itens marcados.
@@ -158,7 +156,7 @@ aliases:
 |--------|-------|
 | 1 | `make up` funcional |
 | 2 | `make ingest` funcional |
-| 3 | `make process` funcional |
+| 3 | `make process` + `make load-db` funcional |
 | 4 | `make dbt-test` passando |
 | 5 | DAG completa no Airflow |
 | 6 | `make ml-train` comparativo |

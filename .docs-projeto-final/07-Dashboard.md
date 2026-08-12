@@ -16,59 +16,46 @@ aliases:
 
 ---
 
-## Página 1 — Visão Geral
+## Dashboard 1 — Visão Geral
 
 | Widget | Tipo | Descrição |
 |--------|------|-----------|
-| **KPIs** | Number | Total de vendas, Rating médio, % Reviews negativas (<3), Total de produtos |
-| **Rating por categoria** | Bar chart | Média de rating por categoria |
-| **Evolução do rating** | Line chart | Rating médio ao longo do tempo (se houver data) |
-| **Piores produtos** | Table | Top 10 produtos com pior rating |
+| **KPI — Total de Amostras** | Number | `SELECT COUNT(*) FROM fact_audio_analysis` |
+| **KPI — Taxa de Anomalia (%)** | Number | `ROUND(100.0 * SUM(condition_binary) / COUNT(*), 1)` |
+| **KPI — Duração Média (s)** | Number | `ROUND(AVG(duration_sec)::numeric, 2)` |
+| **Distribuição de Condições** | Pie chart | normal vs anomalia |
+| **Anomalias por Modelo** | Bar chart | Contagem de anomalias por `model_id` |
 
 ---
 
-## Página 2 — Análise de Sentimento (NLP)
+## Dashboard 2 — Análise de Áudio por Modelo
 
 | Widget | Tipo | Descrição |
 |--------|------|-----------|
-| **Nuvem de palavras** | Word cloud | Top palavras em reviews positivas (4-5) vs negativas (1-2) |
-| **Distribuição de polaridade** | Histogram | `polarity` agrupado por rating |
-| **Complaint vs Praise** | Stacked bar | `contains_complaint` vs `contains_praise` por categoria |
-| **Dissonância** | Table | Reviews com rating 5 mas polaridade negativa |
+| **Resumo por Modelo** | Table | Dados de `dim_machines` (total, anomalias, normais) |
+| **MFCC-1 Médio por Modelo** | Bar chart | Média de `mfcc_1_mean` por `model_id` |
+| **Spectral Centroid vs Condição** | Comparison | `spectral_centroid_mean` normal vs anomalia |
+| **Top 10 Maior RMS** | Table | Amostras com maior energia (possível anomalia severa) |
 
 ---
 
-## Página 3 — Análise Visual (Imagem)
+## Dashboard 3 — Resultados do Modelo ML
 
 | Widget | Tipo | Descrição |
 |--------|------|-----------|
-| **Imagens ruins** | Table | Produtos com `blur_score` alto e seu rating médio |
-| **Brilho vs Rating** | Scatter plot | `brightness_mean` vs `rating` |
-| **Cor dominante** | Bar chart | Cor dominante mais frequente por categoria |
-
-> [!question] Hipóteses a testar
-> Imagens escuras ou borradas estão associadas a ratings mais baixos?
+| **KPI — Acurácia do Modelo (%)** | Number | Acurácia do MLP sklearn no teste (tabela `model_predictions`) |
+| **Métricas dos Modelos** | Table | Comparativo baselines vs MLPs (tabela `model_metrics`) |
+| **Matriz de Confusão (Sklearn)** | Heatmap | Contagens real × predito |
+| **Predições com Erro** | Table | Amostras mal classificadas — insumo da análise qualitativa |
 
 ---
 
-## Página 4 — Resultados do Modelo ML
+## Filtros
 
-| Widget | Tipo | Descrição |
-|--------|------|-----------|
-| **Matriz de confusão** | Heatmap | 5x5 matriz de confusão |
-| **Métricas por classe** | Table | Accuracy, Precision, Recall, F1 para cada rating |
-| **Hard-code vs Sklearn** | Grouped bar | Comparação lado a lado |
-| **Top features** | Bar chart | Palavras mais importantes para cada classe de rating |
+Os dashboards 1 e 2 têm **filtro por modelo de máquina** (parâmetro mapeado via template-tag `{{model_id}}` nos cards SQL — cláusula opcional `[[AND model_id = {{model_id}}]]`).
 
----
-
-## Filtros Globais
-
-- [ ] Período (se disponível)
-- [ ] Categoria do produto
-- [ ] Faixa de preço
-- [ ] Faixa de desconto
-- [ ] Rating
+> [!info] Schemas
+> Os cards SQL referenciam os schemas do dbt: `public_analytics.fact_audio_analysis` e `public_analytics.dim_machines`. As tabelas `model_metrics` e `model_predictions` ficam em `public`.
 
 ---
 
@@ -76,16 +63,15 @@ aliases:
 
 Ao rodar `make up`, o container `metabase-setup` configura automaticamente:
 - Conexão com o banco PostgreSQL
-- 4 dashboards com perguntas SQL pré-configuradas
+- 3 dashboards com perguntas SQL pré-configuradas (`scripts/setup_metabase.py`)
 
 **Acesso:**
 - URL: [http://localhost:3000](http://localhost:3000)
 - Email: `admin@projeto.com`
-- Senha: `admin123`
+- Senha: `ProjetoIFG2025!`
 
-> [!tip] Setup manual
-> Se precisar reconfigurar, rode `make setup-metabase` a qualquer momento.
-> Para ver o progresso da configuração: `make logs-setup`
+> [!tip] Setup manual / reexecução
+> O `setup_metabase.py` é re-executável (arquiva cards/dashboards antigos de mesmo nome antes de recriar). Para rodar manualmente: `make setup-metabase`. Para ver o progresso: `make logs-setup`.
 
 ---
 
@@ -102,6 +88,3 @@ Database: airflow
 User: airflow
 Password: airflow
 ```
-
-> [!info] Queries SQL
-> As queries SQL de cada widget estão documentadas em `dashboard/metabase_questions.md`.

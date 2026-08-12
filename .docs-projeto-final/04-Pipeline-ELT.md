@@ -22,109 +22,100 @@ aliases:
 
 ```mermaid
 graph TD
-    E1["[1] download_dataset.py\nBaixa datasets do Kaggle"]
-    E2["[2] load_raw_to_s3.py\nUpload MinIO/S3: raw/"]
-    E3["[3] process_structured.py\nLimpeza dados estruturados"]
-    E4A["[4a] extract_text_features.py\nNLP: VADER, TF-IDF, metadados"]
-    E4B["[4b] extract_image_features.py\nCV: cores, nitidez, textura, bordas"]
-    E5["[5] merge_features.py\nJOIN: todas as features"]
-    E6["[6] dbt run\nstaging → dimensions → facts → marts"]
-    E7["[7] dbt test\n4 testes mínimos"]
-    E8["[8] ml/train.py\nNaive Bayes + Avaliação"]
+    E1["[1] download_dataset.py\nBaixa 0_dB_pump.zip do Zenodo"]
+    E2["[2] load_raw_to_s3.py\nUpload .wav → MinIO/S3: raw/pump/"]
+    E3["[3] process_structured.py\nMetadados dos paths → pump_metadata.csv"]
+    E4["[4] extract_audio_features.py\nlibrosa: MFCC, spectral, ZCR, RMS"]
+    E5["[5] merge_features.py\nJOIN metadados + features de áudio"]
+    E6["[6] load_to_postgres.py\nCSV → PostgreSQL (ml_features_raw)"]
+    E7["[7] dbt run + dbt test\nstaging → dims → facts → marts"]
+    E8["[8] ml/evaluate.py\nMLP hard-code + sklearn + avaliação"]
 
-    E1 --> E2 --> E3
-    E3 --> E4A
-    E3 --> E4B
-    E4A --> E5
-    E4B --> E5
-    E5 --> E6 --> E7 --> E8
+    E1 --> E2 --> E3 --> E4 --> E5 --> E6 --> E7 --> E8
 ```
 
 ---
 
 ## Detalhamento por Etapa
 
-### [1] Download Datasets
+### [1] Download Dataset
 
 **Script:** `ingestion/download_dataset.py`
-**Entrada:** API do Kaggle
-**Saída:** `data/raw/amazon_sales.csv`, `data/raw/amazon_reviews.csv`
+**Entrada:** Zenodo (`https://zenodo.org/records/3384388/files/0_dB_pump.zip`)
+**Saída:** `data/raw/pump/`
 
-- Usa `kagglehub` para baixar ambos os datasets
-- Valida se os arquivos foram baixados corretamente
+- Baixa ~7,87 GB com barra de progresso via `requests`
+- Suporta **retomada** de download interrompido (HTTP Range)
+- Remove dados sintéticos legados (`model_id_XX/`) antes de extrair o dataset real
+- Extrai o zip para `data/raw/pump/`
 
 ### [2] Upload para S3/MinIO
 
 **Script:** `ingestion/load_raw_to_s3.py`
-**Entrada:** `data/raw/*.csv` + URLs de imagem
-**Saída:** MinIO/S3 `raw/`
+**Entrada:** `data/raw/pump/**/*.wav`
+**Saída:** MinIO/S3 `raw/pump/`
 
-- Upload dos CSVs para o bucket
-- Download das imagens via `img_link` e upload para `raw/images/`
-- Usa `boto3` (compatível com MinIO e S3)
+- Usa `boto3` com `endpoint_url` configurável (MinIO em dev, AWS S3 em prod)
 
-### [3] Processamento de Dados Estruturados
+### [3] Extração de Metadados
 
 **Script:** `processing/process_structured.py`
-**Entrada:** `raw/amazon_sales.csv`
-**Saída:** `processed/products_clean.csv`
+**Entrada:** `data/raw/pump/`
+**Saída:** `data/processed/pump_metadata.csv`
 
-- Tratamento de nulos
-- Deduplicação
-- Padronização de tipos
-- Transformações: log de preço, buckets de desconto
+- Percorre os paths (`machine_type`, `model_id`, `condition`)
+- Normaliza `abnormal` → `anomaly` (`CONDITION_MAP`)
+- Lê metadata dos arquivos com `soundfile` (`duration_sec`, `sample_rate`, `channels`)
+- Gera `file_id` e o target `condition_binary` (anomaly=1)
 
-### [4a] Extração de Features de Texto (NLP)
+### [4] Extração de Features de Áudio
 
-**Script:** `processing/extract_text_features.py`
-**Entrada:** `products_clean.csv`
-**Saída:** `processed/reviews_features.csv`
+**Script:** `processing/extract_audio_features.py`
+**Entrada:** `data/raw/pump/**/*.wav`
+**Saída:** `data/processed/audio_features.csv`
 
-> [!info] 217 features geradas
-> Ver [[06-Machine-Learning#Features de Texto NLP]] para a lista completa.
+- Carrega cada `.wav` com `librosa.load(sr=16000, mono=True)`
+- Extrai **92 features**: MFCC(40, média+desvio = 80), espectrais (10), ZCR e RMS (2)
 
-### [4b] Extração de Features de Imagem (CV)
+> [!info] Features detalhadas
+> Ver [[06-Machine-Learning#Features]] para a lista completa.
 
-**Script:** `processing/extract_image_features.py`
-**Entrada:** `raw/images/*.jpg`
-**Saída:** `processed/images_features.csv`
-
-> [!info] 28 features geradas
-> Ver [[06-Machine-Learning#Features de Imagem CV]] para a lista completa.
-
-### [5] Merge de Features
+### [5] Merge
 
 **Script:** `processing/merge_features.py`
-**Entrada:** `products_clean.csv` + `reviews_features.csv` + `images_features.csv`
-**Saída:** `processed/ml_features.csv`
+**Entrada:** `pump_metadata.csv` + `audio_features.csv`
+**Saída:** `data/processed/ml_features.csv`
 
-- JOIN pelas chaves de produto
-- Validação de integridade (sem nulos na target)
+- LEFT JOIN por `file_id`
+- Preenche nulos com 0
+- Resultado: 103 colunas (96 features numéricas)
 
-### [6] dbt Run
+### [6] Carga no PostgreSQL
 
-**Comando:** `dbt run`
-**Modelos:** staging → dimensions → facts → marts
+**Script:** `processing/load_to_postgres.py`
+**Entrada:** `data/processed/ml_features.csv`
+**Saída:** tabela `public.ml_features_raw` (PostgreSQL)
+
+- Insere via SQLAlchemy com `if_exists='replace'`
+
+### [7] dbt (Run + Test)
+
+**Comando:** `dbt run` → `dbt test`
+
+**Modelos:** 5 (2 staging views, 1 dimensão, 1 fato, 1 mart)
 
 > [!info] Schema estrela completo
-> Ver [[05-Modelagem-dbt]] para os 8 modelos e relacionamentos.
+> Ver [[05-Modelagem-dbt]] para os 5 modelos e 14 testes.
 
-### [7] dbt Test
+### [8] ML — Treinamento e Avaliação
 
-**Comando:** `dbt test`
+**Script:** `ml/evaluate.py`
+**Entrada:** `ml_features.csv`
+**Saída:** Métricas comparativas, matrizes de confusão, `predictions.csv`, modelos `.pkl`, `report_analys.md`
 
-| Teste | Modelo | Coluna |
-|-------|--------|--------|
-| `not_null` + `unique` | `dim_products` | `product_id` |
-| `not_null` | `fact_reviews` | `review_id`, `rating` |
-| `accepted_values` [1..5] | `fact_reviews` | `rating` |
-| `unique` | `dim_categories` | `category_name` |
-
-### [8] Treinamento ML
-
-**Scripts:** `ml/hard_code/naive_bayes_hardcode.py`, `ml/sklearn/naive_bayes_sklearn.py`, `ml/evaluate.py`
-**Entrada:** `ml_features` (mart do dbt)
-**Saída:** Métricas comparativas
+- Baselines: DummyClassifier (majoritária) + Regressão Logística
+- MLP hard-code (NumPy, 300 épocas) + MLPClassifier (sklearn)
+- Split 80/20 com stratify + StandardScaler
 
 > [!info] Detalhes do ML
 > Ver [[06-Machine-Learning]].
@@ -135,16 +126,15 @@ graph TD
 
 **Arquivo:** `dags/etl_pipeline.py`
 
+**Schedule:** manual ou agendado
+
 ```python
-# Schedule: @daily ou manual
-download_task >> load_to_s3_task >> process_structured_task
-process_structured_task >> extract_text_features_task
-process_structured_task >> extract_image_features_task
-[extract_text_features_task, extract_image_features_task] >> merge_features_task
-merge_features_task >> dbt_run_task >> dbt_test_task >> ml_train_evaluate_task
+# 8 tarefas sequenciais
+download_dataset >> load_raw_to_s3 >> process_structured >> extract_audio_features
+extract_audio_features >> merge_features >> load_to_postgres >> dbt_run >> dbt_test >> ml_train_evaluate
 ```
 
-As tarefas `4a` e `4b` rodam em paralelo (NLP e CV são independentes).
+As tarefas são **sequenciais** (dependência de dados em cada etapa — o pipeline não tem tarefas paralelas, diferentemente da abordagem anterior com NLP ∥ CV).
 
 ---
 
@@ -152,6 +142,7 @@ As tarefas `4a` e `4b` rodam em paralelo (NLP e CV são independentes).
 
 ```bash
 make pipeline    # Dispara DAG completa via Airflow
-make ingest      # Apenas download + upload
-make process     # Apenas processamento + NLP + CV
+make ingest      # Apenas download + upload S3
+make process     # Metadados + features de áudio + merge
+make load-db     # Carrega CSV no PostgreSQL
 ```

@@ -25,7 +25,7 @@ aliases:
 %% Registros serão adicionados automaticamente pelo agente abaixo desta linha %%
 
 - [[Duvida - O que estamos fazendo neste projeto]] — Visão geral: o que construímos, como fizemos passo a passo e qual o objetivo final
-- [[Duvida - Compatibilidade entre os Datasets]] — Por que usamos só o Dataset 1 e como ele já entrega os 3 tipos de dados sozinho
+- [[Duvida - Por que o dataset MIMII Pump]] — Por que o MIMII (Pump), por que só áudio de bomba e o histórico das tentativas descartadas
 
 ---
 

@@ -10,7 +10,7 @@ status: em-andamento
 # Projeto Final Integrado — IFG
 
 > [!important] Ponto de Partida
-> Este vault organiza todo o projeto de **Previsão de Satisfação em E-commerce com Dados Multimodais**.
+> Este vault organiza todo o projeto de **Manutenção Preditiva Industrial com Som** (MIMII Pump).
 
 Comece pela página principal: [[Home]]
 
@@ -24,6 +24,7 @@ Comece pela página principal: [[Home]]
 - **Referência** de comandos, dbt, modelos e pipeline
 - **Canvas visual** para navegação gráfica
 - **Registro automático** de análises, dúvidas e conceitos pelo agente opencode
+- **Modelo de ML** que responde "esta bomba está com anomalia?" (MLP binário sobre features de áudio)
 
 ## Links rápidos
 
@@ -51,7 +52,7 @@ Comece pela página principal: [[Home]]
 ├── 03-Arquitetura.md         ← Diagramas de arquitetura
 ├── 04-Pipeline-ELT.md        ← 8 etapas do pipeline
 ├── 05-Modelagem-dbt.md       ← Schema estrela e modelos
-├── 06-Machine-Learning.md    ← Features + Naive Bayes
+├── 06-Machine-Learning.md    ← Features de áudio + MLP
 ├── 07-Dashboard.md           ← 4 páginas do Metabase
 ├── 08-Cronograma.md          ← Semanas 1-8
 ├── 09-Checklist-Entrega.md   ← 32 requisitos do PDF

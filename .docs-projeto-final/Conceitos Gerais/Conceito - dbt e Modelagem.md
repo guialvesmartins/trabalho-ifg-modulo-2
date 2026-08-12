@@ -19,27 +19,24 @@ Em vez de ter um analista rodando queries manuais no banco, o dbt transforma dad
 ### Schema Estrela
 
 É um jeito de organizar tabelas analíticas com:
-- **Tabelas Fato** (*facts*): registram eventos/acontencimentos (ex: uma review, uma venda)
-- **Tabelas Dimensão** (*dims*): descrevem entidades (ex: produto, categoria)
+- **Tabelas Fato** (*facts*): registram eventos (ex: uma análise de áudio com sua condição)
+- **Tabelas Dimensão** (*dims*): descrevem entidades (ex: uma máquina/bomba)
 
 O nome "estrela" vem do diagrama: uma fato no centro, várias dimensões ao redor.
 
 ## Como foi implementado no projeto
 
-**8 modelos dbt** em 4 camadas:
+**5 modelos dbt** em 4 camadas (origem: tabela `public.ml_features_raw`):
 
-| Camada | Modelos | O que faz |
-|--------|---------|-----------|
-| Staging | `stg_products`, `stg_reviews`, `stg_images` | Renomeia colunas, ajusta tipos, limpa dados brutos |
-| Dimensions | `dim_products`, `dim_categories` | Tabelas de consulta (quais produtos existem? quais categorias?) |
-| Facts | `fact_reviews`, `fact_sales` | Registros de reviews e métricas de venda |
-| Marts | `ml_features` | JOIN final: uma tabela única com todas as features prontas pro modelo ML |
+| Camada | Modelo | Tipo | O que faz |
+|--------|--------|------|-----------|
+| Staging | `stg_pump_metadata` | View | Limpeza, dedup (`distinct on file_id`) e tipagem dos metadados |
+| Staging | `stg_audio_features` | View | Cast para `numeric` das features de áudio |
+| Dimensions | `dim_machines` | Table | Agregação por modelo (total, anomalias, normais) |
+| Facts | `fact_audio_analysis` | Table | Join completo (condição + features) |
+| Marts | `ml_features` | Table | Tabela final pronta para ML |
 
-**4 testes automáticos:**
-- `product_id` não pode ser nulo nem duplicado
-- `review_id` não pode ser nulo
-- `rating` só pode ser 1, 2, 3, 4 ou 5
-- `category_name` não pode ser duplicado
+**16 testes automáticos** (`schema.yml`): `not_null`, `unique` e `accepted_values` (condition ∈ normal/anomaly, condition_binary ∈ 0/1).
 
 Os profiles (`profiles.yml`) têm targets `dev` (Postgres) e `prod` (Snowflake), controlados por variáveis de ambiente — troca o `.env` e o dbt fala com outro banco automaticamente.
 

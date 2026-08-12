@@ -4,7 +4,8 @@ date: 2025-07-03
 tags:
   - dados
   - datasets
-  - kaggle
+  - mimii
+  - audio
 aliases:
   - Dados
   - Fontes de Dados
@@ -16,58 +17,71 @@ aliases:
 
 ---
 
-## Dataset 1 — Amazon Sales Dataset (Principal)
+## MIMII Dataset — Pump (Principal)
 
 | Atributo | Valor |
 |----------|-------|
-| **Kaggle ID** | `karkavelrajaj/amazon-sales-dataset` |
-| **Link** | [abrir no Kaggle](https://www.kaggle.com/datasets/karkavelrajaj/amazon-sales-dataset) |
-| **Tamanho** | ~1.400 produtos |
-| **Arquivo** | `data/raw/amazon_sales.csv` |
+| **Criador** | Hitachi, Ltd. / Toyota Research |
+| **Publicação** | DCASE 2019 Workshop ([arXiv:1909.09347](https://arxiv.org/abs/1909.09347)) |
+| **Licença** | CC BY-SA 4.0 |
+| **Link** | [Zenodo — 0_dB_pump.zip](https://zenodo.org/records/3384388) |
+| **Tamanho** | ~7,87 GB |
+| **Total** | 4.205 clipes de áudio (10 s, 16 kHz) |
+| **Arquivo** | `data/raw/pump/` |
 
-### Colunas
+### Condições
+
+| Condição | Clipes | Descrição |
+|----------|--------|-----------|
+| `normal` | 3.749 | Funcionamento normal da bomba |
+| `anomaly` | 456 | Contaminação, vazamento, desbalanceamento |
+
+> [!warning] Desbalanceamento
+> Taxa de anomalia de ~10,8% (proporção ~8:1). Por isso o split usa `stratify` e a avaliação prioriza recall/F1 da classe minoritária.
+
+### Modelos de Bomba (4)
+
+`id_00`, `id_02`, `id_04`, `id_06`
+
+### Estrutura de Diretórios
+
+```
+pump/
+├── id_00/
+│   ├── normal/    (*.wav)
+│   └── abnormal/  (*.wav)
+├── id_02/ ...
+├── id_04/ ...
+└── id_06/ ...
+```
+
+> [!important] Nomenclatura
+> O dataset real usa `id_XX` e `abnormal`. O pipeline normaliza `abnormal` → `anomaly` (constante `CONDITION_MAP` em `process_structured.py` e `extract_audio_features.py`). Todo o restante (dbt, ML, Metabase) usa `anomaly`.
+
+---
+
+## Características do Áudio
+
+- 16 kHz de sample rate, 16 bits por amostra
+- Gravado com array de 8 microfones (**8 canais**)
+- Misturado com ruído real de fábrica (0 dB SNR)
+- `librosa.load(mono=True)` faz downmix na extração de features
+- Clipes de 10 segundos
+
+---
+
+## Colunas Estruturadas
 
 | Coluna | Tipo | Uso |
 |--------|------|-----|
-| `product_name` | Texto | Nome do produto |
-| `category` | Categórico | Categoria (Eletrônicos, Roupas, etc.) |
-| `discounted_price` | Numérico | Preço com desconto (₹) |
-| `actual_price` | Numérico | Preço original (₹) |
-| `discount_percentage` | Numérico | % de desconto |
-| `rating` | Numérico (1-5) | **🎯 Target do modelo** |
-| `rating_count` | Numérico | Quantidade de avaliações |
-| `review_content` | **Texto** | Conteúdo da review |
-| `review_title` | **Texto** | Título da review |
-| `img_link` | **URL** | Link da imagem do produto |
-| `product_link` | URL | Link da página do produto |
-
-> [!success] Este dataset sozinho já entrega os 3 tipos de dados
-> Estruturado + Texto + Imagens.
-
----
-
-## Dataset 2 — Amazon Product Reviews (Complementar NLP)
-
-| Atributo | Valor |
-|----------|-------|
-| **Kaggle ID** | `arhamrumi/amazon-product-reviews` |
-| **Link** | [abrir no Kaggle](https://www.kaggle.com/datasets/arhamrumi/amazon-product-reviews) |
-| **Tamanho** | ~35.000 reviews |
-| **Arquivo** | `data/raw/amazon_reviews.csv` |
-| **Uso** | Enriquecer os dados textuais com mais exemplos de reviews |
-
----
-
-## Imagens de Produtos
-
-| Atributo | Valor |
-|----------|-------|
-| **Fonte** | Coluna `img_link` do Dataset 1 |
-| **Quantidade** | ~500-1000 imagens |
-| **Formato** | JPEG/PNG |
-| **Armazenamento dev** | MinIO (`raw/images/`) |
-| **Armazenamento prod** | AWS S3 (`images/`) |
-| **Diretório local** | `images/products/` |
+| `file_id` | Texto | Chave única (`machine_type_model_id_condition_stem`) |
+| `machine_type` | Categórico | `pump` |
+| `model_id` | Categórico | `id_00`, `id_02`, `id_04`, `id_06` |
+| `condition` | Categórico | `normal` / `anomaly` |
+| `condition_binary` | Numérico (0/1) | **🎯 Target do modelo** (anomaly=1) |
+| `duration_sec` | Numérico | Duração do clipe |
+| `sample_rate` | Numérico | 16000 |
+| `channels` | Numérico | 8 |
 
 ---
 
@@ -78,12 +92,12 @@ aliases:
 make ingest
 
 # Manual (scripts Python)
-python ingestion/download_dataset.py    # Baixa do Kaggle → data/raw/
-python ingestion/load_raw_to_s3.py      # Upload → MinIO/S3
+python ingestion/download_dataset.py    # Baixa 0_dB_pump.zip do Zenodo → data/raw/
+python ingestion/load_raw_to_s3.py      # Upload .wav → MinIO/S3
 ```
 
-> [!warning] Requisito
-> É necessário ter o `kagglehub` instalado e credenciais Kaggle configuradas (`~/.kaggle/kaggle.json`).
+> [!tip] Download retomável
+> `download_dataset.py` suporta retomada de download interrompido (HTTP Range) e remove dados sintéticos legados (`model_id_XX/`) antes de extrair o dataset real.
 
 ---
 
@@ -91,17 +105,12 @@ python ingestion/load_raw_to_s3.py      # Upload → MinIO/S3
 
 ```
 bucket/
-├── raw/
-│   ├── amazon_sales.csv
-│   ├── amazon_reviews.csv
-│   └── images/
-│       ├── B000001.jpg
-│       ├── B000002.jpg
-│       └── ...
-└── processed/
-    ├── products_clean.csv
-    ├── reviews_clean.csv
-    ├── reviews_features.csv
-    ├── images_features.csv
-    └── ml_features.csv
+└── raw/
+    └── pump/
+        ├── id_00/
+        │   ├── normal/
+        │   └── abnormal/
+        ├── id_02/
+        ├── id_04/
+        └── id_06/
 ```

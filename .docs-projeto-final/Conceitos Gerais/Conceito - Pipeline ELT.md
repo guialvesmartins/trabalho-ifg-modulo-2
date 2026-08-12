@@ -14,24 +14,24 @@ tags:
 
 ELT significa *Extract, Load, Transform* (Extrair, Carregar, Transformar). É o fluxo de trabalho que move dados da fonte bruta até um formato utilizável para análise e machine learning.
 
-Diferente do ETL tradicional (onde os dados são transformados ANTES de entrar no banco), no ELT você primeiro carrega os dados brutos no banco e só depois os transforma usando ferramentas como dbt. A vantagem é flexibilidade: você pode transformar os mesmos dados de várias formas diferentes depois.
+Diferente do ETL tradicional (onde os dados são transformados ANTES de entrar no banco), no ELT você primeiro carrega os dados brutos e só depois transforma usando ferramentas como dbt. A vantagem é flexibilidade: você pode transformar os mesmos dados de várias formas diferentes depois.
 
 ## Como foi implementado no projeto
 
 Nosso pipeline ELT tem 3 grandes fases:
 
 **Extract (extrair):**
-- Baixamos 2 datasets do Kaggle via Python
-- Extraímos as URLs das imagens de produtos e baixamos 500 delas
-- Tudo vai para `data/raw/`
+- Baixamos o dataset **MIMII Pump** (~7,87 GB) do Zenodo via Python
+- São clipes `.wav` de 10 s, 16 kHz, de bombas industriais (normal + anomalia)
+- Tudo vai para `data/raw/pump/`
 
 **Load (carregar):**
-- CSVs são enviados para o MinIO (simula o S3 da AWS)
-- Os dados processados são carregados no PostgreSQL via SQLAlchemy
-- A troca para S3/Snowflake reais é só mudar 4 linhas no `.env`
+- Os `.wav` são enviados para o MinIO (simula o S3 da AWS)
+- As features processadas são carregadas no PostgreSQL via SQLAlchemy (`ml_features_raw`)
+- A troca para S3/Snowflake reais é só mudar 4 variáveis no `.env`
 
 **Transform (transformar):**
-- Scripts Python limpam os dados, extraem features de texto (NLP) e imagem (CV)
+- Scripts Python extraem metadados dos paths e features de áudio (librosa: MFCC, spectral, ZCR, RMS)
 - dbt organiza em schema estrela (dimensões e fatos)
 - A tabela final `ml_features` está pronta para consumo pelo modelo de ML e pelo Metabase
 

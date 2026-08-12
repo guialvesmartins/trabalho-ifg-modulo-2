@@ -22,55 +22,39 @@ aliases:
 
 ```mermaid
 erDiagram
-    dim_categories ||--o{ dim_products : "1:N"
-    dim_products ||--o{ fact_sales : "1:N"
-    dim_products ||--o{ fact_reviews : "1:N"
-    fact_reviews ||--o{ ml_features : "JOIN"
+    dim_machines ||--o{ fact_audio_analysis : "1:N"
+    fact_audio_analysis ||--o{ ml_features : "JOIN"
 
-    dim_categories {
-        int category_id PK
-        string category_name
-        int total_products
-        float avg_rating
+    dim_machines {
+        string machine_type PK
+        string model_id PK
+        int total_samples
+        int anomaly_count
+        int normal_count
+        numeric avg_duration_sec
     }
 
-    dim_products {
-        int product_id PK
-        string product_name
-        int category_id FK
-        float actual_price
-        float discounted_price
-        float discount_pct
-        float rating
-        int rating_count
-        string image_url
-    }
-
-    fact_sales {
-        int product_id FK
-        float actual_price
-        float discounted_price
-        float discount_pct
-        float rating
-        int rating_count
-    }
-
-    fact_reviews {
-        int review_id PK
-        int product_id FK
-        int rating
-        string review_title
-        string review_content
-        float polarity
-        float subjectivity
-        int review_length
-        int word_count
+    fact_audio_analysis {
+        string file_id PK
+        string machine_type FK
+        string model_id FK
+        string condition
+        int condition_binary
+        numeric duration_sec
+        numeric zcr_mean
+        numeric rms_mean
+        numeric spectral_centroid_mean
+        numeric mfcc_1_mean "… mfcc_13_mean, mfcc_1_std…"
     }
 
     ml_features {
-        int product_id
-        int review_id
-        int rating
+        string file_id
+        string machine_type
+        string model_id
+        string condition
+        int condition_binary
+        int total_samples
+        int anomaly_count
     }
 ```
 
@@ -78,49 +62,33 @@ erDiagram
 
 ## Modelos por Camada
 
-| Camada | Modelo | Arquivo | Descrição |
-|--------|--------|---------|-----------|
-| **Staging** | `stg_products` | `models/staging/stg_products.sql` | Renomeia, tipa, deduplica `ml_features.csv` |
-| **Staging** | `stg_reviews` | `models/staging/stg_reviews.sql` | Renomeia, tipa, deduplica reviews |
-| **Staging** | `stg_images` | `models/staging/stg_images.sql` | Renomeia, tipa, deduplica features de imagem |
-| **Dimension** | `dim_products` | `models/dimensions/dim_products.sql` | Dimensão de produtos, SCD Type 1 |
-| **Dimension** | `dim_categories` | `models/dimensions/dim_categories.sql` | Categorias únicas com métricas agregadas |
-| **Fact** | `fact_reviews` | `models/facts/fact_reviews.sql` | Reviews com features NLP + imagem |
-| **Fact** | `fact_sales` | `models/facts/fact_sales.sql` | Métricas de venda por produto |
-| **Mart** | `ml_features` | `models/marts/ml_features.sql` | JOIN final: features prontas para ML |
+| Camada | Modelo | Arquivo | Tipo | Descrição |
+|--------|--------|---------|------|-----------|
+| **Staging** | `stg_pump_metadata` | `models/staging/stg_pump_metadata.sql` | View | Limpeza, dedup (`distinct on file_id`) e tipagem dos metadados |
+| **Staging** | `stg_audio_features` | `models/staging/stg_audio_features.sql` | View | Cast para `numeric` das features de áudio |
+| **Dimension** | `dim_machines` | `models/dimensions/dim_machines.sql` | Table | Agregação por modelo: total, anomalias, normais, duração média |
+| **Fact** | `fact_audio_analysis` | `models/facts/fact_audio_analysis.sql` | Table | Join completo dos dados (condição + features de áudio) |
+| **Mart** | `ml_features` | `models/marts/ml_features.sql` | Table | Join com `dim_machines`, pronto para ML |
+
+A origem dos dados é a tabela `public.ml_features_raw` (carregada por `processing/load_to_postgres.py`).
 
 ---
 
-## Testes dbt (`schema.yml`)
+## Testes dbt (`tests/schema.yml`) — 16 testes
 
-```yaml
-version: 2
-
-models:
-  - name: dim_products
-    columns:
-      - name: product_id
-        tests:
-          - not_null
-          - unique
-
-  - name: fact_reviews
-    columns:
-      - name: review_id
-        tests:
-          - not_null
-      - name: rating
-        tests:
-          - not_null
-          - accepted_values:
-              values: [1, 2, 3, 4, 5]
-
-  - name: dim_categories
-    columns:
-      - name: category_name
-        tests:
-          - unique
-```
+| Modelo | Coluna | Testes |
+|--------|--------|--------|
+| `stg_pump_metadata` | `file_id` | `not_null`, `unique` |
+| `stg_pump_metadata` | `machine_type` | `not_null` |
+| `stg_pump_metadata` | `model_id` | `not_null` |
+| `stg_pump_metadata` | `condition` | `not_null`, `accepted_values: [normal, anomaly]` |
+| `stg_audio_features` | `file_id` | `not_null`, `unique` |
+| `dim_machines` | `machine_type` | `not_null` |
+| `dim_machines` | `model_id` | `not_null` |
+| `dim_machines` | `total_samples` | `not_null` |
+| `fact_audio_analysis` | `file_id` | `not_null`, `unique` |
+| `fact_audio_analysis` | `condition_binary` | `not_null`, `accepted_values: [0, 1]` |
+| `ml_features` | `condition_binary` | `not_null` |
 
 ---
 
@@ -128,26 +96,20 @@ models:
 
 ```
 dbt_project/
-├── dbt_project.yml
-├── packages.yml
-├── profiles.yml
+├── dbt_project.yml       # staging=view, dim/facts/marts=table
+├── profiles.yml          # dev (postgres) e prod (snowflake)
 ├── models/
 │   ├── staging/
-│   │   ├── stg_products.sql
-│   │   ├── stg_reviews.sql
-│   │   └── stg_images.sql
+│   │   ├── stg_pump_metadata.sql
+│   │   └── stg_audio_features.sql
 │   ├── dimensions/
-│   │   ├── dim_products.sql
-│   │   └── dim_categories.sql
+│   │   └── dim_machines.sql
 │   ├── facts/
-│   │   ├── fact_reviews.sql
-│   │   └── fact_sales.sql
+│   │   └── fact_audio_analysis.sql
 │   └── marts/
 │       └── ml_features.sql
-├── macros/
-├── tests/
-│   └── schema.yml
-└── docs/
+└── tests/
+    └── schema.yml
 ```
 
 ---
