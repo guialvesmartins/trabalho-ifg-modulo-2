@@ -19,7 +19,7 @@
 		{"id":"c000000000000001","type":"text","text":"## 📈 Dashboard\n- [[07-Dashboard]]\n- 4 páginas Metabase\n- KPIs + NLP + Imagens + ML","x":-350,"y":300,"width":300,"height":100,"color":"2"},
 		{"id":"c000000000000002","type":"text","text":"## ☁️ Infra AWS\n- [[10-Infra-AWS]]\n- CloudFormation\n- S3 + EC2 + Redshift\n- SageMaker","x":-10,"y":300,"width":300,"height":100,"color":"2"},
 		{"id":"c000000000000003","type":"text","text":"## ✅ Entregas\n- [[09-Checklist-Entrega]]\n- 32 requisitos\n- Relatório + PPT\n- Repositório Git","x":330,"y":300,"width":300,"height":100,"color":"2"},
-		{"id":"d000000000000001","type":"text","text":"## 🏠 Índice\n[[🏠 Home]] | [[01-Plano-Geral]] | [[03-Arquitetura]]\n[[08-Cronograma]] | [[11-Comandos]]","x":-200,"y":450,"width":380,"height":80,"color":"1"}
+		{"id":"d000000000000001","type":"text","text":"## 🏠 Índice\n[[Home]] | [[01-Plano-Geral]] | [[03-Arquitetura]]\n[[08-Cronograma]] | [[11-Comandos]]","x":-200,"y":450,"width":380,"height":80,"color":"1"}
 	],
 	"edges":[
 		{"id":"e000000000000001","fromNode":"a000000000000001","fromSide":"bottom","toNode":"a000000000000002","toSide":"top"},

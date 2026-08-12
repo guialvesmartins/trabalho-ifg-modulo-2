@@ -40,6 +40,6 @@ Arquivos criados/modificados:
 
 ## Relacionado
 
-- [[🏠 Home]]
+- [[Home]]
 - [[12-Passo-a-Passo]]
 - [[01-Plano-Geral]]

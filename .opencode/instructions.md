@@ -10,7 +10,7 @@ Sempre que fizer alterações em arquivos do projeto fora do vault, avalie se de
 
 ## Categorias do Vault
 
-### 📊 Análise (`.docs-projeto-final/📊 Análise/`)
+### Análise (`.docs-projeto-final/Análise/`)
 
 **Quando salvar:** Mudanças estruturais no projeto, decisões de arquitetura, refatorações significativas, criação/exclusão de arquivos importantes, mudanças no pipeline, alterações no docker-compose, novos scripts.
 
@@ -52,11 +52,11 @@ O que mudou no projeto. Arquivos afetados: `caminho/arquivo.py`
 - [[Nota Relacionada]]
 ```
 
-Após criar o arquivo, **atualizar** o índice `📊 Análise/📊 Análise.md` adicionando um link `[[Nome do Arquivo]]` na seção de índice.
+Após criar o arquivo, **atualizar** o índice `Análise/Análise.md` adicionando um link `[[Nome do Arquivo]]` na seção de índice.
 
 ---
 
-### ❓ Dúvidas (`.docs-projeto-final/❓ Dúvidas/`)
+### Dúvidas (`.docs-projeto-final/Dúvidas/`)
 
 **Quando salvar:** Toda vez que o usuário fizer uma pergunta e você responder com uma explicação não trivial (conceitos, decisões de código, comparações, "como funciona", "por que usar X vs Y"). NÃO salvar perguntas operacionais simples (ex: "lista arquivos", "roda comando X").
 
@@ -92,11 +92,11 @@ tags:
 - [[Nota Relacionada]]
 ```
 
-Após criar o arquivo, **atualizar** o índice `❓ Dúvidas/❓ Dúvidas.md` adicionando um link.
+Após criar o arquivo, **atualizar** o índice `Dúvidas/Dúvidas.md` adicionando um link.
 
 ---
 
-### 📚 Conceitos Gerais (`.docs-projeto-final/📚 Conceitos Gerais/`)
+### Conceitos Gerais (`.docs-projeto-final/Conceitos Gerais/`)
 
 **Quando salvar:** Conceitos teóricos, fundamentos, padrões de projeto, ou conhecimento geral que surgir durante o desenvolvimento e for útil para referência futura. Exemplos: "O que é TF-IDF", "Como funciona Laplace Smoothing", "Padrão Star Schema no dbt", "Diferença entre ETL e ELT".
 
@@ -131,7 +131,7 @@ tags:
 - [[Nota Relacionada]]
 ```
 
-Após criar o arquivo, **atualizar** o índice `📚 Conceitos Gerais/📚 Conceitos Gerais.md` adicionando um link.
+Após criar o arquivo, **atualizar** o índice `Conceitos Gerais/Conceitos Gerais.md` adicionando um link.
 
 ---
 
@@ -148,6 +148,6 @@ Após criar o arquivo, **atualizar** o índice `📚 Conceitos Gerais/📚 Conce
 ## Checklist Pós-Sessão
 
 Antes de encerrar uma sessão de trabalho significativa, verifique:
-- [ ] Houve mudanças estruturais no projeto? → Salvar em 📊 Análise
-- [ ] O usuário fez perguntas com respostas não triviais? → Salvar em ❓ Dúvidas
-- [ ] Surgiram conceitos importantes? → Salvar em 📚 Conceitos Gerais
+- [ ] Houve mudanças estruturais no projeto? → Salvar em Análise
+- [ ] O usuário fez perguntas com respostas não triviais? → Salvar em Dúvidas
+- [ ] Surgiram conceitos importantes? → Salvar em Conceitos Gerais

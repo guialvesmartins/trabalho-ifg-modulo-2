@@ -14,7 +14,7 @@ aliases:
 
 # Referência de Comandos
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

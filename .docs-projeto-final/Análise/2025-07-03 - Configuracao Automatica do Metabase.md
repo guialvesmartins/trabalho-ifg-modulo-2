@@ -41,4 +41,4 @@ Acesso apos `make up`:
 ## Relacionado
 
 - [[07-Dashboard]]
-- [[🏠 Home]]
+- [[Home]]

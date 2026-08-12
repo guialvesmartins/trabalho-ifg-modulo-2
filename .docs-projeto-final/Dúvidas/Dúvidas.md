@@ -16,7 +16,7 @@ aliases:
 > [!info] Propósito
 > Esta pasta contém dúvidas tiradas durante o desenvolvimento, com as respostas fornecidas pelo agente. Cada dúvida vira um arquivo independente, facilitando a busca futura.
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

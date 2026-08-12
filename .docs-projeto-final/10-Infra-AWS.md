@@ -14,7 +14,7 @@ aliases:
 
 # Infraestrutura AWS — CloudFormation
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

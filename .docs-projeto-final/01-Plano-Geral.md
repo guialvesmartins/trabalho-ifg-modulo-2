@@ -13,7 +13,7 @@ aliases:
 
 # Plano Geral
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

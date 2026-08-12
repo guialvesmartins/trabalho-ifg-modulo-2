@@ -12,7 +12,7 @@ aliases:
 
 # Dashboard — Metabase
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

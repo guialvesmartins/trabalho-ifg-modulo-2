@@ -13,7 +13,7 @@ aliases:
 
 # Cronograma — 8 Semanas
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

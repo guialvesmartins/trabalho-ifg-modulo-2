@@ -15,7 +15,7 @@ aliases:
 
 # Machine Learning
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

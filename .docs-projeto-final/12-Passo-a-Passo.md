@@ -12,7 +12,7 @@ aliases:
 
 # Passo a Passo — Implementação do Projeto
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 Este guia mapeia cada requisito do PDF para ações concretas de implementação, organizadas pelas 8 semanas do [[08-Cronograma]].
 

@@ -60,7 +60,7 @@ Arquivos criados (45+):
 
 ## Relacionado
 
-- [[🏠 Home]]
+- [[Home]]
 - [[12-Passo-a-Passo]]
 - [[01-Plano-Geral]]
 - [[04-Pipeline-ELT]]

@@ -36,9 +36,9 @@ semana-atual: 1
 | ☁️ Infra AWS | [[10-Infra-AWS]] | CloudFormation e serviços |
 | 🚀 Passo a Passo | [[12-Passo-a-Passo]] | Guia de implementação semana a semana |
 | 🔧 Comandos | [[11-Comandos]] | Referência rápida de comandos |
-| 📊 Análise | [[📊 Análise/📊 Análise]] | Registro de mudanças e decisões |
-| ❓ Dúvidas | [[❓ Dúvidas/❓ Dúvidas]] | Perguntas e respostas |
-| 📚 Conceitos | [[📚 Conceitos Gerais/📚 Conceitos Gerais]] | Fundamentos e teoria |
+| Análise | [[Análise/Análise]] | Registro de mudanças e decisões |
+| Dúvidas | [[Dúvidas/Dúvidas]] | Perguntas e respostas |
+| Conceitos | [[Conceitos Gerais/Conceitos Gerais]] | Fundamentos e teoria |
 
 > [!tip] Visão Visual
 > Abra o [[Canvas do Projeto]] para uma visão geral gráfica do projeto.

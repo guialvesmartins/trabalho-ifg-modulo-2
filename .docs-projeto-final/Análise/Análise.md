@@ -15,7 +15,7 @@ aliases:
 > [!info] Propósito
 > Esta pasta contém registros automáticos de mudanças estruturais, decisões de arquitetura, e análises feitas durante o desenvolvimento do projeto. O agente opencode salva aqui sempre que uma mudança relevante é feita.
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 
@@ -23,6 +23,8 @@ aliases:
 
 %% Registros serão adicionados automaticamente pelo agente abaixo desta linha %%
 
+- [[2026-08-11 - Remocao de Emojis dos Nomes no Vault]] — Renomeação de pastas/arquivos com emoji para ASCII puro + atualização de todos os links
+- [[2026-08-11 - Avaliacao do Ambiente Local para Rodar o Projeto]] — Levantamento de pré-requisitos (Docker, Python, make, hardware) para subir o projeto localmente
 - [[2026-08-10 - Apresentacao Final Deck Dark 12 Slides]] — Deck final dark (12 slides, 4 locutores) regenerado para a apresentação de 10 min
 - [[2026-08-05 - Recriacao da Apresentacao]] — Deck `apresentacao.pptx` recriado para o projeto MIMII Pump (12 slides, speaker notes, validação XSD aprovada)
 - [[2026-08-04 - Guia Visual HTML da Solucao]] — Guia didático em HTML autocontido (10 seções, infográficos SVG) para apresentação à banca + status por pilar

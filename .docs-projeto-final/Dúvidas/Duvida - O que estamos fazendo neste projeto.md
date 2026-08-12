@@ -63,6 +63,6 @@ Um gerente de e-commerce abre o dashboard, vê quais produtos têm maior chance 
 
 ## Relacionado
 
-- [[🏠 Home]]
+- [[Home]]
 - [[12-Passo-a-Passo]]
 - [[09-Checklist-Entrega]]

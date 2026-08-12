@@ -14,7 +14,7 @@ aliases:
 
 # Pipeline ELT — 8 Etapas
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

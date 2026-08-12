@@ -17,7 +17,7 @@ aliases:
 > [!info] Propósito
 > Esta pasta contém conceitos gerais aprendidos ou revisados durante o projeto — desde fundamentos de ML até padrões de engenharia de dados. Cada conceito vira um arquivo independente.
 
-[[🏠 Home|Voltar ao índice]]
+[[Home|Voltar ao índice]]
 
 ---
 

@@ -12,7 +12,7 @@ status: em-andamento
 > [!important] Ponto de Partida
 > Este vault organiza todo o projeto de **Previsão de Satisfação em E-commerce com Dados Multimodais**.
 
-Comece pela página principal: [[🏠 Home]]
+Comece pela página principal: [[Home]]
 
 ---
 
@@ -29,15 +29,15 @@ Comece pela página principal: [[🏠 Home]]
 
 | Link | Descrição |
 |------|-----------|
-| [[🏠 Home]] | Índice principal do projeto |
+| [[Home]] | Índice principal do projeto |
 | [[Canvas do Projeto]] | Visão gráfica de todo o projeto |
 | [[08-Cronograma]] | O que fazer a cada semana |
 | [[09-Checklist-Entrega]] | Requisitos mapeados do PDF |
 | [[12-Passo-a-Passo]] | Guia de implementação completo |
 | [[11-Comandos]] | Referência rápida de comandos |
-| [[📊 Análise/📊 Análise]] | Registro de mudanças estruturais |
-| [[❓ Dúvidas/❓ Dúvidas]] | Perguntas e respostas |
-| [[📚 Conceitos Gerais/📚 Conceitos Gerais]] | Fundamentos e teoria |
+| [[Análise/Análise]] | Registro de mudanças estruturais |
+| [[Dúvidas/Dúvidas]] | Perguntas e respostas |
+| [[Conceitos Gerais/Conceitos Gerais]] | Fundamentos e teoria |
 
 ---
 
@@ -45,7 +45,7 @@ Comece pela página principal: [[🏠 Home]]
 
 ```
 .docs-projeto-final/
-├── 🏠 Home.md                 ← Índice principal
+├── Home.md                   ← Índice principal
 ├── 01-Plano-Geral.md         ← Definição do problema
 ├── 02-Datasets.md            ← Fontes de dados
 ├── 03-Arquitetura.md         ← Diagramas de arquitetura
@@ -58,7 +58,7 @@ Comece pela página principal: [[🏠 Home]]
 ├── 10-Infra-AWS.md           ← CloudFormation
 ├── 11-Comandos.md            ← Referência de comandos
 ├── Canvas do Projeto.canvas  ← Visão gráfica
-├── 📊 Análise/               ← Registros automáticos do agente
-├── ❓ Dúvidas/               ← Perguntas e respostas
-└── 📚 Conceitos Gerais/      ← Fundamentos e teoria
+├── Análise/                 ← Registros automáticos do agente
+├── Dúvidas/                 ← Perguntas e respostas
+└── Conceitos Gerais/        ← Fundamentos e teoria
 ```
