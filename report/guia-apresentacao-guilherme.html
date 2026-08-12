@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guilherme — Visão Geral e Arquitetura · Guia de Domínio</title>
+<meta name="description" content="Guia de estudo da parte de Visão Geral e Arquitetura da apresentação do projeto final IFG — problema, MIMII, pipeline ELT, Airflow, dbt e fluxo até o Metabase.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font-body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+    --bg: #0b1120;
+    --bg-soft: #0f1730;
+    --surface: #121c36;
+    --surface-2: #182442;
+    --border: rgba(148, 180, 224, .14);
+    --border-strong: rgba(148, 180, 224, .28);
+    --text: #e6edf7;
+    --text-muted: #9aa9c2;
+    --text-faint: #6b7a94;
+
+    --amber: #34d399;
+    --amber-ink: #06210f;
+    --cyan: #38bdf8;
+    --cyan-ink: #062130;
+    --green: #34d399;
+    --red: #fb7185;
+
+    --ok: #34d399;
+    --warn: #f5a524;
+
+    --radius: 14px;
+    --radius-sm: 9px;
+    --gap: clamp(1rem, 3vw, 2rem);
+    --wrap: 1080px;
+    --shadow: 0 12px 40px rgba(0,0,0,.35);
+    --header-h: 64px;
+  }
+
+  html[data-theme="light"]{
+    --bg: #f4f6fb;
+    --bg-soft: #eef1f8;
+    --surface: #ffffff;
+    --surface-2: #f0f4fb;
+    --border: rgba(15, 27, 45, .12);
+    --border-strong: rgba(15, 27, 45, .22);
+    --text: #0f1b2d;
+    --text-muted: #4f5f7a;
+    --text-faint: #7d8aa3;
+    --amber: #059669;
+    --amber-ink: #ffffff;
+    --cyan: #0284c7;
+    --cyan-ink: #ffffff;
+    --shadow: 0 12px 34px rgba(15,27,45,.10);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(56,189,248,.10), transparent 60%),
+      radial-gradient(900px 460px at -10% 0%, rgba(52,211,153,.08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: clamp(16px, 1.02vw + .65rem, 19px);
+    line-height: 1.62;
+    transition: background-color .35s ease, color .35s ease;
+  }
+  a{ color: var(--cyan); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  ::selection{ background: var(--amber); color: var(--amber-ink); }
+
+  .topbar{
+    position: sticky; top: 0; z-index: 50;
+    height: var(--header-h);
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand{
+    font-family: var(--font-mono);
+    font-weight: 700; font-size: .82rem; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--text-muted);
+    display: flex; align-items: center; gap: .55rem; white-space: nowrap;
+  }
+  .brand .dot{ width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
+  .topnav{
+    display: flex; gap: .2rem; flex: 1; justify-content: flex-end;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .topnav::-webkit-scrollbar{ display: none; }
+  .topnav a{
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em;
+    color: var(--text-muted); padding: .45rem .7rem; border-radius: 8px; white-space: nowrap;
+  }
+  .topnav a:hover{ background: var(--surface-2); color: var(--text); text-decoration: none; }
+  .theme-btn{
+    border: 1px solid var(--border-strong); background: var(--surface);
+    color: var(--text); width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
+    display: grid; place-items: center; flex: 0 0 auto; transition: transform .15s ease;
+  }
+  .theme-btn:hover{ transform: scale(1.06); }
+  .theme-btn svg{ width: 18px; height: 18px; }
+  html[data-theme="dark"] .theme-btn .icon-sun{ display: none; }
+  html[data-theme="light"] .theme-btn .icon-moon{ display: none; }
+
+  .wrap{ max-width: var(--wrap); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+  section{ padding: clamp(2.2rem, 6vw, 4.2rem) 0; }
+  .grid-2{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .grid-3{ display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+  @media (max-width: 820px){ .grid-2, .grid-3{ grid-template-columns: 1fr; } }
+
+  .hero{ padding: clamp(3rem, 9vw, 6rem) 0 2rem; }
+  .hero-inner{ display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--gap); align-items: center; }
+  @media (max-width: 900px){ .hero-inner{ grid-template-columns: 1fr; } }
+  .eyebrow{
+    font-family: var(--font-mono); font-size: .78rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--amber); font-weight: 500;
+  }
+  h1{
+    font-size: clamp(1.9rem, 4.4vw, 3.4rem); line-height: 1.06; margin: .5rem 0 .6rem;
+    letter-spacing: -.02em; font-weight: 700;
+  }
+  h1 .hl{ color: var(--cyan); }
+  .hero p.lead{ font-size: clamp(1rem, 1.5vw, 1.22rem); color: var(--text-muted); max-width: 34em; margin: 0 0 1.4rem; }
+  .chips{ display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip{
+    font-family: var(--font-mono); font-size: .74rem; letter-spacing: .02em;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted);
+    padding: .42rem .8rem; border-radius: 999px;
+  }
+  .chip b{ color: var(--text); font-weight: 600; }
+
+  .sig{
+    padding: .6rem; border: 1px solid var(--border); border-radius: var(--radius);
+    background: linear-gradient(var(--border) 1px, transparent 1px) 0 0/100% 34px, var(--surface);
+  }
+  .sig svg{ width: 100%; height: auto; display: block; }
+  .sig-cap{ font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; color: var(--text-faint); text-transform: uppercase; margin-top: .5rem; text-align: center; }
+  .nlab{ font-family: var(--font-mono); font-size: .62rem; letter-spacing: .03em; }
+  html[data-theme="light"] .nlab{ fill: #0f1b2d; }
+  html[data-theme="dark"] .nlab{ fill: #e6edf7; }
+  .ncap{ font-family: var(--font-mono); font-size: .5rem; letter-spacing: .02em; }
+  html[data-theme="light"] .ncap{ fill: #5a6b85; }
+  html[data-theme="dark"] .ncap{ fill: #9aa9c2; }
+
+  .sec-head{ display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: .8rem; }
+  .sec-num{
+    font-family: var(--font-mono); font-size: .95rem; font-weight: 700; color: var(--amber);
+    flex: 0 0 auto;
+  }
+  .sec-title{ font-size: clamp(1.4rem, 2.6vw, 2rem); letter-spacing: -.015em; margin: 0; }
+  .sec-sub{ color: var(--text-muted); margin: 0 0 0 auto; font-size: .92rem; white-space: nowrap; }
+  @media (max-width: 720px){ .sec-sub{ display: none; } }
+
+  .card{
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.6rem);
+    box-shadow: var(--shadow);
+  }
+  .card h3{ margin: 0 0 .5rem; font-size: 1.08rem; }
+  .card h3 .k{ font-family: var(--font-mono); color: var(--cyan); font-weight: 500; }
+
+  .callout{
+    display: flex; gap: .9rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong); padding: 1rem 1.1rem; margin: 1rem 0;
+    background: var(--surface-2);
+  }
+  .callout .ico{ font-family: var(--font-mono); font-weight: 700; flex: 0 0 auto; }
+  .callout.warn{ border-color: color-mix(in srgb, var(--warn) 55%, transparent); background: color-mix(in srgb, var(--warn) 9%, var(--surface)); }
+  .callout.warn .ico{ color: var(--warn); }
+  .callout.info{ border-color: color-mix(in srgb, var(--cyan) 55%, transparent); background: color-mix(in srgb, var(--cyan) 9%, var(--surface)); }
+  .callout.info .ico{ color: var(--cyan); }
+  .callout.danger{ border-color: color-mix(in srgb, var(--red) 55%, transparent); background: color-mix(in srgb, var(--red) 9%, var(--surface)); }
+  .callout.danger .ico{ color: var(--red); }
+  .callout p{ margin: 0; }
+  .callout b{ color: var(--text); }
+
+  .tbl-scroll{ overflow-x: auto; margin: .6rem 0; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+  table{ border-collapse: collapse; width: 100%; font-size: .92rem; background: var(--surface); }
+  th, td{ padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th{ font-family: var(--font-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); background: var(--surface-2); }
+  tbody tr:last-child td{ border-bottom: none; }
+  tr:hover td{ background: color-mix(in srgb, var(--cyan) 5%, transparent); }
+  td.num{ font-family: var(--font-mono); font-size: .85rem; }
+  .best{ color: var(--amber); font-weight: 700; }
+
+  .timeline{ display: grid; gap: 1rem; }
+  .blk{ display: grid; grid-template-columns: 96px 1fr; gap: 1.1rem; }
+  @media (max-width: 720px){ .blk{ grid-template-columns: 1fr; } }
+  .blk-tag{
+    font-family: var(--font-mono); font-size: .74rem; line-height: 1.35;
+    color: var(--text-faint); border: 1px dashed var(--border-strong);
+    border-radius: 10px; padding: .55rem .7rem; height: fit-content; text-align: center;
+  }
+  .blk-tag .t{ font-size: 1.15rem; color: var(--cyan); font-weight: 700; display: block; }
+  .blk-body{ background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: var(--radius-sm); padding: 1rem 1.15rem; }
+  .blk-body h4{ margin: 0 0 .35rem; font-size: 1rem; }
+  .script{
+    font-size: .96rem; color: var(--text-muted); border-left: 2px solid var(--border-strong);
+    padding-left: .9rem; margin: .5rem 0;
+  }
+  .script::before{ content: "🎤  "; font-family: var(--font-mono); }
+  .script b{ color: var(--text); }
+
+  details{ border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-bottom: .7rem; overflow: hidden; }
+  details[open]{ border-color: var(--border-strong); }
+  summary{
+    cursor: pointer; list-style: none; display: flex; gap: .9rem; align-items: baseline;
+    padding: .95rem 1.1rem; font-weight: 600; font-size: .98rem;
+  }
+  summary::-webkit-details-marker{ display: none; }
+  summary .q{ font-family: var(--font-mono); font-size: .8rem; color: var(--amber); font-weight: 700; flex: 0 0 auto; }
+  summary::after{
+    content: "+"; margin-left: auto; font-family: var(--font-mono); font-weight: 700; color: var(--cyan);
+    transition: transform .2s ease; flex: 0 0 auto;
+  }
+  details[open] summary::after{ transform: rotate(45deg); }
+  .qa-body{ padding: .2rem 1.1rem 1.1rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: .9rem; }
+  .qa-body b{ color: var(--text); }
+  .qa-body .tag{
+    display: inline-block; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em;
+    text-transform: uppercase; border-radius: 6px; padding: .15rem .5rem; margin-right: .4rem;
+  }
+  .tag.easy{ background: color-mix(in srgb, var(--cyan) 15%, transparent); color: var(--cyan); }
+  .tag.medium{ background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .tag.hard{ background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
+
+  .kbd{
+    font-family: var(--font-mono); font-size: .82em; background: var(--surface-2);
+    border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
+    padding: .05em .45em; color: var(--cyan); white-space: nowrap;
+  }
+
+  .foot{ border-top: 1px solid var(--border); padding: 2rem 0 3rem; color: var(--text-faint); font-size: .9rem; }
+  .foot .wrap{ display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: space-between; }
+
+  ul.tight{ margin: .4rem 0; padding-left: 1.15rem; }
+  ul.tight li{ margin: .28rem 0; }
+  code.inl{ font-family: var(--font-mono); font-size: .85em; background: var(--surface-2); border: 1px solid var(--border); padding: .05em .4em; border-radius: 5px; }
+  .stat-row{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+  .stat{ background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .stat .v{ font-family: var(--font-mono); font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--amber); line-height: 1.1; }
+  .stat .l{ font-size: .8rem; color: var(--text-muted); margin-top: .2rem; }
+  pre.code{
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem; overflow-x: auto; font-family: var(--font-mono); font-size: .82rem; line-height: 1.55;
+  }
+  pre.code .c{ color: var(--text-faint); }
+  pre.code .k{ color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<!-- ================= TOPBAR ================= -->
+<header class="topbar">
+  <div class="brand"><span class="dot"></span>Guilherme · Arquitetura / 3 min</div>
+  <nav class="topnav">
+    <a href="#pitch">01 · Pitch</a>
+    <a href="#roteiro">02 · Roteiro</a>
+    <a href="#conceitos">03 · Conceitos</a>
+    <a href="#numeros">04 · Números</a>
+    <a href="#simulado">05 · Simulado</a>
+  </nav>
+  <button class="theme-btn" id="themeBtn" aria-label="Alternar tema" title="Alternar tema claro/escuro">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+</header>
+
+<!-- ================= HERO ================= -->
+<div class="wrap">
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Projeto Final IFG · Módulo 2 · Manutenção Preditiva Industrial</div>
+      <h1>Visão Geral e<br><span class="hl">Arquitetura</span> do Pipeline.</h1>
+      <p class="lead">Guia de estudo da sua parte da apresentação: o problema de negócio, o dataset MIMII Pump, a tarefa de classificação binária e o fluxo completo — da ingestão do áudio no Zenodo até o consumo no Metabase, com Airflow, dbt e o DW.</p>
+      <div class="chips">
+        <span class="chip">⏱ <b>3 min</b> de fala</span>
+        <span class="chip">🧠 <b>6</b> blocos</span>
+        <span class="chip">❓ <b>14+</b> perguntas</span>
+        <span class="chip">🔀 <b>ELT</b> 8 etapas</span>
+        <span class="chip">📦 <b>4</b> serviços + setup</span>
+      </div>
+    </div>
+    <div>
+      <div class="sig" aria-label="Fluxo da arquitetura de dados">
+        <svg viewBox="0 0 560 170" role="img">
+          <defs>
+            <marker id="arrowG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 Z" fill="#34d399"/>
+            </marker>
+          </defs>
+          <g>
+            <rect x="12" y="60" width="72" height="48" rx="10" fill="#182442" stroke="#34d399" stroke-width="1.5"/>
+            <text x="48" y="82" text-anchor="middle" class="nlab">Zenodo</text>
+            <text x="48" y="96" text-anchor="middle" class="ncap">ingestão</text>
+          </g>
+          <g>
+            <rect x="118" y="60" width="72" height="48" rx="10" fill="#182442" stroke="#34d399" stroke-width="1.5"/>
+            <text x="154" y="82" text-anchor="middle" class="nlab">Airflow</text>
+            <text x="154" y="96" text-anchor="middle" class="ncap">orquestra</text>
+          </g>
+          <g>
+            <rect x="224" y="60" width="72" height="48" rx="10" fill="#182442" stroke="#34d399" stroke-width="1.5"/>
+            <text x="260" y="82" text-anchor="middle" class="nlab">MinIO</text>
+            <text x="260" y="96" text-anchor="middle" class="ncap">S3 raw</text>
+          </g>
+          <g>
+            <rect x="330" y="60" width="72" height="48" rx="10" fill="#182442" stroke="#34d399" stroke-width="1.5"/>
+            <text x="366" y="82" text-anchor="middle" class="nlab">Postgres</text>
+            <text x="366" y="96" text-anchor="middle" class="ncap">DW · Snowflake</text>
+          </g>
+          <g>
+            <rect x="436" y="60" width="72" height="48" rx="10" fill="#182442" stroke="#34d399" stroke-width="1.5"/>
+            <text x="472" y="82" text-anchor="middle" class="nlab">dbt</text>
+            <text x="472" y="96" text-anchor="middle" class="ncap">transform</text>
+          </g>
+          <g>
+            <rect x="320" y="128" width="72" height="34" rx="8" fill="#182442" stroke="#38bdf8" stroke-width="1.5"/>
+            <text x="356" y="149" text-anchor="middle" class="nlab">Metabase</text>
+          </g>
+          <g stroke="#34d399" stroke-width="1.6" opacity=".9" fill="none">
+            <path d="M84 84 H118" marker-end="url(#arrowG)"/>
+            <path d="M190 84 H224" marker-end="url(#arrowG)"/>
+            <path d="M296 84 H330" marker-end="url(#arrowG)"/>
+            <path d="M402 84 H436" marker-end="url(#arrowG)"/>
+          </g>
+          <g stroke="#38bdf8" stroke-width="1.6" opacity=".9" fill="none">
+            <path d="M472 108 V145 H392" marker-end="url(#arrowB)"/>
+          </g>
+          <defs>
+            <marker id="arrowB" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L7,3.5 L0,7 Z" fill="#38bdf8"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+      <div class="sig-cap">— fluxo: ingestão → storage → DW → transform → BI —</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 01 · PITCH ================= -->
+<section id="pitch">
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <h2 class="sec-title">O pitch de 30 segundos</h2>
+    <span class="sec-sub">diga isto no aquecimento</span>
+  </div>
+
+  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> o problema de negócio, o dataset MIMII e o fluxo ELT até o data warehouse. <b>👥 Colegas:</b> features (Walber), o modelo em si (Daniel), resultados/demo (David).</p></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> O problema, em uma frase</h3>
+      <p style="font-size:1.15rem; line-height:1.5;"><b>"Numa fábrica, dezenas de bombas operam <span style="color:var(--amber)">24 horas por dia</span>; uma parada não programada paralisa a produção e gera reparo emergencial caro. Nosso projeto responde a decisão: <span style="color:var(--cyan)">esta bomba está operando com anomalia? devemos parar para manutenção?</span> — e entrega essa resposta de forma automatizada, da coleta do som até o dashboard."</b></p>
+      <div class="callout info">
+        <span class="ico">ℹ</span>
+        <p>Tomador de decisão: <b>engenheiro de manutenção</b>. Impacto: menos paradas não programadas, menos manutenção desnecessária, maior vida útil e economia em reparos emergenciais.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> A solução em uma frase</h3>
+      <p style="color:var(--text-muted);">Um <b>pipeline ELT completo</b>: o áudio de bombas reais (dataset MIMII) é ingerido e armazenado em <b>S3/MinIO</b>, processado em features numéricas, carregado num <b>data warehouse</b> (Postgres, espelho do Snowflake), transformado em camadas pelo <b>dbt</b>, orquestrado pelo <b>Airflow</b> e consumido em <b>3 dashboards no Metabase</b>.</p>
+      <ul class="tight">
+        <li><b>Docker</b> reproduz o ambiente localmente.</li>
+        <li>Troca para produção (AWS + Snowflake) com <b>4 variáveis de ambiente</b>.</li>
+        <li>Pipeline <b>reproduzível</b>: `make up &amp;&amp; make ingest &amp;&amp; ...`</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 · ROTEIRO ================= -->
+<section id="roteiro">
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <h2 class="sec-title">Roteiro narrado de 3 minutos</h2>
+    <span class="sec-sub">ordem = tópicos do slide</span>
+  </div>
+
+  <div class="timeline">
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:00</span>~20s<br>Problema</div>
+      <div class="blk-body">
+        <h4>1. O problema de negócio e o objetivo</h4>
+        <p class="script">"O problema é de <b>manutenção preditiva industrial</b>. Numa fábrica, dezenas de bombas operam 24 horas por dia; uma parada não programada <b>paralisa a produção</b> e gera reparo emergencial caro. A pergunta que o projeto responde é: <b>'esta bomba está operando com anomalia? devemos parar para manutenção?'</b> — decidida pelo engenheiro de manutenção, com apoio do modelo."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:20</span>~40s<br>Dataset</div>
+      <div class="blk-body">
+        <h4>2. O dataset MIMII Pump</h4>
+        <p class="script">"Usamos o dataset <b>MIMII</b>, criado pela <b>Hitachi</b> em parceria com a <b>Toyota Research</b>, publicado no DCASE 2019 e disponível no <b>Zenodo</b>. São <b>4.205 clipes de áudio</b> de bombas reais operando em fábrica, com <b>ruído real a 0 dB SNR</b>: clipes de 10 segundos, <b>16 kHz</b>, <b>8 canais</b>. Há <b>4 modelos de bomba</b> (id_00, id_02, id_04 e id_06), com <b>3.749 gravações normais</b> e <b>456 com anomalia</b> — contaminação, vazamento e desbalanceamento."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">1:00</span>~25s<br>Tarefa</div>
+      <div class="blk-body">
+        <h4>3. Contextualização da tarefa</h4>
+        <p class="script">"A tarefa de machine learning é uma <b>classificação binária</b>: cada áudio vira <b>96 features numéricas</b> e o modelo decide entre <b>normal</b> e <b>anômala</b>. Mas antes do modelo, o dado precisa atravessar uma arquitetura completa — é isso que eu vou apresentar agora."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">1:25</span>~50s<br>Arquitetura</div>
+      <div class="blk-body">
+        <h4>4. Fluxo geral da arquitetura</h4>
+        <p class="script">"Em desenvolvimento, <b>tudo roda em Docker</b>: o <b>MinIO</b> faz o papel do AWS S3 para guardar os áudios brutos; o <b>PostgreSQL</b> faz o papel do <b>Snowflake</b> como data warehouse; o <b>Airflow</b> orquestra o pipeline; e o <b>Metabase</b> entrega os dashboards. O ponto forte: para ir para produção, <b>bastam 4 variáveis de ambiente</b> — o endpoint do S3 aponta para a AWS e o banco vira Snowflake. Nenhuma linha de código muda."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">2:15</span>~30s<br>ELT</div>
+      <div class="blk-body">
+        <h4>5. Pipeline ELT e o papel do DW</h4>
+        <p class="script">"O pipeline é <b>ELT</b>: primeiro <b>extraímos</b> e <b>carregamos</b> o dado bruto — o áudio vai para o MinIO e as features processadas vão para o Postgres. A <b>transformação acontece dentro do banco</b>, em camadas, com o <b>dbt</b>: staging, dimensões, fatos e marts, num <b>modelo estrela</b>. O <b>Airflow</b> agenda e orquestra as <b>8 etapas</b>, do download no Zenodo até o treinamento do modelo."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">2:45</span>~15s<br>Fechamento</div>
+      <div class="blk-body">
+        <h4>6. Até o Metabase</h4>
+        <p class="script">"Por fim, o <b>Metabase lê direto as camadas do dbt</b> e entrega 3 dashboards: visão geral, análise de áudio por modelo e resultados do modelo de ML. Ou seja: o dado flui da ingestão no Zenodo até a decisão no dashboard — <b>automatizado e reproduzível</b>. Comigo agora, o Walber detalha o processamento e as features de áudio."</p>
+        <div class="callout warn"><span class="ico">!</span><p><b>Dica de tempo:</b> se apertar, encurte o bloco 4 (arquitetura) e nunca pule o <b>problema de negócio</b> (bloco 1) nem a <b>troca de ambiente</b> (bloco 4) — são os pontos que a banca mais valoriza.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 · CONCEITOS ================= -->
+<section id="conceitos">
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <h2 class="sec-title">Domínio conceitual (nível banca)</h2>
+    <span class="sec-sub">entenda para improvisar</span>
+  </div>
+
+  <h3 style="margin:0 0 .8rem;">3.1 · Manutenção preditiva vs corretiva vs preventiva</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h3><span class="k">//</span> Corretiva</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Reage à <b>falha</b>: a máquina quebra e então conserta. Custo máximo (produção parada, reparo urgente, possível dano maior).</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Preventiva</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Manutenção por <b>calendário</b> (ex.: a cada 90 dias). Previne falhas, mas muitas vezes para máquinas que não precisavam — custo desnecessário.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Preditiva (nosso caso)</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Monitora <b>condição real</b> (o som!) e prevê a anomalia <b>antes da falha</b>. É o equilíbrio: detecta problema cedo e só para quando precisa.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.2 · O dataset MIMII Pump</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> De onde vêm os dados</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>MIMII</b> = Malfunctioning Industrial Machine Investigation &amp; Inspection.</li>
+        <li>Criado por <b>Hitachi + Toyota Research</b>, publicado no <b>DCASE 2019</b> (paper arXiv:1909.09347).</li>
+        <li>Licença <b>CC BY-SA 4.0</b>; download no <b>Zenodo</b> (records/3384388).</li>
+        <li>Áudio gravado com <b>array de 8 microfones</b>, 16 kHz, 16 bits.</li>
+        <li>Ruído real de fábrica misturado a <b>0 dB SNR</b> (sinal e ruído com a mesma energia).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> O que é "0 dB SNR"?</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;"><b>SNR</b> = relação sinal-ruído. <b>0 dB</b> significa que a energia do ruído é <b>igual</b> à energia do som da máquina — o sinal está "escondido" no ruído.</p>
+      <div class="callout info"><span class="ico">ℹ</span><p>Isso torna o problema <b>realista e difícil</b>: detectar anomalia em áudio que já vem mascarado por ruído de fábrica. É por isso que os 15 falsos negativos existem.</p></div>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">Nota: no dataset real as pastas se chamam <code class="inl">id_XX</code> e <code class="inl">abnormal</code>; o pipeline normaliza <code class="inl">abnormal → anomaly</code>.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.3 · ELT vs ETL — por que ELT?</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> ETL (clássico)</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>Transforma antes</b> de carregar, num servidor de staging separado.</li>
+        <li>Dados prontos entram no DW, mas <b>transformação pesada fora do banco</b>.</li>
+        <li>Menos flexível para reprocessar; precisa de engine extra (ex.: Spark).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> ELT (nosso caso)</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>Carrega o bruto primeiro</b>; a transformação acontece <b>dentro do DW</b> (Postgres/Snowflake).</li>
+        <li>O <b>dbt</b> transforma em SQL, em camadas (staging → dim/fact → mart).</li>
+        <li>Vantagens: reprocessamento fácil, SQL versionado, escalável no Snowflake.</li>
+        <li>O download/extração vira <b>dado bruto no storage</b>; só o que vai ao banco é o que o modelo/BI consome.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.4 · Papel de cada serviço</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Serviço</th><th>Dev (Docker)</th><th>Prod</th><th>Papel</th></tr></thead>
+      <tbody>
+        <tr><td class="num">Object Storage</td><td class="num">MinIO (9000/9001)</td><td class="num">AWS S3</td><td>Guarda o áudio bruto (<code class="inl">raw/pump/</code>)</td></tr>
+        <tr><td class="num">Data Warehouse</td><td class="num">PostgreSQL 16 (5432)</td><td class="num">Snowflake</td><td>Camadas do dbt + métricas de ML</td></tr>
+        <tr><td class="num">Orquestração</td><td class="num">Airflow 2.9 (8080)</td><td class="num">Airflow</td><td>Executa e agenda as 8 tarefas do ELT</td></tr>
+        <tr><td class="num">Transformação</td><td class="num">dbt-core (CLI)</td><td class="num">dbt-core</td><td>Camadas de dados + testes de qualidade</td></tr>
+        <tr><td class="num">BI / Dashboard</td><td class="num">Metabase (3000)</td><td class="num">Metabase</td><td>Dashboards e exploração dos dados</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout info"><span class="ico">ℹ</span><p><b>MinIO</b> implementa a API do S3 — é um "S3 local". O <b>PostgreSQL</b> espelha o papel do Snowflake: armazenar as camadas transformadas. Isso permite desenvolver tudo localmente e migrar só mudando o endpoint.</p></div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.5 · A DAG do Airflow (8 tarefas)</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> Sequência</h3>
+      <pre class="code"><span class="k">download_dataset</span> &gt;&gt; <span class="k">load_to_s3</span> &gt;&gt;
+<span class="k">process_structured</span> &gt;&gt; <span class="k">extract_audio_features</span> &gt;&gt;
+<span class="k">merge_features</span> &gt;&gt; <span class="k">load_to_postgres</span> &gt;&gt;
+<span class="k">dbt_run</span> &gt;&gt; <span class="k">dbt_test</span> &gt;&gt;
+<span class="k">ml_train_evaluate</span></pre>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">Tarefas <b>sequenciais</b> — cada etapa depende da anterior (dados fluem). Agenda <code class="inl">@daily</code>, com <b>retries</b> e trava de execução única (<code class="inl">max_active_runs=1</code>) para não corromper arquivos.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Por que orquestrar?</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>Reprodutibilidade:</b> mesmo código, mesma ordem, mesmo resultado.</li>
+        <li><b>Resiliência:</b> retry automático, log centralizado, UI de monitoramento.</li>
+        <li><b>Escalonamento:</b> na produção, o Airflow na AWS executa o mesmo DAG.</li>
+        <li>Os scripts são chamados por tarefas Python/Bash com <code class="inl">_call(module)</code> — o DAG é só a orquestração do pipeline existente.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.6 · dbt e o modelo estrela</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> As 5 camadas</h3>
+      <table style="font-size:.86rem;">
+        <thead><tr><th>Camada</th><th>Modelo</th><th>Tipo</th></tr></thead>
+        <tbody>
+          <tr><td>Staging</td><td class="num">stg_pump_metadata</td><td>View</td></tr>
+          <tr><td>Staging</td><td class="num">stg_audio_features</td><td>View</td></tr>
+          <tr><td>Dimensão</td><td class="num">dim_machines</td><td>Table</td></tr>
+          <tr><td>Fato</td><td class="num">fact_audio_analysis</td><td>Table</td></tr>
+          <tr><td>Mart</td><td class="num">ml_features</td><td>Table</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;"><b>16 testes</b> de qualidade: not_null, unique, accepted_values — garantem integridade antes do ML.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> O que é o modelo estrela</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Um <b>fato central</b> (medições) rodeado de <b>dimensões</b> (contexto descritivo). Aqui:</p>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>dim_machines</b> (dimensão): 1 linha por modelo de bomba — totais, anomalias, duração média.</li>
+        <li><b>fact_audio_analysis</b> (fato): 1 linha por áudio — condição + 92+ features.</li>
+        <li><b>ml_features</b> (mart): join pronto para o treinamento do modelo.</li>
+      </ul>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">Fácil para BI (joins simples) e otimizado para consultas analíticas.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.7 · Dev → Prod: a troca de ambiente</h3>
+  <div class="grid-2">
+    <div class="card">
+      <pre class="code"><span class="c"># .env.local (dev)</span>
+<span class="k">S3_ENDPOINT</span>=http://minio:9000
+<span class="k">S3_ACCESS_KEY</span>=minioadmin
+<span class="k">S3_SECRET_KEY</span>=minioadmin
+<span class="k">DB_TYPE</span>=postgres</pre>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;"><b>MinIO local</b> + <b>Postgres local</b>.</p>
+    </div>
+    <div class="card">
+      <pre class="code"><span class="c"># .env.prod</span>
+<span class="k">S3_ENDPOINT</span>=https://s3.amazonaws.com
+<span class="k">S3_ACCESS_KEY</span>=&lt;aws_access_key&gt;
+<span class="k">S3_SECRET_KEY</span>=&lt;aws_secret_key&gt;
+<span class="k">DB_TYPE</span>=snowflake</pre>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;"><b>AWS S3</b> + <b>Snowflake</b>.</p>
+    </div>
+  </div>
+  <div class="callout info"><span class="ico">ℹ</span><p>O <code class="inl">boto3</code> usa <code class="inl">endpoint_url</code> e o dbt usa <code class="inl">env_var()</code> nos <code class="inl">profiles.yml</code> — a troca é <b>configuração</b>, não código. Existe também um template <b>CloudFormation</b> 100% AWS (Glue, Athena, Redshift, SageMaker, QuickSight) como exercício acadêmico.</p></div>
+</section>
+
+<!-- ================= 04 · NÚMEROS ================= -->
+<section id="numeros">
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <h2 class="sec-title">Números para decorar</h2>
+    <span class="sec-sub">dataset e infraestrutura</span>
+  </div>
+
+  <div class="stat-row" style="margin-bottom:1.4rem;">
+    <div class="stat"><div class="v">4.205</div><div class="l">clipes de áudio MIMII</div></div>
+    <div class="stat"><div class="v">7,87 GB</div><div class="l">tamanho do 0_dB_pump.zip</div></div>
+    <div class="stat"><div class="v">10,8%</div><div class="l">taxa de anomalia (456 / 4.205)</div></div>
+    <div class="stat"><div class="v">8</div><div class="l">tarefas na DAG do Airflow</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:1.2rem;">
+    <div>
+      <h3 style="margin:0 0 .6rem;">Especificações do áudio</h3>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Característica</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td>Sample rate</td><td class="num">16 kHz</td></tr>
+            <tr><td>Duração por clip</td><td class="num">10 s</td></tr>
+            <tr><td>Canais</td><td class="num">8 (array de microfones)</td></tr>
+            <tr><td>SNR</td><td class="num">0 dB (ruído real de fábrica)</td></tr>
+            <tr><td>Condições</td><td class="num">normal (3.749) · anomaly (456)</td></tr>
+            <tr><td>Modelos de bomba</td><td class="num">id_00, id_02, id_04, id_06</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin:0 0 .6rem;">Anomalias no dataset real</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>contaminação</b> (partículas no rotor)</li>
+        <li><b>vazamento</b></li>
+        <li><b>desbalanceamento</b> do rotor</li>
+      </ul>
+      <p style="color:var(--text-muted); font-size:.95rem;">Desbalanceamento <b>~8:1</b> normal:anomalia — por isso o split estratificado e o foco em recall/F1 (o Walber e o Daniel detalham).</p>
+      <div class="callout warn"><span class="ico">!</span><p><b>Nomenclatura:</b> no dataset real as pastas são <code class="inl">id_XX</code> e <code class="inl">abnormal</code>. O pipeline normaliza para <code class="inl">model_id</code> e <code class="inl">anomaly</code>.</p></div>
+    </div>
+  </div>
+
+  <h3 style="margin:0 0 .6rem;">Acesso aos serviços (dev)</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Serviço</th><th>URL</th><th>Login</th></tr></thead>
+      <tbody>
+        <tr><td class="num">Airflow</td><td class="num">http://localhost:8080</td><td class="num">admin / admin</td></tr>
+        <tr><td class="num">Metabase</td><td class="num">http://localhost:3000</td><td class="num">admin@projeto.com / ProjetoIFG2025!</td></tr>
+        <tr><td class="num">MinIO</td><td class="num">http://localhost:9001</td><td class="num">minioadmin / minioadmin</td></tr>
+        <tr><td class="num">Postgres</td><td class="num">localhost:5432</td><td class="num">airflow / airflow (db airflow)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ================= 05 · SIMULADO ================= -->
+<section id="simulado">
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <h2 class="sec-title">Simulado da banca</h2>
+    <span class="sec-sub">clique para ver a resposta</span>
+  </div>
+  <p style="color:var(--text-muted); margin-top:0;">Tente responder em voz alta antes de abrir. Grau de dificuldade estimado ao lado de cada pergunta.</p>
+
+  <details>
+    <summary><span class="q">P1</span> Por que manutenção preditiva e não corretiva ou preventiva?</summary>
+    <div class="qa-body">
+      <span class="tag medium">negócio</span>
+      <p>A <b>corretiva</b> só age depois da falha — é o cenário mais caro (produção parada, reparo urgente). A <b>preventiva</b> para a máquina por calendário, muitas vezes desnecessariamente. A <b>preditiva</b> monitora a condição real (no nosso caso, o som) e prevê a anomalia antes da falha: detecta cedo e só para quando precisa — reduz paradas não programadas e manutenções desnecessárias, aumentando a vida útil do equipamento.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P2</span> Por que usar som (áudio) para detectar anomalia?</summary>
+    <div class="qa-body">
+      <span class="tag medium">domínio</span>
+      <p>O som é um <b>sensor não invasivo e barato</b>: capta vibração acústica sem parar a máquina nem instalar sensores no rotor. Uma bomba com contaminação, vazamento ou desbalanceamento muda o <b>perfil espectral/timbral</b> — exatamente o que as features de áudio (MFCC, espectrais) capturam. Isso permite monitoramento contínuo 24/7 com um simples microfone.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P3</span> O que significa "0 dB SNR" e por que é um desafio?</summary>
+    <div class="qa-body">
+      <span class="tag easy">dataset</span>
+      <p>SNR é a relação sinal/ruído. <b>0 dB</b> = a energia do ruído é igual à do sinal da máquina: o som da bomba está <b>mascarado pelo ruído da fábrica</b>. É um cenário realista e difícil — por isso existem anomalias sutis que o modelo não detecta (os falsos negativos). Também mostra que o resultado não é "dados fáceis de laboratório".</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P4</span> Quem criou o MIMII e onde está disponível?</summary>
+    <div class="qa-body">
+      <span class="tag easy">dataset</span>
+      <p>O MIMII (Malfunctioning Industrial Machine Investigation &amp; Inspection) foi criado pela <b>Hitachi</b> com a <b>Toyota Research</b>, publicado no workshop <b>DCASE 2019</b> (paper arXiv:1909.09347), licença <b>CC BY-SA 4.0</b>, disponível no <b>Zenodo</b> — o arquivo <code class="inl">0_dB_pump.zip</code> (~7,87 GB) é baixado pelo nosso pipeline de ingestão.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P5</span> O dataset é desbalanceado. O que isso significa para o projeto?</summary>
+    <div class="qa-body">
+      <span class="tag medium">dados</span>
+      <p>Sim: <b>3.749 normais vs 456 anomalias</b> (~8:1). Consequências: (1) split <b>estratificado</b> para manter a proporção no teste; (2) <b>accuracy sozinha engana</b> — um modelo que prevê "sempre normal" acerta 89%; (3) o projeto prioriza <b>recall/F1</b> da classe anomalia, que é a que interessa ao negócio.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P6</span> Por que usar MinIO e PostgreSQL em desenvolvimento, se em produção é AWS + Snowflake?</summary>
+    <div class="qa-body">
+      <span class="tag easy">arquitetura</span>
+      <p>Para desenvolver <b>sem custo e sem internet</b>: o <b>MinIO</b> implementa a API do S3 (é um "S3 local") e o <b>PostgreSQL</b> espelha o papel do Snowflake como DW. Como a troca é só de <b>endpoint/configuração</b> (boto3 com <code class="inl">endpoint_url</code>, dbt com <code class="inl">env_var</code>), tudo testado localmente funciona igual na AWS trocando 4 variáveis.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P7</span> Diferença entre ETL e ELT. Por que vocês usam ELT?</summary>
+    <div class="qa-body">
+      <span class="tag medium">conceito</span>
+      <p>No <b>ETL</b>, a transformação acontece antes de carregar, num servidor separado. No <b>ELT</b>, carrega-se o bruto e a transformação acontece <b>dentro do DW</b> (no nosso caso, com SQL do <b>dbt</b>). Usamos ELT porque: o DW (Postgres/Snowflake) é muito mais poderoso para transformações em SQL; o reprocessamento é trivial (re-rodar o dbt); e a lógica de transformação fica <b>versionada</b> e testável.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P8</span> Qual o papel do Airflow no projeto?</summary>
+    <div class="qa-body">
+      <span class="tag easy">orquestração</span>
+      <p>É o <b>orquestrador</b>: agenda e executa a DAG <code class="inl">elt_pipeline</code> com as <b>8 tarefas sequenciais</b> — download, upload ao S3, metadados, features, merge, carga no banco, dbt run e ML. Dá retry automático, logs centralizados, UI de monitoramento e garante a ordem correta (cada etapa depende da anterior).</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P9</span> O que o dbt faz e o que são as camadas?</summary>
+    <div class="qa-body">
+      <span class="tag medium">dados</span>
+      <p>O <b>dbt</b> (data build tool) transforma os dados em SQL dentro do banco, seguindo um <b>modelo estrela</b> em camadas: <b>staging</b> (limpeza, tipagem — views), <b>dimensões</b> (dim_machines: resumo por modelo de bomba), <b>fatos</b> (fact_audio_analysis: 1 linha por áudio) e <b>marts</b> (ml_features: pronta para ML). Roda <code class="inl">dbt run</code> e <code class="inl">dbt test</code> — os 16 testes garantem qualidade (not_null, unique, accepted_values).</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P10</span> O que é um modelo estrela (star schema)?</summary>
+    <div class="qa-body">
+      <span class="tag easy">modelagem</span>
+      <p>É um design dimensional com um <b>fato central</b> (medidas, eventos) conectado a <b>dimensões</b> (atributos descritivos). Aqui: <b>fact_audio_analysis</b> (cada gravação com condição + features) e <b>dim_machines</b> (1 linha por modelo de bomba com totais). Vantagens: joins simples, consultas analíticas rápidas e leitura fácil para BI/Metabase.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P11</span> Como o projeto muda de ambiente (dev → produção)?</summary>
+    <div class="qa-body">
+      <span class="tag easy">infra</span>
+      <p>Bastam <b>4 variáveis de ambiente</b>: em <code class="inl">.env.local</code> o S3 aponta para o MinIO e o banco é o Postgres; em <code class="inl">.env.prod</code>, o S3 aponta para a AWS e o banco é o Snowflake. O <code class="inl">boto3</code> lê <code class="inl">endpoint_url</code> e o dbt seleciona o target via <code class="inl">env_var()</code> nos profiles. Nenhuma alteração de código é necessária.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P12</span> Quais são os dashboards do Metabase?</summary>
+    <div class="qa-body">
+      <span class="tag easy">BI</span>
+      <p>Três: <b>(1) Visão Geral</b> — KPIs (total de amostras, taxa de anomalia, duração média) e distribuição de condições; <b>(2) Análise de Áudio por Modelo</b> — resumo por modelo, MFCC-1 médio, spectral centroid vs condição, top 10 RMS; <b>(3) Resultados do Modelo ML</b> — acurácia, comparação de métricas, matriz de confusão e predições com erro. Os dashboards 1 e 2 têm <b>filtro por modelo de máquina</b>.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P13</span> O que acontece se o download do dataset for interrompido?</summary>
+    <div class="qa-body">
+      <span class="tag hard">engenharia</span>
+      <p>O script de download usa <b>HTTP Range</b>: detecta o tamanho local parcial e retoma de onde parou (<code class="inl">bytes=local_size-</code>). Se o servidor ignorar o Range (não responder 206), ele recomeça do zero. Também remove dados <b>sintéticos legados</b> (pastas <code class="inl">model_id_XX</code>) antes de extrair o dataset real.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P14</span> Por que o pipeline é considerado "reproduzível"?</summary>
+    <div class="qa-body">
+      <span class="tag easy">engenharia</span>
+      <p>Porque com Docker e o Makefile qualquer pessoa executa <code class="inl">make up</code> (sobe Postgres, MinIO, Airflow, Metabase), <code class="inl">make ingest</code>, <code class="inl">make process</code>, <code class="inl">make load-db</code>, <code class="inl">make dbt-run</code>, <code class="inl">make dbt-test</code>, <code class="inl">make ml-train</code> e obtém os mesmos resultados — mesmo dataset, mesmo split (random_state 42), mesmas métricas.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P15</span> Por que o Metabase lê de schemas do dbt?</summary>
+    <div class="qa-body">
+      <span class="tag hard">arquitetura</span>
+      <p>Os cards SQL do Metabase apontam para <code class="inl">public_analytics.fact_audio_analysis</code> e <code class="inl">public_analytics.dim_machines</code> — os <b>esquemas gerados pelo dbt</b>. Assim o BI consome dados já limpos, testados e padronizados, em vez de tabelas cruas. As tabelas de ML (<code class="inl">model_metrics</code>, <code class="inl">model_predictions</code>) ficam em <code class="inl">public</code>, preenchidas pelo <code class="inl">ml/evaluate.py</code>.</p>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="foot">
+  <div class="wrap">
+    <span>Guia preparado com base em <code class="inl">.docs-projeto-final/03-Arquitetura.md</code>, <code class="inl">04-Pipeline-ELT.md</code>, <code class="inl">dags/etl_pipeline.py</code>, <code class="inl">ingestion/</code> e <code class="inl">dbt_project/</code>.</span>
+    <span>Série de guias: <a href="guia-apresentacao-guilherme.html">Guilherme</a> · <a href="guia-apresentacao-walber.html">Walber</a> · <a href="guia-apresentacao-daniel.html">Daniel</a> · <a href="guia-apresentacao-david.html">David</a></span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeBtn");
+    var stored = null;
+    try { stored = localStorage.getItem("guide-theme"); } catch (e) {}
+    if (stored === "light") { root.setAttribute("data-theme", "light"); }
+
+    btn.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("guide-theme", next); } catch (e) {}
+    });
+  })();
+</script>
+</body>
+</html>

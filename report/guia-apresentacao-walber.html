@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Walber — Processamento e Feature Engineering · Guia de Domínio</title>
+<meta name="description" content="Guia de estudo da parte de Processamento de Dados e Feature Engineering da apresentação do projeto final IFG — metadados, librosa, MFCC, features espectrais e temporais.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font-body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+    --bg: #0b1120;
+    --bg-soft: #0f1730;
+    --surface: #121c36;
+    --surface-2: #182442;
+    --border: rgba(148, 180, 224, .14);
+    --border-strong: rgba(148, 180, 224, .28);
+    --text: #e6edf7;
+    --text-muted: #9aa9c2;
+    --text-faint: #6b7a94;
+
+    --amber: #a78bfa;
+    --amber-ink: #1b1038;
+    --cyan: #38bdf8;
+    --cyan-ink: #062130;
+    --green: #34d399;
+    --red: #fb7185;
+
+    --ok: #34d399;
+    --warn: #f5a524;
+
+    --radius: 14px;
+    --radius-sm: 9px;
+    --gap: clamp(1rem, 3vw, 2rem);
+    --wrap: 1080px;
+    --shadow: 0 12px 40px rgba(0,0,0,.35);
+    --header-h: 64px;
+  }
+
+  html[data-theme="light"]{
+    --bg: #f4f6fb;
+    --bg-soft: #eef1f8;
+    --surface: #ffffff;
+    --surface-2: #f0f4fb;
+    --border: rgba(15, 27, 45, .12);
+    --border-strong: rgba(15, 27, 45, .22);
+    --text: #0f1b2d;
+    --text-muted: #4f5f7a;
+    --text-faint: #7d8aa3;
+    --amber: #7c3aed;
+    --amber-ink: #ffffff;
+    --cyan: #0284c7;
+    --cyan-ink: #ffffff;
+    --shadow: 0 12px 34px rgba(15,27,45,.10);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(56,189,248,.10), transparent 60%),
+      radial-gradient(900px 460px at -10% 0%, rgba(167,139,250,.10), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: clamp(16px, 1.02vw + .65rem, 19px);
+    line-height: 1.62;
+    transition: background-color .35s ease, color .35s ease;
+  }
+  a{ color: var(--cyan); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  ::selection{ background: var(--amber); color: var(--amber-ink); }
+
+  .topbar{
+    position: sticky; top: 0; z-index: 50;
+    height: var(--header-h);
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand{
+    font-family: var(--font-mono);
+    font-weight: 700; font-size: .82rem; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--text-muted);
+    display: flex; align-items: center; gap: .55rem; white-space: nowrap;
+  }
+  .brand .dot{ width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
+  .topnav{
+    display: flex; gap: .2rem; flex: 1; justify-content: flex-end;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .topnav::-webkit-scrollbar{ display: none; }
+  .topnav a{
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em;
+    color: var(--text-muted); padding: .45rem .7rem; border-radius: 8px; white-space: nowrap;
+  }
+  .topnav a:hover{ background: var(--surface-2); color: var(--text); text-decoration: none; }
+  .theme-btn{
+    border: 1px solid var(--border-strong); background: var(--surface);
+    color: var(--text); width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
+    display: grid; place-items: center; flex: 0 0 auto; transition: transform .15s ease;
+  }
+  .theme-btn:hover{ transform: scale(1.06); }
+  .theme-btn svg{ width: 18px; height: 18px; }
+  html[data-theme="dark"] .theme-btn .icon-sun{ display: none; }
+  html[data-theme="light"] .theme-btn .icon-moon{ display: none; }
+
+  .wrap{ max-width: var(--wrap); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+  section{ padding: clamp(2.2rem, 6vw, 4.2rem) 0; }
+  .grid-2{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .grid-3{ display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+  @media (max-width: 820px){ .grid-2, .grid-3{ grid-template-columns: 1fr; } }
+
+  .hero{ padding: clamp(3rem, 9vw, 6rem) 0 2rem; }
+  .hero-inner{ display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--gap); align-items: center; }
+  @media (max-width: 900px){ .hero-inner{ grid-template-columns: 1fr; } }
+  .eyebrow{
+    font-family: var(--font-mono); font-size: .78rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--amber); font-weight: 500;
+  }
+  h1{
+    font-size: clamp(1.9rem, 4.4vw, 3.4rem); line-height: 1.06; margin: .5rem 0 .6rem;
+    letter-spacing: -.02em; font-weight: 700;
+  }
+  h1 .hl{ color: var(--cyan); }
+  .hero p.lead{ font-size: clamp(1rem, 1.5vw, 1.22rem); color: var(--text-muted); max-width: 34em; margin: 0 0 1.4rem; }
+  .chips{ display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip{
+    font-family: var(--font-mono); font-size: .74rem; letter-spacing: .02em;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted);
+    padding: .42rem .8rem; border-radius: 999px;
+  }
+  .chip b{ color: var(--text); font-weight: 600; }
+
+  .wave{
+    height: 170px; display: flex; align-items: center; gap: clamp(2px, .3vw, 4px);
+    justify-content: center; padding: .5rem;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background:
+      linear-gradient(var(--border) 1px, transparent 1px) 0 0/100% 34px,
+      var(--surface);
+  }
+  .wave .bar{
+    width: clamp(3px, .55vw, 7px); height: 12%; border-radius: 4px;
+    background: linear-gradient(180deg, var(--cyan), var(--amber));
+    animation: eq 1.9s ease-in-out infinite;
+  }
+  .wave .bar:nth-child(3n){ animation-delay: .3s; }
+  .wave .bar:nth-child(4n){ animation-delay: .6s; }
+  .wave .bar:nth-child(5n){ animation-delay: .9s; }
+  .wave .bar:nth-child(2n){ animation-delay: .15s; }
+  @keyframes eq{
+    0%,100%{ height: 14%; opacity: .55; }
+    50%{ height: 96%; opacity: 1; }
+  }
+  .wave-cap{ font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; color: var(--text-faint); text-transform: uppercase; margin-top: .5rem; text-align: center; }
+  @media (prefers-reduced-motion: reduce){
+    .wave .bar{ animation: none; height: 60%; opacity: .8; }
+    html{ scroll-behavior: auto; }
+  }
+
+  .sec-head{ display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: .8rem; }
+  .sec-num{
+    font-family: var(--font-mono); font-size: .95rem; font-weight: 700; color: var(--amber);
+    flex: 0 0 auto;
+  }
+  .sec-title{ font-size: clamp(1.4rem, 2.6vw, 2rem); letter-spacing: -.015em; margin: 0; }
+  .sec-sub{ color: var(--text-muted); margin: 0 0 0 auto; font-size: .92rem; white-space: nowrap; }
+  @media (max-width: 720px){ .sec-sub{ display: none; } }
+
+  .card{
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.6rem);
+    box-shadow: var(--shadow);
+  }
+  .card h3{ margin: 0 0 .5rem; font-size: 1.08rem; }
+  .card h3 .k{ font-family: var(--font-mono); color: var(--cyan); font-weight: 500; }
+
+  .callout{
+    display: flex; gap: .9rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong); padding: 1rem 1.1rem; margin: 1rem 0;
+    background: var(--surface-2);
+  }
+  .callout .ico{ font-family: var(--font-mono); font-weight: 700; flex: 0 0 auto; }
+  .callout.warn{ border-color: color-mix(in srgb, var(--warn) 55%, transparent); background: color-mix(in srgb, var(--warn) 9%, var(--surface)); }
+  .callout.warn .ico{ color: var(--warn); }
+  .callout.info{ border-color: color-mix(in srgb, var(--cyan) 55%, transparent); background: color-mix(in srgb, var(--cyan) 9%, var(--surface)); }
+  .callout.info .ico{ color: var(--cyan); }
+  .callout.danger{ border-color: color-mix(in srgb, var(--red) 55%, transparent); background: color-mix(in srgb, var(--red) 9%, var(--surface)); }
+  .callout.danger .ico{ color: var(--red); }
+  .callout p{ margin: 0; }
+  .callout b{ color: var(--text); }
+
+  .tbl-scroll{ overflow-x: auto; margin: .6rem 0; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+  table{ border-collapse: collapse; width: 100%; font-size: .92rem; background: var(--surface); }
+  th, td{ padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th{ font-family: var(--font-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); background: var(--surface-2); }
+  tbody tr:last-child td{ border-bottom: none; }
+  tr:hover td{ background: color-mix(in srgb, var(--cyan) 5%, transparent); }
+  td.num{ font-family: var(--font-mono); font-size: .85rem; }
+  .best{ color: var(--amber); font-weight: 700; }
+
+  .timeline{ display: grid; gap: 1rem; }
+  .blk{ display: grid; grid-template-columns: 96px 1fr; gap: 1.1rem; }
+  @media (max-width: 720px){ .blk{ grid-template-columns: 1fr; } }
+  .blk-tag{
+    font-family: var(--font-mono); font-size: .74rem; line-height: 1.35;
+    color: var(--text-faint); border: 1px dashed var(--border-strong);
+    border-radius: 10px; padding: .55rem .7rem; height: fit-content; text-align: center;
+  }
+  .blk-tag .t{ font-size: 1.15rem; color: var(--cyan); font-weight: 700; display: block; }
+  .blk-body{ background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: var(--radius-sm); padding: 1rem 1.15rem; }
+  .blk-body h4{ margin: 0 0 .35rem; font-size: 1rem; }
+  .script{
+    font-size: .96rem; color: var(--text-muted); border-left: 2px solid var(--border-strong);
+    padding-left: .9rem; margin: .5rem 0;
+  }
+  .script::before{ content: "🎤  "; font-family: var(--font-mono); }
+  .script b{ color: var(--text); }
+
+  details{ border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-bottom: .7rem; overflow: hidden; }
+  details[open]{ border-color: var(--border-strong); }
+  summary{
+    cursor: pointer; list-style: none; display: flex; gap: .9rem; align-items: baseline;
+    padding: .95rem 1.1rem; font-weight: 600; font-size: .98rem;
+  }
+  summary::-webkit-details-marker{ display: none; }
+  summary .q{ font-family: var(--font-mono); font-size: .8rem; color: var(--amber); font-weight: 700; flex: 0 0 auto; }
+  summary::after{
+    content: "+"; margin-left: auto; font-family: var(--font-mono); font-weight: 700; color: var(--cyan);
+    transition: transform .2s ease; flex: 0 0 auto;
+  }
+  details[open] summary::after{ transform: rotate(45deg); }
+  .qa-body{ padding: .2rem 1.1rem 1.1rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: .9rem; }
+  .qa-body b{ color: var(--text); }
+  .qa-body .tag{
+    display: inline-block; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em;
+    text-transform: uppercase; border-radius: 6px; padding: .15rem .5rem; margin-right: .4rem;
+  }
+  .tag.easy{ background: color-mix(in srgb, var(--cyan) 15%, transparent); color: var(--cyan); }
+  .tag.medium{ background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .tag.hard{ background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
+
+  .kbd{
+    font-family: var(--font-mono); font-size: .82em; background: var(--surface-2);
+    border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
+    padding: .05em .45em; color: var(--cyan); white-space: nowrap;
+  }
+
+  .foot{ border-top: 1px solid var(--border); padding: 2rem 0 3rem; color: var(--text-faint); font-size: .9rem; }
+  .foot .wrap{ display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: space-between; }
+
+  ul.tight{ margin: .4rem 0; padding-left: 1.15rem; }
+  ul.tight li{ margin: .28rem 0; }
+  code.inl{ font-family: var(--font-mono); font-size: .85em; background: var(--surface-2); border: 1px solid var(--border); padding: .05em .4em; border-radius: 5px; }
+  .stat-row{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+  .stat{ background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .stat .v{ font-family: var(--font-mono); font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--amber); line-height: 1.1; }
+  .stat .l{ font-size: .8rem; color: var(--text-muted); margin-top: .2rem; }
+  pre.code{
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 1rem 1.1rem; overflow-x: auto; font-family: var(--font-mono); font-size: .82rem; line-height: 1.55;
+  }
+  pre.code .c{ color: var(--text-faint); }
+  pre.code .k{ color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<!-- ================= TOPBAR ================= -->
+<header class="topbar">
+  <div class="brand"><span class="dot"></span>Walber · Features / 3 min</div>
+  <nav class="topnav">
+    <a href="#pitch">01 · Pitch</a>
+    <a href="#roteiro">02 · Roteiro</a>
+    <a href="#conceitos">03 · Conceitos</a>
+    <a href="#numeros">04 · Números</a>
+    <a href="#simulado">05 · Simulado</a>
+  </nav>
+  <button class="theme-btn" id="themeBtn" aria-label="Alternar tema" title="Alternar tema claro/escuro">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+</header>
+
+<!-- ================= HERO ================= -->
+<div class="wrap">
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Projeto Final IFG · Módulo 2 · Manutenção Preditiva Industrial</div>
+      <h1>Processamento e<br><span class="hl">Feature Engineering</span> de Áudio.</h1>
+      <p class="lead">Guia de estudo da sua parte da apresentação: como transformamos os 4.205 áudios do MIMII em dados estruturados + 92 features acústicas (MFCC, espectrais e temporais) com librosa — o elo entre o dado bruto e o modelo de ML.</p>
+      <div class="chips">
+        <span class="chip">⏱ <b>3 min</b> de fala</span>
+        <span class="chip">🎛 <b>92</b> features de áudio</span>
+        <span class="chip">📊 <b>103</b> colunas finais</span>
+        <span class="chip">🎵 <b>librosa</b></span>
+        <span class="chip">⚡ processamento <b>paralelo</b></span>
+      </div>
+    </div>
+    <div>
+      <div class="wave" aria-hidden="true" id="wave"></div>
+      <div class="wave-cap">— 16 kHz · mono (downmix) · 10 s por clip —</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 01 · PITCH ================= -->
+<section id="pitch">
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <h2 class="sec-title">O pitch de 30 segundos</h2>
+    <span class="sec-sub">diga isto no aquecimento</span>
+  </div>
+
+  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> transformar o áudio bruto em <b>92 features numéricas</b> que o modelo usa. <b>👥 Colegas:</b> dataset/ELT (Guilherme), treino do modelo (Daniel), resultados/demo (David).</p></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> O que eu faço, em uma frase</h3>
+      <p style="font-size:1.1rem; line-height:1.5;"><b>"Transformo o <span style="color:var(--amber)">áudio bruto</span> em dados que o modelo consiga entender: extraio os metadados estruturados dos paths e, com o <span style="color:var(--cyan)">librosa</span>, extraio <b>92 features acústicas</b> de cada clip — <b>MFCCs</b> (o timbre), <b>features espectrais</b> (centroid, bandwidth, rolloff, contrast) e <b>features temporais</b> (RMS e zero-crossing rate). No fim, cruzo com os metadados e gero a base final de <b>103 colunas × 4.205 linhas</b> que alimenta o dbt e o modelo."</b></p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Por que isso importa</h3>
+      <ul class="tight">
+        <li><b>Dado não estruturado</b> (`.wav`) → <b>tabela numérica</b> (matriz pronta para ML).</li>
+        <li>Cada clip vira uma <b>linha</b>; cada característica acústica, uma <b>coluna</b>.</li>
+        <li>A qualidade dessas features <b>determina</b> se o modelo consegue separar bomba normal de anômala.</li>
+        <li>Tudo é <b>reprodutível</b> via scripts e orquestrado pelo Airflow.</li>
+      </ul>
+      <div class="callout info"><span class="ico">ℹ</span><p>O <b>StandardScaler</b> (normalização numérica) é aplicado na etapa de <b>ML</b>, não aqui no processamento — aqui fazemos limpeza e padronização (mais na pergunta P11).</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 · ROTEIRO ================= -->
+<section id="roteiro">
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <h2 class="sec-title">Roteiro narrado de 3 minutos</h2>
+    <span class="sec-sub">ordem = tópicos do slide</span>
+  </div>
+
+  <div class="timeline">
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:00</span>~20s<br>Objetivo</div>
+      <div class="blk-body">
+        <h4>1. Do áudio bruto à tabela numérica</h4>
+        <p class="script">"Depois da ingestão, meu papel é transformar o <b>áudio bruto em dados estruturados</b>. Cada arquivo `.wav` precisa virar uma <b>linha de uma tabela</b>, com as colunas que o modelo usa: características do áudio + metadados. Esse trabalho acontece em <b>três scripts</b>: metadados, features de áudio e o merge final."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:20</span>~40s<br>Metadados</div>
+      <div class="blk-body">
+        <h4>2. Normalização e dados estruturados</h4>
+        <p class="script">"Primeiro extraímos os <b>metadados estruturados</b> dos paths do dataset: tipo de máquina, modelo, condição e nome do arquivo. Normalizamos a nomenclatura — o dataset real usa <b>'abnormal'</b>, e o pipeline converte para <b>'anomaly'</b>. Com a biblioteca <b>soundfile</b> lemos a duração, a taxa de amostragem e o número de canais de cada arquivo, e geramos o alvo <b>condition_binary</b> (0 normal / 1 anomalia)."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">1:00</span>~55s<br>Features</div>
+      <div class="blk-body">
+        <h4>3. Features de áudio com librosa</h4>
+        <p class="script">"O coração do processamento é a extração de features com o <b>librosa</b>. De cada clip de 10 segundos extraímos <b>92 features acústicas</b>: <b>80 de MFCC</b> — 40 coeficientes, cada um com média e desvio padrão, que capturam o <b>timbre</b> do som; <b>10 espectrais</b> — centroid, bandwidth, rolloff e 7 contrastes, que descrevem a <b>forma do espectro</b>; e <b>2 temporais</b> — <b>RMS</b>, a energia do sinal, e <b>zero-crossing rate</b>, a taxa de cruzamento do zero. O áudio de 8 canais é reduzido para <b>mono</b> (downmix) e reamostrado a <b>16 kHz</b>."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">1:55</span>~35s<br>Merge</div>
+      <div class="blk-body">
+        <h4>4. Merge e base final</h4>
+        <p class="script">"O terceiro passo cruza as duas tabelas por uma <b>chave única</b>, o <code class="inl">file_id</code> — um <b>LEFT JOIN</b> entre metadados e features de áudio. Valores ausentes são preenchidos com zero. O resultado é a base final: <b>4.205 linhas × 103 colunas</b>, sendo <b>96 numéricas</b> — que vão alimentar o banco, o dbt e o modelo de ML."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">2:30</span>~30s<br>Significado</div>
+      <div class="blk-body">
+        <h4>5. O que cada feature diz</h4>
+        <p class="script">"Na prática, os <b>MFCCs</b> capturam a assinatura tímbrica — uma bomba com vazamento ou contaminação soa diferente; as <b>espectrais</b> dizem se o som é grave ou agudo e onde está a energia; e as <b>temporais</b> medem energia e vibração. Juntas, elas dão ao modelo o <b>retrato numérico</b> de cada bomba. É essa base que o Daniel usa para treinar os modelos."</p>
+        <div class="callout warn"><span class="ico">!</span><p><b>Dica de tempo:</b> se apertar, encurte o bloco 4 (merge). Nunca pule a <b>explicação das features</b> (bloco 3) — é o seu conteúdo central.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 · CONCEITOS ================= -->
+<section id="conceitos">
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <h2 class="sec-title">Domínio conceitual (nível banca)</h2>
+    <span class="sec-sub">entenda para improvisar</span>
+  </div>
+
+  <h3 style="margin:0 0 .8rem;">3.1 · As 92 features de áudio</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Grupo</th><th>Qtd</th><th>Features</th><th>O que captura</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="num">MFCC</td><td class="num">80</td>
+          <td class="num">mfcc_1_mean … mfcc_40_mean, mfcc_1_std … mfcc_40_std</td>
+          <td><b>Timbre</b> — formato do espectro perceptivo (escala Mel)</td>
+        </tr>
+        <tr>
+          <td class="num">Spectral</td><td class="num">10</td>
+          <td class="num">centroid, bandwidth, rolloff, contrast_1..7</td>
+          <td><b>Forma do espectro</b> — brilho, espalhamento, energia acumulada</td>
+        </tr>
+        <tr>
+          <td class="num">Temporal</td><td class="num">2</td>
+          <td class="num">rms_mean, zcr_mean</td>
+          <td><b>Energia e vibração</b> do sinal no tempo</td>
+        </tr>
+        <tr>
+          <td class="num best">Total</td><td class="num best">92</td><td class="num">—</td><td>por clip de áudio</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid-3" style="margin-top:1.2rem;">
+    <div class="card">
+      <h3><span class="k">//</span> MFCC (80)</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Mel-Frequency Cepstral Coefficients. O espectro é mapeado para a <b>escala Mel</b> (percepção humana de frequência), log-compressado e transformado. Os 40 primeiros coeficientes descrevem o <b>formato geral do timbre</b>.</p>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;"><b>Média</b> = timbre médio do clip; <b>desvio</b> = o quanto o timbre varia durante os 10 s.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Espectrais (10)</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;"><b>Centroid</b>: centro de massa do espectro (som grave/agudo). <b>Bandwidth</b>: espalhamento em volta do centroid. <b>Rolloff</b>: frequência abaixo de 85% da energia. <b>Contrast ×7</b>: diferença entre picos e vales em 7 bandas de frequência.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Temporais (2)</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;"><b>RMS</b>: energia/potência média do sinal. <b>ZCR</b> (zero-crossing rate): quantas vezes a forma de onda cruza o zero por segundo — indicador de brilho e de ruído.</p>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.2 · Dados estruturados (metadados)</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> O que vem do path + soundfile</h3>
+      <pre class="code"><span class="c"># Estrutura do dataset real</span>
+pump/id_04/abnormal/pump_id_04_anomaly_00000055.wav
+  ↑      ↑      ↑            ↑
+  máquina modelo condição    arquivo</pre>
+      <ul class="tight" style="color:var(--text-muted); font-size:.92rem;">
+        <li><code class="inl">machine_type</code>, <code class="inl">model_id</code>, <code class="inl">condition</code> ← do path.</li>
+        <li><code class="inl">duration_sec</code>, <code class="inl">sample_rate</code>, <code class="inl">channels</code> ← via <code class="inl">soundfile</code>.</li>
+        <li><code class="inl">condition_binary</code> = target do ML (anomaly→1).</li>
+        <li><code class="inl">file_id</code> = chave única do dataset.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Limpeza e normalização</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>CONDITION_MAP:</b> converte <code class="inl">abnormal → anomaly</code> (nomenclatura padrão do projeto em dbt/ML/Metabase).</li>
+        <li><code class="inl">model_id_encoded</code>: extrai o número do modelo (<code class="inl">id_04 → 4</code>) como coluna numérica.</li>
+        <li>Path inesperado é <b>ignorado com warning</b> (não quebra o pipeline).</li>
+        <li>No merge, <code class="inl">fillna(0)</code> para colunas ausentes (features) e drop de colunas duplicadas (<code class="inl">file_path_audio</code>).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.3 · Como a extração é feita na prática</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> Passo a passo (librosa)</h3>
+      <pre class="code">y, sr = librosa.load(wav, sr=<span class="k">16000</span>, mono=<span class="k">True</span>)
+mfcc  = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=<span class="k">40</span>)
+  <span class="c">→ média e desvio por coeficiente (80)</span>
+spectral_centroid / bandwidth / rolloff
+spectral_contrast <span class="c">→ 7 bandas</span>
+zcr, rms  <span class="c">→ médias (2)</span></pre>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;"><b>Downmix</b>: <code class="inl">mono=True</code> reduz 8 canais → 1. <b>Reamostragem</b> fixa em 16 kHz.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Paralelismo</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Milhares de `.wav` de 10 s — extração sequencial levaria horas. O script roda em <b>paralelo</b>:</p>
+      <ul class="tight" style="color:var(--text-muted); font-size:.92rem;">
+        <li>Direto no terminal → <b>multiprocessing</b> (<code class="inl">Pool</code>).</li>
+        <li>Dentro do Airflow (processo daemon) → <b>threads</b> (NumPy/BLAS libera o GIL, há paralelismo real).</li>
+        <li>Arquivo com erro é <b>registrado e pulado</b>, sem derrubar o pipeline.</li>
+      </ul>
+      <div class="callout info"><span class="ico">ℹ</span><p>O resultado: <code class="inl">audio_features.csv</code> — 92 colunas de features + <code class="inl">file_id</code>.</p></div>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.4 · Merge: metadados + features</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> O join</h3>
+      <pre class="code">pump_metadata  <span class="k">LEFT JOIN</span>  audio_features
+  ON <span class="k">file_id</span> = <span class="k">file_id</span></pre>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">O <code class="inl">file_id</code> é gerado <b>de forma idêntica</b> nos dois scripts a partir do mesmo path — é o que garante o casamento 1:1.</p>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> O resultado</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>4.205 linhas</b> × <b>103 colunas</b> → <code class="inl">ml_features.csv</code>.</li>
+        <li><b>96 numéricas</b> usadas no ML (92 de áudio + duração, sample rate, canais, model_id codificado).</li>
+        <li>Restante: colunas de ID/descritivas (<code class="inl">file_id</code>, <code class="inl">filename</code>, <code class="inl">file_path</code>, <code class="inl">condition</code>).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.5 · Normalização numérica</h3>
+  <div class="card">
+    <p style="color:var(--text-muted); font-size:.95rem; margin:0;">Aqui no processamento a "normalização" é <b>limpeza/padronização</b>: <code class="inl">fillna(0)</code>, tipagem, chave consistente e <code class="inl">abnormal → anomaly</code>. A <b>normalização numérica</b> (StandardScaler, média 0 / desvio 1) acontece <b>na etapa de ML</b>, ajustada só no treino — detalhes e motivo estão no guia do Daniel.</p>
+  </div>
+</section>
+
+<!-- ================= 04 · NÚMEROS ================= -->
+<section id="numeros">
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <h2 class="sec-title">Números para decorar</h2>
+    <span class="sec-sub">processamento e features</span>
+  </div>
+
+  <div class="stat-row" style="margin-bottom:1.4rem;">
+    <div class="stat"><div class="v">92</div><div class="l">features de áudio por clip</div></div>
+    <div class="stat"><div class="v">103</div><div class="l">colunas da base final (× 4.205 linhas)</div></div>
+    <div class="stat"><div class="v">96</div><div class="l">colunas numéricas usadas no ML</div></div>
+    <div class="stat"><div class="v">40</div><div class="l">coeficientes MFCC (média + desvio = 80)</div></div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:1.2rem;">
+    <div>
+      <h3 style="margin:0 0 .6rem;">Contagem das features</h3>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Grupo</th><th>Qtd</th></tr></thead>
+          <tbody>
+            <tr><td class="num">MFCC (40 médias + 40 desvios)</td><td class="num best">80</td></tr>
+            <tr><td class="num">Espectrais (centroid, bandwidth, rolloff, contrast ×7)</td><td class="num">10</td></tr>
+            <tr><td class="num">Temporais (rms_mean, zcr_mean)</td><td class="num">2</td></tr>
+            <tr><td class="num">Estruturadas (duration, sample_rate, channels, model_id_encoded)</td><td class="num">4</td></tr>
+            <tr><td class="num best">Total numérico usado no ML</td><td class="num best">96</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <h3 style="margin:0 0 .6rem;">Parâmetros da extração</h3>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>Parâmetro</th><th>Valor</th></tr></thead>
+          <tbody>
+            <tr><td class="num">Sample rate (librosa)</td><td class="num">16.000 Hz</td></tr>
+            <tr><td class="num">Mono (downmix)</td><td class="num">8 canais → 1</td></tr>
+            <tr><td class="num">n_mfcc</td><td class="num">40</td></tr>
+            <tr><td class="num">Duração por clip</td><td class="num">10 s</td></tr>
+            <tr><td class="num">Arquivos processados</td><td class="num">4.205</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn"><span class="ico">!</span><p><b>Fique atento:</b> alguns materiais antigos falam em "2.400 linhas" ou "7 features espectrais". O dataset real tem <b>4.205 linhas</b> e o total de espectrais é <b>10</b> (centroid, bandwidth, rolloff + 7 contrastes). Use sempre os números do dataset real.</p></div>
+</section>
+
+<!-- ================= 05 · SIMULADO ================= -->
+<section id="simulado">
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <h2 class="sec-title">Simulado da banca</h2>
+    <span class="sec-sub">clique para ver a resposta</span>
+  </div>
+  <p style="color:var(--text-muted); margin-top:0;">Tente responder em voz alta antes de abrir. Grau de dificuldade estimado ao lado de cada pergunta.</p>
+
+  <details>
+    <summary><span class="q">P1</span> O que são MFCCs e o que eles capturam?</summary>
+    <div class="qa-body">
+      <span class="tag easy">features</span>
+      <p><b>Mel-Frequency Cepstral Coefficients</b>: representação compacta do <b>timbre</b> de um som. O espectro é mapeado para a <b>escala Mel</b> (que aproxima como o ouvido humano percebe frequência), aplica-se log e uma transformada, resultando em coeficientes que descrevem o "formato" do som. No nosso caso, uma bomba com vazamento ou contaminação muda esse formato — e o MFCC capta essa mudança.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P2</span> Por que média E desvio padrão para cada coeficiente?</summary>
+    <div class="qa-body">
+      <span class="tag medium">features</span>
+      <p>A <b>média</b> resume o timbre médio do clip inteiro; o <b>desvio padrão</b> mede <b>quanto esse timbre varia</b> durante os 10 segundos. Uma anomalia pode aparecer como um timbre consistentemente diferente (média) ou como uma oscilação/rutura no som (desvio). Juntar os dois dobra o poder descritivo: 40 coeficientes → 80 colunas.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P3</span> O que é a escala Mel?</summary>
+    <div class="qa-body">
+      <span class="tag easy">conceito</span>
+      <p>É uma escala de frequência que reflete a <b>percepção auditiva humana</b>: somos mais sensíveis a diferenças em frequências baixas do que altas. A escala Mel "estica" as baixas frequências e "comprime" as altas. Usar essa escala faz as features representarem o som como <b>nós percebemos</b> — e anomalias audíveis em máquinas costumam ser perceptíveis justamente nesse domínio.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P4</span> O que é o spectral centroid?</summary>
+    <div class="qa-body">
+      <span class="tag easy">espectral</span>
+      <p>É o <b>centro de massa</b> do espectro de frequência — o "ponto de equilíbrio" das frequências. Valores altos indicam som mais <b>agudo</b> (brilhante); valores baixos, som mais <b>grave</b>. No nosso caso, mudanças no centroid indicam que a característica acústica da bomba mudou — algo típico de anomalias mecânicas.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P5</span> O que é o spectral rolloff e por que 85%?</summary>
+    <div class="qa-body">
+      <span class="tag medium">espectral</span>
+      <p>É a frequência abaixo da qual está concentrada <b>85% da energia</b> do sinal. O limiar (85%) é um valor padrão na literatura de áudio que separa bem o "corpo" do som dos componentes de alta frequência (muitas vezes ruído). Se esse valor muda, a energia do som da bomba se deslocou na frequência — indicador de anomalia.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P6</span> O que é o spectral contrast e as 7 bandas?</summary>
+    <div class="qa-body">
+      <span class="tag hard">espectral</span>
+      <p>Mede a <b>diferença entre picos e vales</b> do espectro em cada banda de frequência — quanto o espectro é "serrilhado". Sons harmônicos (como um motor saudável) têm contraste alto; ruído contínuo tem contraste baixo. Calculamos em <b>7 bandas</b> de frequência para capturar essa estrutura em regiões diferentes do espectro separadamente, em vez de um número global.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P7</span> O que são ZCR e RMS?</summary>
+    <div class="qa-body">
+      <span class="tag easy">temporal</span>
+      <p><b>RMS</b> (root mean square) é a <b>energia média</b> do sinal — quão alto o som é, em potência. <b>ZCR</b> (zero-crossing rate) é a taxa com que a onda cruza o zero, ligada à <b>frequência percebida</b> e ao brilho. Energia anormalmente alta (RMS) ou vibração estranha (ZCR) são sinais clássicos de desgaste ou desbalanceamento de máquinas.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P8</span> Por que reduzir de 8 canais para mono?</summary>
+    <div class="qa-body">
+      <span class="tag easy">áudio</span>
+      <p>O dataset foi gravado com um <b>array de 8 microfones</b>, mas a tarefa é classificatória por clip. O <code class="inl">librosa.load(mono=True)</code> faz o <b>downmix</b> (média dos canais), gerando uma única forma de onda — suficiente para capturar o timbre da máquina e padroniza o dado. Manter 8 canais aumentaria a dimensionalidade sem ganho claro para a classificação.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P9</span> Por que reamostrar a 16 kHz?</summary>
+    <div class="qa-body">
+      <span class="tag easy">áudio</span>
+      <p>É o <b>sample rate nativo do dataset MIMII</b> (16 kHz = 16.000 amostras/segundo). Forçamos <code class="inl">sr=16000</code> no carregamento para <b>garantir consistência</b> entre arquivos e porque, pelo teorema de Nyquist, 16 kHz captura até 8 kHz — mais que suficiente para sons mecânicos de bombas. Reamostrar é mais leve e suficiente para as features que extraímos.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P10</span> Por que 40 coeficientes MFCC?</summary>
+    <div class="qa-body">
+      <span class="tag medium">features</span>
+      <p>É o valor padrão robusto do librosa para <code class="inl">n_mfcc</code>. Poucos coeficientes perdem detalhe tímbrico; muitos adicionam componentes de alta ordem (suscetíveis a ruído) sem ganho. Com 40, somados aos espectrais e temporais, chegamos a 96 features numéricas — uma dimensionalidade bem comportada para o dataset de 4.205 amostras e para a MLP.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P11</span> Onde o StandardScaler/MinMaxScaler é aplicado no projeto?</summary>
+    <div class="qa-body">
+      <span class="tag hard">processamento × ML</span>
+      <p>No <b>pipeline de ML</b>, não no processamento. Aqui fazemos <b>limpeza/padronização</b> (abnormal→anomaly, tipagem, fillna(0)). O <b>StandardScaler</b> (média 0, desvio 1) é aplicado em <code class="inl">ml/evaluate.py</code>, ajustado só no treino — os detalhes do porquê estão no guia do Daniel.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P12</span> Como os metadados são extraídos dos paths?</summary>
+    <div class="qa-body">
+      <span class="tag easy">estruturado</span>
+      <p>O dataset segue a estrutura <code class="inl">pump/&lt;modelo&gt;/&lt;condição&gt;/&lt;arquivo&gt;.wav</code>. O <code class="inl">process_structured.py</code> percorre os arquivos, lê essas partes do path (machine_type, model_id, condition) e, com o <b>soundfile</b>, lê metadados do próprio áudio (duração, sample rate, canais). A condição "abnormal" é normalizada para "anomaly" via <code class="inl">CONDITION_MAP</code>, e o target <code class="inl">condition_binary</code> (anomaly=1) é gerado.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P13</span> O que é o file_id e por que é a chave do merge?</summary>
+    <div class="qa-body">
+      <span class="tag easy">integração</span>
+      <p>É um identificador único montado a partir do path: <code class="inl">pump_id_04_anomaly_00000055</code> = máquina_modelo_condição_nome. Ele é gerado <b>com a mesma regra</b> em <code class="inl">process_structured.py</code> e <code class="inl">extract_audio_features.py</code>, então os dois CSVs casam exatamente nessa coluna — garantindo que cada linha de features se ligue à linha certa de metadados (1:1).</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P14</span> E se um arquivo falhar durante a extração de features?</summary>
+    <div class="qa-body">
+      <span class="tag medium">robustez</span>
+      <p>O processamento paralelo trata cada arquivo isoladamente: se um `.wav` corrompido lançar exceção, o status é registrado como <code class="inl">error</code>, a mensagem é impressa com o caminho, e o processamento <b>continua</b> sem derrubar o pipeline. Só os arquivos com sucesso entram no CSV final — o merge com LEFT JOIN deixaria um possível ausente com <code class="inl">fillna(0)</code>.</p>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="foot">
+  <div class="wrap">
+    <span>Guia preparado com base em <code class="inl">processing/process_structured.py</code>, <code class="inl">processing/extract_audio_features.py</code>, <code class="inl">processing/merge_features.py</code> e <code class="inl">.docs-projeto-final/06-Machine-Learning.md</code>.</span>
+    <span>Série de guias: <a href="guia-apresentacao-guilherme.html">Guilherme</a> · <a href="guia-apresentacao-walber.html">Walber</a> · <a href="guia-apresentacao-daniel.html">Daniel</a> · <a href="guia-apresentacao-david.html">David</a></span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeBtn");
+    var stored = null;
+    try { stored = localStorage.getItem("guide-theme"); } catch (e) {}
+    if (stored === "light") { root.setAttribute("data-theme", "light"); }
+
+    btn.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("guide-theme", next); } catch (e) {}
+    });
+
+    var wave = document.getElementById("wave");
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < 48; i++) {
+      var b = document.createElement("div");
+      b.className = "bar";
+      frag.appendChild(b);
+    }
+    wave.appendChild(frag);
+  })();
+</script>
+</body>
+</html>

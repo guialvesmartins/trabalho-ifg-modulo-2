@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daniel — Modelagem de Machine Learning · Guia de Domínio</title>
+<meta name="description" content="Guia de estudo da parte de Machine Learning da apresentação do projeto final IFG — MLP hard-code vs sklearn, arquitetura, métricas e simulado da banca.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --font-body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
+
+    --bg: #0b1120;
+    --bg-soft: #0f1730;
+    --surface: #121c36;
+    --surface-2: #182442;
+    --border: rgba(148, 180, 224, .14);
+    --border-strong: rgba(148, 180, 224, .28);
+    --text: #e6edf7;
+    --text-muted: #9aa9c2;
+    --text-faint: #6b7a94;
+
+    --amber: #f5a524;
+    --amber-ink: #2a1a00;
+    --cyan: #38bdf8;
+    --cyan-ink: #062130;
+    --green: #34d399;
+    --red: #fb7185;
+
+    --ok: #34d399;
+    --warn: #f5a524;
+
+    --radius: 14px;
+    --radius-sm: 9px;
+    --gap: clamp(1rem, 3vw, 2rem);
+    --wrap: 1080px;
+    --shadow: 0 12px 40px rgba(0,0,0,.35);
+    --header-h: 64px;
+  }
+
+  html[data-theme="light"]{
+    --bg: #f4f6fb;
+    --bg-soft: #eef1f8;
+    --surface: #ffffff;
+    --surface-2: #f0f4fb;
+    --border: rgba(15, 27, 45, .12);
+    --border-strong: rgba(15, 27, 45, .22);
+    --text: #0f1b2d;
+    --text-muted: #4f5f7a;
+    --text-faint: #7d8aa3;
+    --amber: #d97706;
+    --amber-ink: #ffffff;
+    --cyan: #0284c7;
+    --cyan-ink: #ffffff;
+    --shadow: 0 12px 34px rgba(15,27,45,.10);
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin: 0;
+    background:
+      radial-gradient(1000px 500px at 85% -10%, rgba(56,189,248,.10), transparent 60%),
+      radial-gradient(900px 460px at -10% 0%, rgba(245,165,36,.08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: clamp(16px, 1.02vw + .65rem, 19px);
+    line-height: 1.62;
+    transition: background-color .35s ease, color .35s ease;
+  }
+  a{ color: var(--cyan); text-decoration: none; }
+  a:hover{ text-decoration: underline; }
+  ::selection{ background: var(--amber); color: var(--amber-ink); }
+
+  /* ------- Header / nav ------- */
+  .topbar{
+    position: sticky; top: 0; z-index: 50;
+    height: var(--header-h);
+    display: flex; align-items: center; gap: 1rem;
+    padding: 0 clamp(1rem, 4vw, 2.5rem);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .brand{
+    font-family: var(--font-mono);
+    font-weight: 700; font-size: .82rem; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--text-muted);
+    display: flex; align-items: center; gap: .55rem; white-space: nowrap;
+  }
+  .brand .dot{ width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
+  .topnav{
+    display: flex; gap: .2rem; flex: 1; justify-content: flex-end;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .topnav::-webkit-scrollbar{ display: none; }
+  .topnav a{
+    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em;
+    color: var(--text-muted); padding: .45rem .7rem; border-radius: 8px; white-space: nowrap;
+  }
+  .topnav a:hover{ background: var(--surface-2); color: var(--text); text-decoration: none; }
+  .theme-btn{
+    border: 1px solid var(--border-strong); background: var(--surface);
+    color: var(--text); width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
+    display: grid; place-items: center; flex: 0 0 auto; transition: transform .15s ease;
+  }
+  .theme-btn:hover{ transform: scale(1.06); }
+  .theme-btn svg{ width: 18px; height: 18px; }
+  html[data-theme="dark"] .theme-btn .icon-sun{ display: none; }
+  html[data-theme="light"] .theme-btn .icon-moon{ display: none; }
+
+  /* ------- Layout ------- */
+  .wrap{ max-width: var(--wrap); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
+  section{ padding: clamp(2.2rem, 6vw, 4.2rem) 0; }
+  .grid-2{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .grid-3{ display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
+  @media (max-width: 820px){ .grid-2, .grid-3{ grid-template-columns: 1fr; } }
+
+  /* ------- Hero ------- */
+  .hero{ padding: clamp(3rem, 9vw, 6rem) 0 2rem; }
+  .hero-inner{ display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--gap); align-items: center; }
+  @media (max-width: 900px){ .hero-inner{ grid-template-columns: 1fr; } }
+  .eyebrow{
+    font-family: var(--font-mono); font-size: .78rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--amber); font-weight: 500;
+  }
+  h1{
+    font-size: clamp(1.9rem, 4.4vw, 3.4rem); line-height: 1.06; margin: .5rem 0 .6rem;
+    letter-spacing: -.02em; font-weight: 700;
+  }
+  h1 .hl{ color: var(--cyan); }
+  .hero p.lead{ font-size: clamp(1rem, 1.5vw, 1.22rem); color: var(--text-muted); max-width: 34em; margin: 0 0 1.4rem; }
+  .chips{ display: flex; flex-wrap: wrap; gap: .55rem; }
+  .chip{
+    font-family: var(--font-mono); font-size: .74rem; letter-spacing: .02em;
+    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted);
+    padding: .42rem .8rem; border-radius: 999px;
+  }
+  .chip b{ color: var(--text); font-weight: 600; }
+
+  /* waveform signature */
+  .wave{
+    height: 170px; display: flex; align-items: center; gap: clamp(2px, .3vw, 4px);
+    justify-content: center; padding: .5rem;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background:
+      linear-gradient(var(--border) 1px, transparent 1px) 0 0/100% 34px,
+      var(--surface);
+  }
+  .wave .bar{
+    width: clamp(3px, .55vw, 7px); height: 12%; border-radius: 4px;
+    background: linear-gradient(180deg, var(--cyan), var(--amber));
+    animation: eq 1.9s ease-in-out infinite;
+  }
+  .wave .bar:nth-child(3n){ animation-delay: .3s; }
+  .wave .bar:nth-child(4n){ animation-delay: .6s; }
+  .wave .bar:nth-child(5n){ animation-delay: .9s; }
+  .wave .bar:nth-child(2n){ animation-delay: .15s; }
+  @keyframes eq{
+    0%,100%{ height: 14%; opacity: .55; }
+    50%{ height: 96%; opacity: 1; }
+  }
+  .wave-cap{ font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; color: var(--text-faint); text-transform: uppercase; margin-top: .5rem; text-align: center; }
+  @media (prefers-reduced-motion: reduce){
+    .wave .bar{ animation: none; height: 60%; opacity: .8; }
+    html{ scroll-behavior: auto; }
+  }
+
+  /* ------- Section scaffolding ------- */
+  .sec-head{ display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: .8rem; }
+  .sec-num{
+    font-family: var(--font-mono); font-size: .95rem; font-weight: 700; color: var(--amber);
+    flex: 0 0 auto;
+  }
+  .sec-title{ font-size: clamp(1.4rem, 2.6vw, 2rem); letter-spacing: -.015em; margin: 0; }
+  .sec-sub{ color: var(--text-muted); margin: 0 0 0 auto; font-size: .92rem; white-space: nowrap; }
+  @media (max-width: 720px){ .sec-sub{ display: none; } }
+
+  .card{
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.6rem);
+    box-shadow: var(--shadow);
+  }
+  .card h3{ margin: 0 0 .5rem; font-size: 1.08rem; }
+  .card h3 .k{ font-family: var(--font-mono); color: var(--cyan); font-weight: 500; }
+
+  .callout{
+    display: flex; gap: .9rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--border-strong); padding: 1rem 1.1rem; margin: 1rem 0;
+    background: var(--surface-2);
+  }
+  .callout .ico{ font-family: var(--font-mono); font-weight: 700; flex: 0 0 auto; }
+  .callout.warn{ border-color: color-mix(in srgb, var(--amber) 55%, transparent); background: color-mix(in srgb, var(--amber) 9%, var(--surface)); }
+  .callout.warn .ico{ color: var(--amber); }
+  .callout.info{ border-color: color-mix(in srgb, var(--cyan) 55%, transparent); background: color-mix(in srgb, var(--cyan) 9%, var(--surface)); }
+  .callout.info .ico{ color: var(--cyan); }
+  .callout.danger{ border-color: color-mix(in srgb, var(--red) 55%, transparent); background: color-mix(in srgb, var(--red) 9%, var(--surface)); }
+  .callout.danger .ico{ color: var(--red); }
+  .callout p{ margin: 0; }
+  .callout b{ color: var(--text); }
+
+  /* ------- Tables ------- */
+  .tbl-scroll{ overflow-x: auto; margin: .6rem 0; border-radius: var(--radius-sm); border: 1px solid var(--border); }
+  table{ border-collapse: collapse; width: 100%; font-size: .92rem; background: var(--surface); }
+  th, td{ padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th{ font-family: var(--font-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); background: var(--surface-2); }
+  tbody tr:last-child td{ border-bottom: none; }
+  tr:hover td{ background: color-mix(in srgb, var(--cyan) 5%, transparent); }
+  td.num{ font-family: var(--font-mono); font-size: .85rem; }
+  .best{ color: var(--amber); font-weight: 700; }
+  .center{ text-align: center; }
+
+  /* ------- Script timeline ------- */
+  .timeline{ display: grid; gap: 1rem; }
+  .blk{ display: grid; grid-template-columns: 96px 1fr; gap: 1.1rem; }
+  @media (max-width: 720px){ .blk{ grid-template-columns: 1fr; } }
+  .blk-tag{
+    font-family: var(--font-mono); font-size: .74rem; line-height: 1.35;
+    color: var(--text-faint); border: 1px dashed var(--border-strong);
+    border-radius: 10px; padding: .55rem .7rem; height: fit-content; text-align: center;
+  }
+  .blk-tag .t{ font-size: 1.15rem; color: var(--cyan); font-weight: 700; display: block; }
+  .blk-body{ background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: var(--radius-sm); padding: 1rem 1.15rem; }
+  .blk-body h4{ margin: 0 0 .35rem; font-size: 1rem; }
+  .script{
+    font-size: .96rem; color: var(--text-muted); border-left: 2px solid var(--border-strong);
+    padding-left: .9rem; margin: .5rem 0;
+  }
+  .script::before{ content: "🎤  "; font-family: var(--font-mono); }
+  .script b{ color: var(--text); }
+
+  /* ------- Accordion (simulado) ------- */
+  details{ border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-bottom: .7rem; overflow: hidden; }
+  details[open]{ border-color: var(--border-strong); }
+  summary{
+    cursor: pointer; list-style: none; display: flex; gap: .9rem; align-items: baseline;
+    padding: .95rem 1.1rem; font-weight: 600; font-size: .98rem;
+  }
+  summary::-webkit-details-marker{ display: none; }
+  summary .q{ font-family: var(--font-mono); font-size: .8rem; color: var(--amber); font-weight: 700; flex: 0 0 auto; }
+  summary::after{
+    content: "+"; margin-left: auto; font-family: var(--font-mono); font-weight: 700; color: var(--cyan);
+    transition: transform .2s ease; flex: 0 0 auto;
+  }
+  details[open] summary::after{ transform: rotate(45deg); }
+  .qa-body{ padding: .2rem 1.1rem 1.1rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: .9rem; }
+  .qa-body b{ color: var(--text); }
+  .qa-body .tag{
+    display: inline-block; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em;
+    text-transform: uppercase; border-radius: 6px; padding: .15rem .5rem; margin-right: .4rem;
+  }
+  .tag.easy{ background: color-mix(in srgb, var(--cyan) 15%, transparent); color: var(--cyan); }
+  .tag.medium{ background: color-mix(in srgb, var(--amber) 18%, transparent); color: var(--amber); }
+  .tag.hard{ background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
+
+  /* ------- Architecture SVG ------- */
+  .arch-wrap{ display: grid; grid-template-columns: 1.1fr .9fr; gap: var(--gap); align-items: start; }
+  @media (max-width: 900px){ .arch-wrap{ grid-template-columns: 1fr; } }
+  .arch-svg{ background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: .8rem; }
+  .arch-svg svg{ width: 100%; height: auto; display: block; }
+  .lbl{ font-family: var(--font-mono); font-size: .62rem; letter-spacing: .05em; }
+  html[data-theme="light"] .lbl{ fill: #0f1b2d; }
+  html[data-theme="dark"] .lbl{ fill: #e6edf7; }
+
+  .kbd{
+    font-family: var(--font-mono); font-size: .82em; background: var(--surface-2);
+    border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
+    padding: .05em .45em; color: var(--cyan); white-space: nowrap;
+  }
+
+  .foot{ border-top: 1px solid var(--border); padding: 2rem 0 3rem; color: var(--text-faint); font-size: .9rem; }
+  .foot .wrap{ display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: space-between; }
+
+  ul.tight{ margin: .4rem 0; padding-left: 1.15rem; }
+  ul.tight li{ margin: .28rem 0; }
+  code.inl{ font-family: var(--font-mono); font-size: .85em; background: var(--surface-2); border: 1px solid var(--border); padding: .05em .4em; border-radius: 5px; }
+  .pill-num{
+    display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 .4rem;
+    font-family: var(--font-mono); font-weight: 700; font-size: .85rem; color: var(--cyan-ink);
+    background: var(--cyan); border-radius: 8px;
+  }
+  .stat-row{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+  .stat{ background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
+  .stat .v{ font-family: var(--font-mono); font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--amber); line-height: 1.1; }
+  .stat .l{ font-size: .8rem; color: var(--text-muted); margin-top: .2rem; }
+</style>
+</head>
+<body>
+
+<!-- ================= TOPBAR ================= -->
+<header class="topbar">
+  <div class="brand"><span class="dot"></span>Daniel · ML / 3 min</div>
+  <nav class="topnav">
+    <a href="#pitch">01 · Pitch</a>
+    <a href="#roteiro">02 · Roteiro</a>
+    <a href="#conceitos">03 · Conceitos</a>
+    <a href="#numeros">04 · Números</a>
+    <a href="#simulado">05 · Simulado</a>
+  </nav>
+  <button class="theme-btn" id="themeBtn" aria-label="Alternar tema" title="Alternar tema claro/escuro">
+    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+  </button>
+</header>
+
+<!-- ================= HERO ================= -->
+<div class="wrap">
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">Projeto Final IFG · Módulo 2 · Manutenção Preditiva Industrial</div>
+      <h1>Modelagem de <span class="hl">Machine Learning</span><br>— domínio para a banca.</h1>
+      <p class="lead">Guia de estudo da sua parte da apresentação: MLP hard-code (NumPy) vs scikit-learn, arquitetura da rede, parâmetros de treino, métricas reais e um simulado de perguntas da banca — tudo alinhado ao código do projeto.</p>
+      <div class="chips">
+        <span class="chip">⏱ <b>3 min</b> de fala</span>
+        <span class="chip">🧠 <b>5</b> blocos</span>
+        <span class="chip">❓ <b>15+</b> perguntas</span>
+        <span class="chip">📊 <b>96</b> features</span>
+        <span class="chip">🧬 <b>64→32</b> neurônios</span>
+      </div>
+    </div>
+    <div>
+      <div class="wave" aria-hidden="true" id="wave"></div>
+      <div class="wave-cap">— sinal de áudio · 16 kHz · 8 canais —</div>
+    </div>
+  </div>
+</section>
+</div>
+
+<main class="wrap">
+
+<!-- ================= 01 · PITCH ================= -->
+<section id="pitch">
+  <div class="sec-head">
+    <span class="sec-num">01</span>
+    <h2 class="sec-title">O pitch de 30 segundos</h2>
+    <span class="sec-sub">diga isto no aquecimento</span>
+  </div>
+
+  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> a arquitetura da rede, como ela aprende (backprop, SGD vs Adam) e as métricas que dizem se o modelo funciona. <b>👥 Colegas:</b> dataset/arquitetura de dados (Guilherme), features de áudio (Walber), dashboards + demo (David).</p></div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> O problema, em uma frase</h3>
+      <p style="font-size:1.15rem; line-height:1.5;"><b>"Nossa tarefa de ML é responder: <span style="color:var(--amber)">esta bomba industrial está operando com anomalia?</span> Analisamos o som de cada bomba e treinamos uma rede neural que classifica funcionamento normal vs anômalo — apoiando a decisão de parar (ou não) para manutenção."</b></p>
+      <div class="callout info">
+        <span class="ico">ℹ</span>
+        <p>O tomador de decisão é o <b>engenheiro de manutenção</b>. Paradas não programadas custam caro; o modelo detecta anomalia <b>antes</b> da falha, reduzindo custo de reparo emergencial e aumentando a vida útil do equipamento.</p>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> A matéria-prima</h3>
+      <ul class="tight">
+        <li><b>Dataset MIMII</b> (Hitachi/Toyota Research) — <b>4.205</b> clipes de áudio de bombas reais em fábrica, ruído real a <b>0 dB SNR</b>.</li>
+        <li><b>96 features numéricas</b> por clip: <b>MFCC</b> (80), espectrais (10), energia/ritmo (2) e metadados.</li>
+        <li>Alvo binário <code class="inl">condition_binary</code>: <b>0 = normal</b> (3.749) | <b>1 = anomalia</b> (456).</li>
+        <li>Desbalanceamento <b>~8:1</b> — isso explica quase tudo que vem a seguir.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 02 · ROTEIRO ================= -->
+<section id="roteiro">
+  <div class="sec-head">
+    <span class="sec-num">02</span>
+    <h2 class="sec-title">Roteiro narrado de 3 minutos</h2>
+    <span class="sec-sub">ordem = tópicos do slide</span>
+  </div>
+
+  <div class="timeline">
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:00</span>~20s<br>Abertura</div>
+      <div class="blk-body">
+        <h4>1. O problema e os dados</h4>
+        <p class="script">"Nosso objetivo é responder uma pergunta: <b>esta bomba está com anomalia?</b> Para isso, extraímos <b>96 features do áudio</b> — MFCC, características espectrais e de energia — de <b>4.205 clips</b> do dataset MIMII, com ruído real de fábrica."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:20</span>~35s<br>Modelos</div>
+      <div class="blk-body">
+        <h4>2. Dois caminhos para o mesmo MLP</h4>
+        <p class="script">"Implementamos o modelo de duas formas. Um <b>hard-code em NumPy</b>: uma MLP escrita do zero, com forward pass, <b>backpropagation</b> e SGD com momento — sem nenhum framework de deep learning. E uma versão com biblioteca: o <b>MLPClassifier do scikit-learn</b>, com otimizador Adam. Também treinamos dois baselines para referência: <b>classe majoritária</b> e <b>regressão logística</b>."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">0:55</span>~40s<br>Arquitetura</div>
+      <div class="blk-body">
+        <h4>3. Como a rede é montada</h4>
+        <p class="script">"A arquitetura é um MLP com <b>96 entradas</b> — as features do áudio —, <b>duas camadas ocultas</b>: <b>64 neurônios com ReLU</b> e <b>32 neurônios com ReLU</b>, e uma saída que produz a <b>probabilidade de anomalia</b>. No hard-code a saída é um neurônio <b>sigmoide</b>; no sklearn, <b>softmax</b> com duas classes — para classificação binária, as duas são equivalentes. Usei <b>ReLU</b> nas ocultas porque é barata e evita o problema do gradiente que se anula, comum quando se usa sigmoide em camadas profundas."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">1:35</span>~40s<br>Treinamento</div>
+      <div class="blk-body">
+        <h4>4. Parâmetros de treinamento</h4>
+        <p class="script">"Como função de perda usamos <b>cross-entropy</b> — no hard-code, a versão binária. O hard-code treina com <b>mini-batch SGD com momento</b>: taxa de aprendizado <b>0.01</b>, momento <b>0.9</b>, <b>300 épocas</b> e batch de <b>32</b>. O sklearn usa <b>Adam</b>, que adapta a taxa por parâmetro, com até <b>500 iterações</b> e regularização L2. Antes de treinar, <b>escalamos as features</b> com StandardScaler e dividimos <b>80/20 com stratify</b>, para manter a proporção de anomalias no teste."</p>
+      </div>
+    </div>
+
+    <div class="blk">
+      <div class="blk-tag"><span class="t">2:15</span>~45s<br>Saída + métricas</div>
+      <div class="blk-body">
+        <h4>5. Resultado e o que ele significa</h4>
+        <p class="script">"O modelo devolve a <b>probabilidade de anomalia</b> de cada amostra. No teste de <b>841 amostras</b>, o MLP sklearn chegou a <b>97,98% de acurácia</b>, <b>97,4% de precisão</b>, <b>83,5% de recall</b> e <b>F1 de 0,899</b>. A matriz de confusão mostra <b>15 falsos negativos</b> e só <b>2 falsos positivos</b> — raramente paramos uma máquina saudável, mas ainda existem anomalias sutis que não detectamos. Comparado ao baseline majoritário — que atinge 89% de acurácia só pelo desbalanceamento, mas <b>não detecta nenhuma anomalia</b> —, nosso modelo é o que realmente resolve o problema. Os modelos foram <b>exportados via pickle</b> e alimentam o dashboard do Metabase."</p>
+        <div class="callout warn"><span class="ico">!</span><p><b>Dica de tempo:</b> se estiver apertado, pule os baselines no bloco 2 e a regularização L2 no bloco 4. Nunca pule a matriz de confusão — é o seu melhor gráfico.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 03 · CONCEITOS ================= -->
+<section id="conceitos">
+  <div class="sec-head">
+    <span class="sec-num">03</span>
+    <h2 class="sec-title">Domínio conceitual (nível banca)</h2>
+    <span class="sec-sub">entenda para improvisar</span>
+  </div>
+
+  <!-- 3.1 Arquitetura -->
+  <h3 style="margin:0 0 .8rem;">3.1 · Arquitetura da rede</h3>
+  <div class="arch-wrap">
+    <div class="arch-svg" aria-label="Diagrama da arquitetura do MLP">
+      <svg viewBox="0 0 520 210" role="img">
+        <defs>
+          <linearGradient id="gbar" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#38bdf8"/><stop offset="1" stop-color="#f5a524"/>
+          </linearGradient>
+        </defs>
+        <!-- input -->
+        <g>
+          <rect x="10" y="60" width="70" height="90" rx="10" fill="#182442" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="45" y="120" text-anchor="middle" class="lbl">Input</text>
+          <text x="45" y="135" text-anchor="middle" class="lbl" opacity=".6">96</text>
+        </g>
+        <!-- hidden 1 -->
+        <g>
+          <rect x="165" y="38" width="80" height="134" rx="10" fill="#182442" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="205" y="110" text-anchor="middle" class="lbl">64</text>
+          <text x="205" y="125" text-anchor="middle" class="lbl" opacity=".6">ReLU</text>
+        </g>
+        <!-- hidden 2 -->
+        <g>
+          <rect x="295" y="55" width="80" height="100" rx="10" fill="#182442" stroke="#38bdf8" stroke-width="1.5"/>
+          <text x="335" y="110" text-anchor="middle" class="lbl">32</text>
+          <text x="335" y="125" text-anchor="middle" class="lbl" opacity=".6">ReLU</text>
+        </g>
+        <!-- output -->
+        <g>
+          <rect x="425" y="75" width="85" height="60" rx="10" fill="#182442" stroke="#f5a524" stroke-width="2"/>
+          <text x="467" y="108" text-anchor="middle" class="lbl">P(anomalia)</text>
+          <text x="467" y="123" text-anchor="middle" class="lbl" opacity=".6">sigmoid · 1</text>
+        </g>
+        <!-- arrows -->
+        <g stroke="#f5a524" stroke-width="2" opacity=".85">
+          <path d="M80 105 L165 105" marker-end="url(#arrow)"/>
+        </g>
+        <g stroke="#f5a524" stroke-width="2" opacity=".85">
+          <path d="M245 105 L295 105" marker-end="url(#arrow)"/>
+        </g>
+        <g stroke="#f5a524" stroke-width="2" opacity=".85">
+          <path d="M375 105 L425 105" marker-end="url(#arrow)"/>
+        </g>
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L6,3 L0,6 Z" fill="#f5a524"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Lendo o diagrama</h3>
+      <ul class="tight">
+        <li><b>96 entradas</b> = features numéricas por clip de áudio.</li>
+        <li><b>Camada 1 (64, ReLU)</b>: extrai combinações não lineares de baixo nível.</li>
+        <li><b>Camada 2 (32, ReLU)</b>: refina em representações de alto nível.</li>
+        <li><b>Saída (1, sigmoid)</b>: número entre 0 e 1 = <b>P(anomalia)</b>. Decisão por <b>threshold 0.5</b>.</li>
+        <li>Total de pesos ≈ <span class="kbd">96×64 + 64×32 + 32×1</span> ≈ <b>8.480</b> parâmetros aprendidos.</li>
+      </ul>
+      <div class="callout info"><span class="ico">ⓘ</span><p>Inicialização <b>He</b>: pesos ~ <span class="kbd">N(0, √(2/fan_in))</span>. Se distribuídos para a ReLU manter a variância do sinal nas camadas, evitando explosão/colapso.</p></div>
+    </div>
+  </div>
+
+  <!-- 3.2 Sigmoide x Softmax -->
+  <div class="card" style="margin-top:1.2rem;">
+    <h3><span class="k">//</span> A pegadinha do slide: Sigmoid × Softmax</h3>
+    <p style="color:var(--text-muted);">Seu slide diz <b>Output(2, Softmax)</b>. O hard-code usa <b>Output(1, Sigmoid)</b> (<code class="inl">neural_network_hardcode.py</code>). Isso <b>não é um erro do projeto</b> — é a diferença entre as duas implementações, e saber explicar é um trunfo.</p>
+    <div class="grid-2">
+      <div class="callout info"><span class="ico">🧮</span><p><b>Equivalência:</b> em binário, <span class="kbd">σ(z) = e^z / (e^z + 1) = softmax(z, 0)</span>. A sigmoide de um neurônio é exatamente o softmax sobre duas classes. Resultados idênticos — e de fato hard-code e sklearn ficaram praticamente empatados nas métricas.</p></div>
+      <div class="callout info"><span class="ico">🤖</span><p><b>O que cada um faz:</b> sklearn usa <b>softmax</b> (2 saídas, cross-entropy multiclasse). Hard-code usa <b>sigmoid</b> (1 saída, <b>binary</b> cross-entropy). Mesma matemática, apresentações diferentes.</p></div>
+    </div>
+  </div>
+
+  <!-- 3.3 Funções de ativação -->
+  <h3 style="margin:2rem 0 .8rem;">3.3 · Ativações: ReLU nas ocultas, por quê?</h3>
+  <div class="grid-3">
+    <div class="card">
+      <h3><span class="k">//</span> ReLU (ocultas)</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;"><span class="kbd">max(0, z)</span>. Derivada 1 quando z&gt;0, 0 caso contrário.</p>
+      <ul class="tight" style="font-size:.92rem; color:var(--text-muted);">
+        <li>Barata e não satura no lado positivo → gradiente não "morre".</li>
+        <li>Evita o <b>vanishing gradient</b> do sigmoid em redes profundas.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Sigmoid (saída)</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;"><span class="kbd">1/(1+e^(-z))</span> ∈ (0,1).</p>
+      <ul class="tight" style="font-size:.92rem; color:var(--text-muted);">
+        <li>Saída vira <b>probabilidade interpretável</b>: P(anomalia).</li>
+        <li>Na saída (1 neurônio), saturação é menos crítica que nas ocultas.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> E se trocássemos?</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Sigmoide nas ocultas → gradiente multiplica por ≤0.25 em cada camada e <b>desaparece</b> em profundidade (treino lento/travado). Sem não-linearidade, a rede colapsa em um modelo linear.</p>
+    </div>
+  </div>
+
+  <!-- 3.4 Backprop + otimizadores -->
+  <h3 style="margin:2rem 0 .8rem;">3.4 · Backpropagation, perda e otimizadores</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> Como o hard-code aprende</h3>
+      <ol class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>Forward:</b> X → camadas → sigmoid → <b>predição ŷ</b>.</li>
+        <li><b>Perda (BCE):</b> <span class="kbd">-mean[ y·ln(ŷ) + (1-y)·ln(1-ŷ) ]</span> — pune forte quando confia no erro.</li>
+        <li><b>Backward:</b> regra da cadeia propaga o erro da saída até cada peso (analítico, com <code class="inl">ReLU'</code>).</li>
+        <li><b>Atualização:</b> SGD com momento: <span class="kbd">v = μ·v + ∇</span> ; <span class="kbd">W -= lr·v</span>. O momento "acumula" direção dos passos e atravessa planícies mais rápido.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> SGD+momento vs Adam</h3>
+      <table style="font-size:.88rem;">
+        <thead><tr><th>Aspecto</th><th>Hard-code</th><th>Sklearn</th></tr></thead>
+        <tbody>
+          <tr><td>Otimizador</td><td class="num">SGD + momento (0.9)</td><td class="num">Adam</td></tr>
+          <tr><td>Taxa</td><td class="num">0.01 fixa</td><td class="num">adaptativa por parâmetro</td></tr>
+          <tr><td>Épocas</td><td class="num">300</td><td class="num">max 500 iterações</td></tr>
+          <tr><td>Batch</td><td class="num">32</td><td class="num">automático</td></tr>
+          <tr><td>Regularização</td><td class="num">—</td><td class="num">L2 (α = 1e-4)</td></tr>
+        </tbody>
+      </table>
+      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">Adam guarda média de gradiente <b>e</b> do quadrado → taxa por peso. Por isso converge em menos passos; mas o hard-code é <b>didático</b>: mostra o mecanismo por dentro.</p>
+    </div>
+  </div>
+
+  <!-- 3.5 Pré-processamento + métricas -->
+  <h3 style="margin:2rem 0 .8rem;">3.5 · Pré-processamento e métricas (as perguntas de ouro)</h3>
+  <div class="grid-2">
+    <div class="card">
+      <h3><span class="k">//</span> Split estratificado + escalonamento</h3>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>80/20 com stratify</b> (<code class="inl">random_state=42</code>): o teste mantém a mesma proporção normal/anomalia do dataset. Sem isso, o teste pequeno poderia pegar 0% ou 100% de anomalias e as métricas mentiriam.</li>
+        <li><b>StandardScaler ajustado SÓ no treino</b> (média e desvio do treino) e <b>aplicado no teste</b>: vazamento de informação do teste para o treino = métricas infladas falsamente.</li>
+        <li>Necessário porque MFCC e RMS vivem em escalas muito diferentes; o gradiente fica mal condicionado sem escala.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3><span class="k">//</span> Por que accuracy sozinha engana</h3>
+      <p style="color:var(--text-muted); font-size:.95rem;">Com 89,2% de normais, o modelo idiota que diz "sempre normal" acerta <b>89,2%</b> — mas nunca encontra uma única anomalia (recall 0). Por isso avaliamos com:</p>
+      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
+        <li><b>Precision</b> = acertos anômalos / previstos anômalos → "quando eu digo anomalia, quantas vezes estou certo?"</li>
+        <li><b>Recall</b> = acertos anômalos / anomalias reais → "quantas anomalias eu realmente pego?"</li>
+        <li><b>F1</b> = média harmônica de ambos — balanceia os dois.</li>
+      </ul>
+      <div class="callout danger"><span class="ico">!</span><p>No nosso caso, <b>falso negativo é o erro caro</b>: anomalia que passa despercebida vira falha. F1/recall importam mais que accuracy.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 04 · NÚMEROS ================= -->
+<section id="numeros">
+  <div class="sec-head">
+    <span class="sec-num">04</span>
+    <h2 class="sec-title">Números para decorar</h2>
+    <span class="sec-sub">report_analys.md · 2026-08-11</span>
+  </div>
+
+  <div class="stat-row" style="margin-bottom:1.4rem;">
+    <div class="stat"><div class="v">4.205</div><div class="l">clipes de áudio (dataset completo)</div></div>
+    <div class="stat"><div class="v">96</div><div class="l">features numéricas</div></div>
+    <div class="stat"><div class="v">841</div><div class="l">amostras no teste (750 normal · 91 anomalia)</div></div>
+    <div class="stat"><div class="v">17</div><div class="l">erros do MLP sklearn no teste</div></div>
+  </div>
+
+  <h3 style="margin:0 0 .6rem;">Métricas no teste</h3>
+  <div class="tbl-scroll">
+    <table>
+      <thead><tr><th>Métrica</th><th>Majoritária</th><th>Reg. Logística</th><th>MLP Hard-Code</th><th>MLP Sklearn</th></tr></thead>
+      <tbody>
+        <tr><td>Accuracy</td><td class="num">89,18%</td><td class="num">96,79%</td><td class="num">97,86%</td><td class="num best">97,98%</td></tr>
+        <tr><td>Precision</td><td class="num">0%</td><td class="num">95,71%</td><td class="num">96,20%</td><td class="num best">97,44%</td></tr>
+        <tr><td>Recall</td><td class="num">0%</td><td class="num">73,63%</td><td class="num best">83,52%</td><td class="num best">83,52%</td></tr>
+        <tr><td>F1-Score</td><td class="num">0</td><td class="num">0,832</td><td class="num">0,894</td><td class="num best">0,899</td></tr>
+        <tr><td>Tempo treino (ms)</td><td class="num">0,6</td><td class="num">603,8</td><td class="num">11.337,2</td><td class="num">3.786,7</td></tr>
+        <tr><td>Tempo predição (ms)</td><td class="num">0,15</td><td class="num">4,56</td><td class="num">12,24</td><td class="num">3,33</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn"><span class="ico">!</span><p><b>Armadilha — números antigos:</b> alguns documentos citam ~2.600 ms / ~425 ms e "6,7x mais rápido". O relatório atual (2026-08-11) mostra <b>11.337 ms vs 3.787 ms</b> → sklearn ≈ <b>3x</b> mais rápido. Cite os números do relatório mais recente.</p></div>
+
+  <div style="margin-top:1.4rem;">
+    <h3 style="margin:0 0 .6rem;">Features mais discriminativas (o que o modelo aprendeu)</h3>
+    <div class="tbl-scroll">
+      <table>
+        <thead><tr><th>Feature</th><th>Diferença entre classes</th></tr></thead>
+        <tbody>
+          <tr><td class="num">mfcc_35_mean</td><td class="num">-1954%</td></tr>
+          <tr><td class="num">mfcc_31_mean</td><td class="num">-612%</td></tr>
+          <tr><td class="num">mfcc_10_mean</td><td class="num">+483%</td></tr>
+          <tr><td class="num">mfcc_3_mean</td><td class="num">-407%</td></tr>
+          <tr><td class="num">mfcc_5_mean</td><td class="num">-299%</td></tr>
+          <tr><td class="num">mfcc_11_mean</td><td class="num">-202%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--text-muted); font-size:.92rem; margin:.4rem 0 0;">Conclusão: são os <b>MFCCs</b> (perfil timbral) que separam as classes — não as features espectrais agregadas. A <b>matriz de confusão</b> detalhada fica no guia do David (resultados).</p>
+  </div>
+
+  <div class="card" style="margin-top:1.4rem;">
+    <h3><span class="k">//</span> Resumo dos hiperparâmetros</h3>
+    <div class="grid-2">
+      <div>
+        <h4 style="margin:.2rem 0 .4rem;">Hard-code (NumPy)</h4>
+        <ul class="tight" style="color:var(--text-muted); font-size:.92rem; margin:0;">
+          <li>Camadas: <b>64 → 32</b> ReLU; saída sigmoid</li>
+          <li>Loss: <b>Binary Cross-Entropy</b></li>
+          <li>Otimizador: <b>SGD mini-batch + momento</b></li>
+          <li>lr <b>0.01</b> · momentum <b>0.9</b> · épocas <b>300</b> · batch <b>32</b></li>
+          <li>Init: <b>He</b> · seed 42 · threshold 0.5</li>
+        </ul>
+      </div>
+      <div>
+        <h4 style="margin:.2rem 0 .4rem;">Sklearn (MLPClassifier)</h4>
+        <ul class="tight" style="color:var(--text-muted); font-size:.92rem; margin:0;">
+          <li>Camadas: <b>(64, 32)</b> ReLU; saída softmax</li>
+          <li>Loss: cross-entropy multiclasse</li>
+          <li>Otimizador: <b>Adam</b></li>
+          <li>max_iter <b>500</b> · regularização <b>L2 (α=1e-4)</b></li>
+          <li>seed 42 · split 80/20 estratificado</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 05 · SIMULADO ================= -->
+<section id="simulado">
+  <div class="sec-head">
+    <span class="sec-num">05</span>
+    <h2 class="sec-title">Simulado da banca</h2>
+    <span class="sec-sub">clique para ver a resposta</span>
+  </div>
+  <p style="color:var(--text-muted); margin-top:0;">Tente responder em voz alta antes de abrir. Grau de dificuldade estimado ao lado de cada pergunta.</p>
+
+  <details>
+    <summary><span class="q">P1</span> Seu slide fala em Softmax, mas o código tem sigmoid. Explique.</summary>
+    <div class="qa-body">
+      <span class="tag medium">arquitetura</span>
+      <p>Não é contradição: em classificação binária os dois são equivalentes. A sigmoide de um único neurônio é o softmax sobre duas classes — <b>σ(z) = e^z/(e^z+1)</b>. O hard-code usa 1 saída sigmoide + binary cross-entropy; o sklearn, 2 saídas softmax + cross-entropy multiclasse. Por isso as métricas dos dois ficaram praticamente empatadas.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P2</span> Por que ReLU nas camadas ocultas e não sigmoid?</summary>
+    <div class="qa-body">
+      <span class="tag medium">ativação</span>
+      <p>Porque sigmoid satura em |z| grande: a derivada cai a ~0 e o gradiente "desaparece" ao ser propagado por várias camadas (vanishing gradient) — treino para ou fica lentíssimo. ReLU é linear no lado positivo, com derivada 1, então o gradiente flui; além disso é barata de calcular. Na saída, a saturação é aceitável porque queremos uma probabilidade em (0,1).</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P3</span> O que é backpropagation, na prática?</summary>
+    <div class="qa-body">
+      <span class="tag easy">método</span>
+      <p>É a aplicação da regra da cadeia para calcular a derivada da perda em relação a cada peso. No forward calculamos a predição e a perda; no backward propagamos o erro da saída para trás, camada a camada, e obtemos o gradiente que o otimizador usa para atualizar os pesos. No nosso hard-code isso é feito manualmente, com operações matriciais do NumPy — sem autograd.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P4</span> O que é o "momento" no SGD? Para que serve?</summary>
+    <div class="qa-body">
+      <span class="tag medium">otimização</span>
+      <p>O momento mantém uma média móvel dos gradientes anteriores (v = μ·v + ∇) e usa essa velocidade para atualizar os pesos. Isso amortiza oscilações e dá inércia: se a direção é consistente, o passo acelera; se oscila, o momento cancela. Na prática converge mais rápido e com menos ruído que o SGD puro.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P5</span> Qual a diferença prática entre SGD+momento e Adam?</summary>
+    <div class="qa-body">
+      <span class="tag medium">otimização</span>
+      <p>O SGD usa uma única taxa de aprendizado para todos os pesos, mantida fixa. O Adam guarda média do gradiente e do quadrado do gradiente, criando uma taxa adaptativa por parâmetro — pesos com gradiente grande andam menos, pesos "parados" andam mais. Por isso converge em menos iterações (no sklearn, max_iter=500; no hard-code, 300 épocas). Adam também é mais robusto a escolha de lr.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P6</span> O que é StandardScaler e por que ajustar só no treino?</summary>
+    <div class="qa-body">
+      <span class="tag easy">pré-processamento</span>
+      <p>StandardScaler centraliza (média 0) e normaliza (desvio 1) cada feature, porque MFCC e RMS têm escalas muito diferentes — sem escala, o gradiente fica mal condicionado. Calculamos média e desvio <b>apenas no treino</b> e aplicamos a mesma transformação no teste. Se calculássemos com o teste, estaríamos vazando informação dele para o modelo — as métricas ficariam otimistas de forma enganosa.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P7</span> O que é o "stratify" no train_test_split?</summary>
+    <div class="qa-body">
+      <span class="tag easy">dados</span>
+      <p>Garante que treino e teste mantenham a mesma proporção de classes do dataset original (aqui ~89% normal / 11% anomalia). Como a classe de anomalia é rara (456 de 4.205), um split aleatório poderia deixar o teste com pouquíssimas ou nenhuma anomalia — e aí as métricas não mediriam o que importa.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P8</span> Por que não usar só a accuracy?</summary>
+    <div class="qa-body">
+      <span class="tag easy">métricas</span>
+      <p>Porque o dataset é desbalanceado (8:1). Um modelo que prevê sempre "normal" tem accuracy de 89,2% sem detectar nenhuma anomalia — inútil para o negócio. Por isso olhamos precision, recall e F1, especialmente da classe minoritária (anomalia), que é a que interessa.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P9</span> Por que o recall é mais importante que a precision aqui?</summary>
+    <div class="qa-body">
+      <span class="tag medium">métricas · negócio</span>
+      <p>Recall = fração de anomalias reais que o modelo pega (83,5%). Um falso negativo (anomalia não detectada) vira falha no campo, produção parada, reparo emergencial — o cenário mais caro. Um falso positivo custa só uma inspeção. Com precision de 97,4%, raramente paramos máquinas saudáveis; com recall de 83,5%, ainda perdemos anomalias sutis — é o erro que queremos reduzir.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P10</span> Por que o baseline majoritário tem recall 0?</summary>
+    <div class="qa-body">
+      <span class="tag easy">baseline</span>
+      <p>Porque ele sempre prevê a classe majoritária, "normal". Então nunca prevê anomalia → zero verdadeiros positivos → recall = 0/(0+15... na verdade 0/91 = 0). O mesmo vale para precision e F1 = 0. Ele só "acerta" nos 89% de normais — e por isso é o piso: qualquer modelo útil precisa superá-lo em recall e F1.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P11</span> O que significa o F1 de 0,899?</summary>
+    <div class="qa-body">
+      <span class="tag easy">métricas</span>
+      <p>F1 é a média harmônica de precision e recall: F1 = 2·(P·R)/(P+R). Com 0,974 de precision e 0,835 de recall, o F1 de ~0,90 indica um bom equilíbrio: alto quando o modelo é preciso (poucos alarmes falsos) e sensível (pega a maioria das anomalias) ao mesmo tempo.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P12</span> Por que o hard-code é mais lento que o sklearn?</summary>
+    <div class="qa-body">
+      <span class="tag medium">performance</span>
+      <p>Três motivos: (1) o sklearn usa Adam, que converge em menos iterações; (2) o sklearn é escrito em C/Fortran otimizado, enquanto nosso hard-code é Python puro com loops por época/batch; (3) sem regularização, o hard-code precisa de todas as 300 épocas. No relatório atual: ~11,3 s vs ~3,8 s de treino — cerca de 3x mais rápido.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P13</span> Como o modelo seria usado em produção?</summary>
+    <div class="qa-body">
+      <span class="tag hard">deploy</span>
+      <p>O áudio da bomba em operação passa pelo mesmo pipeline de features, é escalado com o scaler salvo e entra no modelo. A saída é P(anomalia); com o threshold ajustável (0.5 hoje), o sistema dispara um alerta para o engenheiro. Exportamos via pickle: <code class="inl">mlp_sklearn_pipeline.pkl</code> (scaler + MLP num Pipeline só) e <code class="inl">mlp_hardcode.pkl</code> (recarregável com <code class="inl">HardCodedMLP.load()</code>).</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P14</span> Quais features mais diferenciam as classes e por quê?</summary>
+    <div class="qa-body">
+      <span class="tag medium">interpretabilidade</span>
+      <p>Os MFCCs (ex.: mfcc_35_mean, mfcc_31_mean, mfcc_10_mean, mfcc_3_mean) — diferenças de 200% a quase 2000% entre as médias das classes. MFCC captura o <b>timbre</b>, o "formato" do espectro; uma bomba com contaminação, vazamento ou desbalanceamento muda o perfil espectral de forma característica, e a rede aprende exatamente essa assinatura.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P15</span> Quais as limitações do modelo?</summary>
+    <div class="qa-body">
+      <span class="tag hard">crítica</span>
+      <ul class="tight" style="margin-top:.3rem;">
+        <li>Desbalanceado — accuracy isolada engana; priorizamos recall/F1.</li>
+        <li>Falsos negativos (15): anomalias sutis mascaradas pelo ruído de fábrica a 0 dB SNR.</li>
+        <li>Treinado para 4 modelos de bomba específicos — pode não generalizar a outros equipamentos/ambientes.</li>
+        <li>Features agregadas por clip (médias) descartam a dinâmica temporal do som.</li>
+        <li>Threshold fixo 0.5 — em produção deve ser calibrado pelo custo de FP vs FN.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P16</span> Por que 64 e 32 neurônios?</summary>
+    <div class="qa-body">
+      <span class="tag hard">arquitetura</span>
+      <p>É uma escolha heurística típica: camadas encolhendo (96 → 64 → 32 → 1) forçam a rede a comprimir as 96 features em representações mais densas e discriminativas. Camadas maiores podem overfitar o dataset pequeno; menores perdem capacidade. 64/32 é um ponto intermediário que funcionou bem, validado por ambos os modelos produzirem resultados equivalentes. Um refinamento futuro seria validação cruzada para otimizar esses valores.</p>
+    </div>
+  </details>
+
+  <details>
+    <summary><span class="q">P17</span> Se você tivesse mais tempo, o que melhoraria?</summary>
+    <div class="qa-body">
+      <span class="tag easy">futuro</span>
+      <ul class="tight" style="margin-top:.3rem;">
+        <li>Validação cruzada (k-fold) e early stopping.</li>
+        <li>Regularização L2 e dropout no hard-code.</li>
+        <li>Data augmentation nos áudios (pitch shift, time stretch).</li>
+        <li>Mais tipos de máquina (fan, valve, slider) para generalizar.</li>
+        <li>Monitoramento de drift em produção e deploy via SageMaker.</li>
+      </ul>
+    </div>
+  </details>
+</section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="foot">
+  <div class="wrap">
+    <span>Guia preparado com base em <code class="inl">report_analys.md</code>, <code class="inl">ml/evaluate.py</code>, <code class="inl">ml/hard_code/neural_network_hardcode.py</code> e <code class="inl">ml/library/neural_network_sklearn.py</code>.</span>
+    <span>Boa apresentação! 🎓</span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeBtn");
+    var stored = null;
+    try { stored = localStorage.getItem("guide-theme"); } catch (e) {}
+    if (stored === "light") { root.setAttribute("data-theme", "light"); }
+
+    btn.addEventListener("click", function () {
+      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      try { localStorage.setItem("guide-theme", next); } catch (e) {}
+    });
+
+    var wave = document.getElementById("wave");
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < 48; i++) {
+      var b = document.createElement("div");
+      b.className = "bar";
+      frag.appendChild(b);
+    }
+    wave.appendChild(frag);
+  })();
+</script>
+</body>
+</html>
