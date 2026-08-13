@@ -3,276 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>David — Resultados e Demonstração Prática · Guia de Domínio</title>
-<meta name="description" content="Guia de estudo da parte de Resultados e Demonstração Prática da apresentação do projeto final IFG — dashboards no Metabase, matriz de confusão, comparativo e inferência ao vivo.">
+<title>David — Cloud Computing e Dashboard · Guia de Domínio</title>
+<meta name="description" content="Guia de estudo da parte de Cloud Computing — arquitetura AWS, dev→prod e dashboard de decisão — Pilar 3, slides 10 a 12.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --font-body: "Space Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", Consolas, monospace;
-
-    --bg: #0b1120;
-    --bg-soft: #0f1730;
-    --surface: #121c36;
-    --surface-2: #182442;
-    --border: rgba(148, 180, 224, .14);
-    --border-strong: rgba(148, 180, 224, .28);
-    --text: #e6edf7;
-    --text-muted: #9aa9c2;
-    --text-faint: #6b7a94;
-
-    --amber: #fb923c;
-    --amber-ink: #2a1400;
-    --cyan: #38bdf8;
-    --cyan-ink: #062130;
-    --green: #34d399;
-    --red: #fb7185;
-
-    --ok: #34d399;
-    --warn: #f5a524;
-
-    --radius: 14px;
-    --radius-sm: 9px;
-    --gap: clamp(1rem, 3vw, 2rem);
-    --wrap: 1080px;
-    --shadow: 0 12px 40px rgba(0,0,0,.35);
-    --header-h: 64px;
+    --font-body:"Space Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,"Cascadia Code",Consolas,monospace;
+    --bg:#0b1120;--bg-soft:#0f1730;--surface:#121c36;--surface-2:#182442;
+    --border:rgba(148,180,224,.14);--border-strong:rgba(148,180,224,.28);
+    --text:#e6edf7;--text-muted:#9aa9c2;--text-faint:#6b7a94;
+    --amber:#fb923c;--amber-ink:#2a1400;--cyan:#38bdf8;--cyan-ink:#062130;
+    --green:#34d399;--red:#fb7185;--warn:#f5a524;
+    --radius:14px;--radius-sm:9px;--gap:clamp(1rem,3vw,2rem);--wrap:1080px;
+    --shadow:0 12px 40px rgba(0,0,0,.35);--header-h:64px;
   }
-
   html[data-theme="light"]{
-    --bg: #f4f6fb;
-    --bg-soft: #eef1f8;
-    --surface: #ffffff;
-    --surface-2: #f0f4fb;
-    --border: rgba(15, 27, 45, .12);
-    --border-strong: rgba(15, 27, 45, .22);
-    --text: #0f1b2d;
-    --text-muted: #4f5f7a;
-    --text-faint: #7d8aa3;
-    --amber: #ea580c;
-    --amber-ink: #ffffff;
-    --cyan: #0284c7;
-    --cyan-ink: #ffffff;
-    --shadow: 0 12px 34px rgba(15,27,45,.10);
+    --bg:#f4f6fb;--bg-soft:#eef1f8;--surface:#ffffff;--surface-2:#f0f4fb;
+    --border:rgba(15,27,45,.12);--border-strong:rgba(15,27,45,.22);
+    --text:#0f1b2d;--text-muted:#4f5f7a;--text-faint:#7d8aa3;
+    --amber:#ea580c;--amber-ink:#ffffff;--cyan:#0284c7;--cyan-ink:#ffffff;
+    --shadow:0 12px 34px rgba(15,27,45,.10);
   }
-
-  *{ box-sizing: border-box; }
-  html{ scroll-behavior: smooth; }
-  body{
-    margin: 0;
-    background:
-      radial-gradient(1000px 500px at 85% -10%, rgba(56,189,248,.10), transparent 60%),
-      radial-gradient(900px 460px at -10% 0%, rgba(251,146,60,.10), transparent 55%),
-      var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: clamp(16px, 1.02vw + .65rem, 19px);
-    line-height: 1.62;
-    transition: background-color .35s ease, color .35s ease;
-  }
-  a{ color: var(--cyan); text-decoration: none; }
-  a:hover{ text-decoration: underline; }
-  ::selection{ background: var(--amber); color: var(--amber-ink); }
-
-  .topbar{
-    position: sticky; top: 0; z-index: 50;
-    height: var(--header-h);
-    display: flex; align-items: center; gap: 1rem;
-    padding: 0 clamp(1rem, 4vw, 2.5rem);
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--border);
-  }
-  .brand{
-    font-family: var(--font-mono);
-    font-weight: 700; font-size: .82rem; letter-spacing: .06em;
-    text-transform: uppercase; color: var(--text-muted);
-    display: flex; align-items: center; gap: .55rem; white-space: nowrap;
-  }
-  .brand .dot{ width: 9px; height: 9px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 3px color-mix(in srgb, var(--amber) 22%, transparent); }
-  .topnav{
-    display: flex; gap: .2rem; flex: 1; justify-content: flex-end;
-    overflow-x: auto; scrollbar-width: none;
-  }
-  .topnav::-webkit-scrollbar{ display: none; }
-  .topnav a{
-    font-family: var(--font-mono); font-size: .72rem; letter-spacing: .04em;
-    color: var(--text-muted); padding: .45rem .7rem; border-radius: 8px; white-space: nowrap;
-  }
-  .topnav a:hover{ background: var(--surface-2); color: var(--text); text-decoration: none; }
-  .theme-btn{
-    border: 1px solid var(--border-strong); background: var(--surface);
-    color: var(--text); width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
-    display: grid; place-items: center; flex: 0 0 auto; transition: transform .15s ease;
-  }
-  .theme-btn:hover{ transform: scale(1.06); }
-  .theme-btn svg{ width: 18px; height: 18px; }
-  html[data-theme="dark"] .theme-btn .icon-sun{ display: none; }
-  html[data-theme="light"] .theme-btn .icon-moon{ display: none; }
-
-  .wrap{ max-width: var(--wrap); margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2.5rem); }
-  section{ padding: clamp(2.2rem, 6vw, 4.2rem) 0; }
-  .grid-2{ display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
-  .grid-3{ display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gap); }
-  @media (max-width: 820px){ .grid-2, .grid-3{ grid-template-columns: 1fr; } }
-
-  .hero{ padding: clamp(3rem, 9vw, 6rem) 0 2rem; }
-  .hero-inner{ display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--gap); align-items: center; }
-  @media (max-width: 900px){ .hero-inner{ grid-template-columns: 1fr; } }
-  .eyebrow{
-    font-family: var(--font-mono); font-size: .78rem; letter-spacing: .14em;
-    text-transform: uppercase; color: var(--amber); font-weight: 500;
-  }
-  h1{
-    font-size: clamp(1.9rem, 4.4vw, 3.4rem); line-height: 1.06; margin: .5rem 0 .6rem;
-    letter-spacing: -.02em; font-weight: 700;
-  }
-  h1 .hl{ color: var(--cyan); }
-  .hero p.lead{ font-size: clamp(1rem, 1.5vw, 1.22rem); color: var(--text-muted); max-width: 34em; margin: 0 0 1.4rem; }
-  .chips{ display: flex; flex-wrap: wrap; gap: .55rem; }
-  .chip{
-    font-family: var(--font-mono); font-size: .74rem; letter-spacing: .02em;
-    border: 1px solid var(--border-strong); background: var(--surface); color: var(--text-muted);
-    padding: .42rem .8rem; border-radius: 999px;
-  }
-  .chip b{ color: var(--text); font-weight: 600; }
-
-  .sig{
-    padding: .6rem; border: 1px solid var(--border); border-radius: var(--radius);
-    background: linear-gradient(var(--border) 1px, transparent 1px) 0 0/100% 34px, var(--surface);
-  }
-  .sig svg{ width: 100%; height: auto; display: block; }
-  .sig-cap{ font-family: var(--font-mono); font-size: .68rem; letter-spacing: .1em; color: var(--text-faint); text-transform: uppercase; margin-top: .5rem; text-align: center; }
-  .cm{ font-family: var(--font-mono); font-size: .9rem; font-weight: 700; text-anchor: middle; }
-  html[data-theme="light"] .cm{ fill: #0f1b2d; }
-  html[data-theme="dark"] .cm{ fill: #e6edf7; }
-  .cmh{ font-family: var(--font-mono); font-size: .6rem; letter-spacing: .05em; text-anchor: middle; }
-  html[data-theme="light"] .cmh{ fill: #7d8aa3; }
-  html[data-theme="dark"] .cmh{ fill: #9aa9c2; }
-
-  .sec-head{ display: flex; align-items: baseline; gap: 1rem; margin-bottom: 1.4rem; border-bottom: 1px solid var(--border); padding-bottom: .8rem; }
-  .sec-num{
-    font-family: var(--font-mono); font-size: .95rem; font-weight: 700; color: var(--amber);
-    flex: 0 0 auto;
-  }
-  .sec-title{ font-size: clamp(1.4rem, 2.6vw, 2rem); letter-spacing: -.015em; margin: 0; }
-  .sec-sub{ color: var(--text-muted); margin: 0 0 0 auto; font-size: .92rem; white-space: nowrap; }
-  @media (max-width: 720px){ .sec-sub{ display: none; } }
-
-  .card{
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: clamp(1.1rem, 2.4vw, 1.6rem);
-    box-shadow: var(--shadow);
-  }
-  .card h3{ margin: 0 0 .5rem; font-size: 1.08rem; }
-  .card h3 .k{ font-family: var(--font-mono); color: var(--cyan); font-weight: 500; }
-
-  .callout{
-    display: flex; gap: .9rem; border-radius: var(--radius-sm);
-    border: 1px solid var(--border-strong); padding: 1rem 1.1rem; margin: 1rem 0;
-    background: var(--surface-2);
-  }
-  .callout .ico{ font-family: var(--font-mono); font-weight: 700; flex: 0 0 auto; }
-  .callout.warn{ border-color: color-mix(in srgb, var(--warn) 55%, transparent); background: color-mix(in srgb, var(--warn) 9%, var(--surface)); }
-  .callout.warn .ico{ color: var(--warn); }
-  .callout.info{ border-color: color-mix(in srgb, var(--cyan) 55%, transparent); background: color-mix(in srgb, var(--cyan) 9%, var(--surface)); }
-  .callout.info .ico{ color: var(--cyan); }
-  .callout.danger{ border-color: color-mix(in srgb, var(--red) 55%, transparent); background: color-mix(in srgb, var(--red) 9%, var(--surface)); }
-  .callout.danger .ico{ color: var(--red); }
-  .callout p{ margin: 0; }
-  .callout b{ color: var(--text); }
-
-  .tbl-scroll{ overflow-x: auto; margin: .6rem 0; border-radius: var(--radius-sm); border: 1px solid var(--border); }
-  table{ border-collapse: collapse; width: 100%; font-size: .92rem; background: var(--surface); }
-  th, td{ padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-  th{ font-family: var(--font-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); background: var(--surface-2); }
-  tbody tr:last-child td{ border-bottom: none; }
-  tr:hover td{ background: color-mix(in srgb, var(--cyan) 5%, transparent); }
-  td.num{ font-family: var(--font-mono); font-size: .85rem; }
-  .best{ color: var(--amber); font-weight: 700; }
-
-  .timeline{ display: grid; gap: 1rem; }
-  .blk{ display: grid; grid-template-columns: 96px 1fr; gap: 1.1rem; }
-  @media (max-width: 720px){ .blk{ grid-template-columns: 1fr; } }
-  .blk-tag{
-    font-family: var(--font-mono); font-size: .74rem; line-height: 1.35;
-    color: var(--text-faint); border: 1px dashed var(--border-strong);
-    border-radius: 10px; padding: .55rem .7rem; height: fit-content; text-align: center;
-  }
-  .blk-tag .t{ font-size: 1.15rem; color: var(--cyan); font-weight: 700; display: block; }
-  .blk-body{ background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--cyan); border-radius: var(--radius-sm); padding: 1rem 1.15rem; }
-  .blk-body h4{ margin: 0 0 .35rem; font-size: 1rem; }
-  .script{
-    font-size: .96rem; color: var(--text-muted); border-left: 2px solid var(--border-strong);
-    padding-left: .9rem; margin: .5rem 0;
-  }
-  .script::before{ content: "🎤  "; font-family: var(--font-mono); }
-  .script b{ color: var(--text); }
-
-  details{ border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); margin-bottom: .7rem; overflow: hidden; }
-  details[open]{ border-color: var(--border-strong); }
-  summary{
-    cursor: pointer; list-style: none; display: flex; gap: .9rem; align-items: baseline;
-    padding: .95rem 1.1rem; font-weight: 600; font-size: .98rem;
-  }
-  summary::-webkit-details-marker{ display: none; }
-  summary .q{ font-family: var(--font-mono); font-size: .8rem; color: var(--amber); font-weight: 700; flex: 0 0 auto; }
-  summary::after{
-    content: "+"; margin-left: auto; font-family: var(--font-mono); font-weight: 700; color: var(--cyan);
-    transition: transform .2s ease; flex: 0 0 auto;
-  }
-  details[open] summary::after{ transform: rotate(45deg); }
-  .qa-body{ padding: .2rem 1.1rem 1.1rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: .9rem; }
-  .qa-body b{ color: var(--text); }
-  .qa-body .tag{
-    display: inline-block; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em;
-    text-transform: uppercase; border-radius: 6px; padding: .15rem .5rem; margin-right: .4rem;
-  }
-  .tag.easy{ background: color-mix(in srgb, var(--cyan) 15%, transparent); color: var(--cyan); }
-  .tag.medium{ background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
-  .tag.hard{ background: color-mix(in srgb, var(--red) 18%, transparent); color: var(--red); }
-
-  .kbd{
-    font-family: var(--font-mono); font-size: .82em; background: var(--surface-2);
-    border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 6px;
-    padding: .05em .45em; color: var(--cyan); white-space: nowrap;
-  }
-
-  .foot{ border-top: 1px solid var(--border); padding: 2rem 0 3rem; color: var(--text-faint); font-size: .9rem; }
-  .foot .wrap{ display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; justify-content: space-between; }
-
-  ul.tight{ margin: .4rem 0; padding-left: 1.15rem; }
-  ul.tight li{ margin: .28rem 0; }
-  code.inl{ font-family: var(--font-mono); font-size: .85em; background: var(--surface-2); border: 1px solid var(--border); padding: .05em .4em; border-radius: 5px; }
-  .stat-row{ display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
-  .stat{ background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.1rem; }
-  .stat .v{ font-family: var(--font-mono); font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; color: var(--amber); line-height: 1.1; }
-  .stat .l{ font-size: .8rem; color: var(--text-muted); margin-top: .2rem; }
-  pre.code{
-    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius-sm);
-    padding: 1rem 1.1rem; overflow-x: auto; font-family: var(--font-mono); font-size: .82rem; line-height: 1.55;
-  }
-  pre.code .c{ color: var(--text-faint); }
-  pre.code .k{ color: var(--cyan); }
-  .check{ list-style: none; padding-left: 0; }
-  .check li{ display: flex; gap: .6rem; align-items: baseline; margin: .35rem 0; }
-  .check li::before{ content: "☐"; font-family: var(--font-mono); color: var(--amber); flex: 0 0 auto; }
+  *{box-sizing:border-box;} html{scroll-behavior:smooth;}
+  body{margin:0;background:radial-gradient(1000px 500px at 85% -10%,rgba(56,189,248,.10),transparent 60%),radial-gradient(900px 460px at -10% 0%,rgba(251,146,60,.10),transparent 55%),var(--bg);color:var(--text);font-family:var(--font-body);font-size:clamp(16px,1.02vw + .65rem,19px);line-height:1.62;transition:background-color .35s ease,color .35s ease;}
+  a{color:var(--cyan);text-decoration:none;} a:hover{text-decoration:underline;} ::selection{background:var(--amber);color:var(--amber-ink);}
+  .topbar{position:sticky;top:0;z-index:50;height:var(--header-h);display:flex;align-items:center;gap:1rem;padding:0 clamp(1rem,4vw,2.5rem);background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--border);}
+  .brand{font-family:var(--font-mono);font-weight:700;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);display:flex;align-items:center;gap:.55rem;white-space:nowrap;}
+  .brand .dot{width:9px;height:9px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 3px color-mix(in srgb,var(--amber) 22%,transparent);}
+  .topnav{display:flex;gap:.2rem;flex:1;justify-content:flex-end;overflow-x:auto;scrollbar-width:none;}
+  .topnav::-webkit-scrollbar{display:none;}
+  .topnav a{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.04em;color:var(--text-muted);padding:.45rem .7rem;border-radius:8px;white-space:nowrap;}
+  .topnav a:hover{background:var(--surface-2);color:var(--text);text-decoration:none;}
+  .theme-btn{border:1px solid var(--border-strong);background:var(--surface);color:var(--text);width:38px;height:38px;border-radius:10px;cursor:pointer;display:grid;place-items:center;flex:0 0 auto;}
+  .theme-btn svg{width:18px;height:18px;}
+  html[data-theme="dark"] .theme-btn .icon-sun{display:none;} html[data-theme="light"] .theme-btn .icon-moon{display:none;}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem);}
+  section{padding:clamp(2.2rem,6vw,4.2rem) 0;}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap);} .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap);}
+  @media(max-width:820px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+  .hero{padding:clamp(3rem,9vw,6rem) 0 2rem;}
+  .hero-inner{display:grid;grid-template-columns:1.15fr .85fr;gap:var(--gap);align-items:center;}
+  @media(max-width:900px){.hero-inner{grid-template-columns:1fr;}}
+  .eyebrow{font-family:var(--font-mono);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);font-weight:500;}
+  h1{font-size:clamp(1.9rem,4.4vw,3.4rem);line-height:1.06;margin:.5rem 0 .6rem;letter-spacing:-.02em;font-weight:700;} h1 .hl{color:var(--cyan);}
+  .hero p.lead{font-size:clamp(1rem,1.5vw,1.22rem);color:var(--text-muted);max-width:34em;margin:0 0 1.4rem;}
+  .chips{display:flex;flex-wrap:wrap;gap:.55rem;}
+  .chip{font-family:var(--font-mono);font-size:.74rem;border:1px solid var(--border-strong);background:var(--surface);color:var(--text-muted);padding:.42rem .8rem;border-radius:999px;} .chip b{color:var(--text);font-weight:600;}
+  .sig{padding:.6rem;border:1px solid var(--border);border-radius:var(--radius);background:linear-gradient(var(--border) 1px,transparent 1px) 0 0/100% 34px,var(--surface);}
+  .sig svg{width:100%;height:auto;display:block;}
+  .sig-cap{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.1em;color:var(--text-faint);text-transform:uppercase;margin-top:.5rem;text-align:center;}
+  .nlab{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.03em;} html[data-theme="light"] .nlab{fill:#0f1b2d;} html[data-theme="dark"] .nlab{fill:#e6edf7;}
+  .ncap{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.02em;} html[data-theme="light"] .ncap{fill:#5a6b85;} html[data-theme="dark"] .ncap{fill:#9aa9c2;}
+  .sec-head{display:flex;align-items:baseline;gap:1rem;margin-bottom:1.4rem;border-bottom:1px solid var(--border);padding-bottom:.8rem;}
+  .sec-num{font-family:var(--font-mono);font-size:.95rem;font-weight:700;color:var(--amber);flex:0 0 auto;}
+  .sec-title{font-size:clamp(1.4rem,2.6vw,2rem);letter-spacing:-.015em;margin:0;} .sec-sub{color:var(--text-muted);margin:0 0 0 auto;font-size:.92rem;white-space:nowrap;}
+  @media(max-width:720px){.sec-sub{display:none;}}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:clamp(1.1rem,2.4vw,1.6rem);box-shadow:var(--shadow);}
+  .card h3{margin:0 0 .5rem;font-size:1.08rem;} .card h3 .k{font-family:var(--font-mono);color:var(--cyan);font-weight:500;}
+  .callout{display:flex;gap:.9rem;border-radius:var(--radius-sm);border:1px solid var(--border-strong);padding:1rem 1.1rem;margin:1rem 0;background:var(--surface-2);}
+  .callout .ico{font-family:var(--font-mono);font-weight:700;flex:0 0 auto;}
+  .callout.warn{border-color:color-mix(in srgb,var(--warn) 55%,transparent);background:color-mix(in srgb,var(--warn) 9%,var(--surface));} .callout.warn .ico{color:var(--warn);}
+  .callout.info{border-color:color-mix(in srgb,var(--cyan) 55%,transparent);background:color-mix(in srgb,var(--cyan) 9%,var(--surface));} .callout.info .ico{color:var(--cyan);}
+  .callout.danger{border-color:color-mix(in srgb,var(--red) 55%,transparent);background:color-mix(in srgb,var(--red) 9%,var(--surface));} .callout.danger .ico{color:var(--red);}
+  .callout p{margin:0;} .callout b{color:var(--text);}
+  .tbl-scroll{overflow-x:auto;margin:.6rem 0;border-radius:var(--radius-sm);border:1px solid var(--border);}
+  table{border-collapse:collapse;width:100%;font-size:.92rem;background:var(--surface);} th,td{padding:.7rem .9rem;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+  th{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);background:var(--surface-2);}
+  tbody tr:last-child td{border-bottom:none;} tr:hover td{background:color-mix(in srgb,var(--cyan) 5%,transparent);} td.num{font-family:var(--font-mono);font-size:.85rem;} .best{color:var(--amber);font-weight:700;}
+  .timeline{display:grid;gap:1rem;} .blk{display:grid;grid-template-columns:96px 1fr;gap:1.1rem;}
+  @media(max-width:720px){.blk{grid-template-columns:1fr;}}
+  .blk-tag{font-family:var(--font-mono);font-size:.74rem;line-height:1.35;color:var(--text-faint);border:1px dashed var(--border-strong);border-radius:10px;padding:.55rem .7rem;height:fit-content;text-align:center;}
+  .blk-tag .t{font-size:1.15rem;color:var(--cyan);font-weight:700;display:block;}
+  .blk-body{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:var(--radius-sm);padding:1rem 1.15rem;}
+  .blk-body h4{margin:0 0 .35rem;font-size:1rem;}
+  .script{font-size:.96rem;color:var(--text-muted);border-left:2px solid var(--border-strong);padding-left:.9rem;margin:.5rem 0;} .script::before{content:"🎤  ";font-family:var(--font-mono);} .script b{color:var(--text);}
+  details{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);margin-bottom:.7rem;overflow:hidden;} details[open]{border-color:var(--border-strong);}
+  summary{cursor:pointer;list-style:none;display:flex;gap:.9rem;align-items:baseline;padding:.95rem 1.1rem;font-weight:600;font-size:.98rem;}
+  summary::-webkit-details-marker{display:none;} summary .q{font-family:var(--font-mono);font-size:.8rem;color:var(--amber);font-weight:700;flex:0 0 auto;}
+  summary::after{content:"+";margin-left:auto;font-family:var(--font-mono);font-weight:700;color:var(--cyan);transition:transform .2s ease;flex:0 0 auto;}
+  details[open] summary::after{transform:rotate(45deg);}
+  .qa-body{padding:.2rem 1.1rem 1.1rem;color:var(--text-muted);border-top:1px solid var(--border);padding-top:.9rem;} .qa-body b{color:var(--text);}
+  .qa-body .tag{display:inline-block;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.05em;text-transform:uppercase;border-radius:6px;padding:.15rem .5rem;margin-right:.4rem;}
+  .tag.easy{background:color-mix(in srgb,var(--cyan) 15%,transparent);color:var(--cyan);} .tag.medium{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn);} .tag.hard{background:color-mix(in srgb,var(--red) 18%,transparent);color:var(--red);}
+  .kbd{font-family:var(--font-mono);font-size:.82em;background:var(--surface-2);border:1px solid var(--border-strong);border-bottom-width:2px;border-radius:6px;padding:.05em .45em;color:var(--cyan);white-space:nowrap;}
+  .foot{border-top:1px solid var(--border);padding:2rem 0 3rem;color:var(--text-faint);font-size:.9rem;} .foot .wrap{display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;justify-content:space-between;}
+  ul.tight{margin:.4rem 0;padding-left:1.15rem;} ul.tight li{margin:.28rem 0;}
+  code.inl{font-family:var(--font-mono);font-size:.85em;background:var(--surface-2);border:1px solid var(--border);padding:.05em .4em;border-radius:5px;}
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.1rem;} .stat .v{font-family:var(--font-mono);font-size:clamp(1.4rem,3vw,2rem);font-weight:700;color:var(--amber);line-height:1.1;} .stat .l{font-size:.8rem;color:var(--text-muted);margin-top:.2rem;}
 </style>
 </head>
 <body>
 
-<!-- ================= TOPBAR ================= -->
 <header class="topbar">
-  <div class="brand"><span class="dot"></span>David · Resultados / 3 min</div>
+  <div class="brand"><span class="dot"></span>David · Cloud & Dashboard / 3 min</div>
   <nav class="topnav">
-    <a href="#pitch">01 · Pitch</a>
-    <a href="#roteiro">02 · Roteiro</a>
-    <a href="#conceitos">03 · Conceitos</a>
-    <a href="#numeros">04 · Números</a>
-    <a href="#simulado">05 · Simulado</a>
+    <a href="#pitch">01 · Pitch</a><a href="#roteiro">02 · Roteiro</a><a href="#conceitos">03 · Conceitos</a><a href="#numeros">04 · Números</a><a href="#simulado">05 · Simulado</a>
   </nav>
   <button class="theme-btn" id="themeBtn" aria-label="Alternar tema" title="Alternar tema claro/escuro">
     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -280,43 +109,38 @@
   </button>
 </header>
 
-<!-- ================= HERO ================= -->
 <div class="wrap">
 <section class="hero">
   <div class="hero-inner">
     <div>
-      <div class="eyebrow">Projeto Final IFG · Módulo 2 · Manutenção Preditiva Industrial</div>
-      <h1>Resultados e<br><span class="hl">Demonstração Prática</span>.</h1>
-      <p class="lead">Guia de estudo da sua parte da apresentação: os 3 dashboards no Metabase, as métricas reais e a matriz de confusão hard-code vs sklearn, e o roteiro da demonstração ao vivo de inferência com um áudio real de bomba.</p>
+      <div class="eyebrow">Pilar 3 · Cloud Computing · Slides 10–12 · Apresenta: Integrante 4</div>
+      <h1>Nuvem e <span class="hl">Dashboard</span> de Decisão.</h1>
+      <p class="lead">Sua parte: levar a solução para a <b>AWS</b>, mostrar a troca <b>dev → produção</b> e fechar com o <b>dashboard</b> que apoia a decisão do engenheiro.</p>
       <div class="chips">
-        <span class="chip">⏱ <b>3 min</b> de fala</span>
-        <span class="chip">📈 <b>3</b> dashboards</span>
-        <span class="chip">🎯 <b>97,98%</b> accuracy</span>
-        <span class="chip">🧪 demo <b>ao vivo</b></span>
-        <span class="chip">📦 <b>4</b> modelos .pkl</span>
+        <span class="chip">⏱ <b>3 min</b> de fala</span><span class="chip">📄 <b>3</b> slides</span><span class="chip">❓ <b>12</b> perguntas</span><span class="chip">☁️ <b>6</b> serviços AWS</span><span class="chip">💵 <b>~R$40/mês</b></span>
       </div>
     </div>
     <div>
-      <div class="sig" aria-label="Matriz de confusão do MLP sklearn">
-        <svg viewBox="0 0 300 230" role="img">
-          <text x="150" y="20" text-anchor="middle" class="cmh">MATRIZ DE CONFUSÃO · MLP sklearn</text>
-          <rect x="20" y="40" width="120" height="34" fill="#0f1730" stroke="none"/>
-          <rect x="150" y="40" width="120" height="34" fill="#0f1730" stroke="none"/>
-          <text x="80" y="62" text-anchor="middle" class="cmh">PRED. NORMAL</text>
-          <text x="210" y="62" text-anchor="middle" class="cmh">PRED. ANOMALIA</text>
-          <rect x="20" y="74" width="120" height="72" rx="8" fill="#182442" stroke="#34d399" stroke-width="2"/>
-          <text x="80" y="116" text-anchor="middle" class="cm" fill="#34d399">748</text>
-          <rect x="150" y="74" width="120" height="72" rx="8" fill="#182442" stroke="#f5a524" stroke-width="2"/>
-          <text x="210" y="116" text-anchor="middle" class="cm" fill="#f5a524">2</text>
-          <rect x="20" y="146" width="120" height="72" rx="8" fill="#182442" stroke="#fb7185" stroke-width="2"/>
-          <text x="80" y="188" text-anchor="middle" class="cm" fill="#fb7185">15</text>
-          <rect x="150" y="146" width="120" height="72" rx="8" fill="#182442" stroke="#34d399" stroke-width="2"/>
-          <text x="210" y="188" text-anchor="middle" class="cm" fill="#34d399">76</text>
-          <text x="80" y="220" text-anchor="middle" class="cmh">REAL NORMAL</text>
-          <text x="210" y="220" text-anchor="middle" class="cmh">REAL ANOMALIA</text>
+      <div class="sig" aria-label="Fluxo na AWS">
+        <svg viewBox="0 0 300 170" role="img">
+          <defs><marker id="arD" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#fb923c"/></marker></defs>
+          <g>
+            <rect x="6" y="20" width="44" height="30" rx="7" fill="#182442" stroke="#fb923c"/><text x="28" y="39" text-anchor="middle" class="nlab">S3</text>
+            <rect x="62" y="20" width="44" height="30" rx="7" fill="#182442" stroke="#fb923c"/><text x="84" y="39" text-anchor="middle" class="nlab">EC2</text>
+            <rect x="118" y="20" width="52" height="30" rx="7" fill="#182442" stroke="#fb923c"/><text x="144" y="39" text-anchor="middle" class="nlab">Snowflake</text>
+            <rect x="182" y="20" width="44" height="30" rx="7" fill="#182442" stroke="#fb923c"/><text x="204" y="39" text-anchor="middle" class="nlab">dbt</text>
+            <rect x="238" y="20" width="58" height="30" rx="7" fill="#182442" stroke="#fb923c"/><text x="267" y="39" text-anchor="middle" class="nlab">SageMaker</text>
+            <rect x="150" y="80" width="58" height="30" rx="7" fill="#182442" stroke="#38bdf8"/><text x="179" y="99" text-anchor="middle" class="nlab">Metabase</text>
+          </g>
+          <g stroke="#fb923c" stroke-width="1.6" opacity=".9" fill="none">
+            <path d="M50 35 H62" marker-end="url(#arD)"/><path d="M106 35 H118" marker-end="url(#arD)"/><path d="M170 35 H182" marker-end="url(#arD)"/><path d="M226 35 H238" marker-end="url(#arD)"/>
+          </g>
+          <g stroke="#38bdf8" stroke-width="1.6" opacity=".9" fill="none"><path d="M296 50 V95 H208" marker-end="url(#arB)"/></g>
+          <defs><marker id="arB" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#38bdf8"/></marker></defs>
+          <text x="150" y="145" text-anchor="middle" class="ncap">S3 → EC2 → Snowflake → dbt → SageMaker → Metabase</text>
         </svg>
       </div>
-      <div class="sig-cap">— 841 amostras de teste · 750 normais · 91 anomalias —</div>
+      <div class="sig-cap">— fluxo completo de dados e decisão na nuvem —</div>
     </div>
   </div>
 </section>
@@ -324,388 +148,217 @@
 
 <main class="wrap">
 
-<!-- ================= 01 · PITCH ================= -->
 <section id="pitch">
-  <div class="sec-head">
-    <span class="sec-num">01</span>
-    <h2 class="sec-title">O pitch de 30 segundos</h2>
-    <span class="sec-sub">diga isto no aquecimento</span>
-  </div>
+  <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">O pitch de 30 segundos</h2><span class="sec-sub">diga isto no aquecimento</span></div>
 
-  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> mostrar os resultados no Metabase e provar com a demo ao vivo. <b>👥 Colegas:</b> o modelo e as métricas de avaliação (Daniel), as features (Walber), o dataset/ELT (Guilherme).</p></div>
+  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> arquitetura AWS, dev→prod e dashboard de decisão. <b>👥 Colegas:</b> Guilherme (problema + dataset), Walber (features + ELT), Daniel (o modelo).</p></div>
 
   <div class="grid-2">
     <div class="card">
       <h3><span class="k">//</span> O que eu mostro, em uma frase</h3>
-      <p style="font-size:1.1rem; line-height:1.5;"><b>"Apresento os <span style="color:var(--cyan)">resultados do projeto no Metabase</span>: 3 dashboards com as métricas do treinamento, o comparativo entre as implementações e a matriz de confusão do hard-code vs sklearn. Depois faço a <span style="color:var(--amber)">demonstração ao vivo</span>: carrego o modelo treinado, testo com um áudio real de bomba e classifico em tempo real se é normal ou anômala, interpretando a confiança da previsão."</b></p>
+      <p style="font-size:1.1rem;line-height:1.5;"><b>"Fecho o ciclo: mostro como a solução roda <span style="color:var(--amber)">100% na AWS</span> — S3, EC2, Snowflake, dbt, SageMaker e Metabase —, como trocamos de <span style="color:var(--cyan)">dev para produção</span> com 4 variáveis, e o <b>dashboard</b> que entrega a decisão ao engenheiro."</b></p>
     </div>
     <div class="card">
-      <h3><span class="k">//</span> O que fica provado</h3>
-      <ul class="tight">
-        <li><b>O pipeline funciona de ponta a ponta</b>: dados → treino → dashboard.</li>
-        <li>O modelo é <b>utilizável</b>: exportado via pickle, pronto para inferência.</li>
-        <li>A comparação <b>hard-code vs sklearn</b> valida a implementação manual.</li>
-        <li>Rastreabilidade: <code class="inl">predictions.csv</code> liga cada previsão à sua amostra.</li>
-      </ul>
-      <div class="callout info"><span class="ico">ℹ</span><p>Acesso ao Metabase: <b>http://localhost:3000</b> · <code class="inl">admin@projeto.com</code> / <code class="inl">ProjetoIFG2025!</code></p></div>
+      <h3><span class="k">//</span> A decisão final</h3>
+      <p style="color:var(--text-muted);font-size:.95rem;"><b>P(anomalia) &gt; 0,5</b> → anomalia → agende manutenção. <b>Caso contrário</b> → normal → continue operando.</p>
+      <div class="callout info"><span class="ico">ℹ</span><p>O modelo e as métricas são do Daniel; aqui eu mostro <b>onde isso roda</b> e <b>como vira decisão</b>.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ================= 02 · ROTEIRO ================= -->
 <section id="roteiro">
-  <div class="sec-head">
-    <span class="sec-num">02</span>
-    <h2 class="sec-title">Roteiro narrado de 3 minutos</h2>
-    <span class="sec-sub">ordem = tópicos do slide</span>
-  </div>
+  <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">Roteiro narrado de 3 minutos</h2><span class="sec-sub">3 slides · ~1min cada</span></div>
 
   <div class="timeline">
     <div class="blk">
-      <div class="blk-tag"><span class="t">0:00</span>~25s<br>Metabase</div>
+      <div class="blk-tag"><span class="t">0:00</span>~1min<br>Slide 10</div>
       <div class="blk-body">
-        <h4>1. Os dashboards no Metabase</h4>
-        <p class="script">"Para fechar, apresento os resultados. O <b>Metabase</b> exibe 3 dashboards que leem direto as camadas do dbt: o de <b>Visão Geral</b>, com os KPIs do dataset; o de <b>Análise de Áudio por Modelo</b>, com as features; e o de <b>Resultados do Modelo ML</b>, com as métricas do treinamento, a matriz de confusão e as predições com erro. Tudo configurado automaticamente na subida dos containers."</p>
+        <h4>1. Arquitetura 100% AWS</h4>
+        <p class="script">"Para produção, a solução roda <b>inteira na AWS</b>. O fluxo é: os `.wav` brutos ficam no <b>S3</b>; uma <b>EC2</b> roda o <b>Airflow</b> e os scripts; o <b>Snowflake</b> é o data warehouse; o <b>dbt</b> transforma em camadas e roda os testes; o <b>SageMaker</b> treina o MLP; e o <b>Metabase</b> serve o dashboard. Ou seja, <b>S3 → EC2 → Snowflake → dbt → SageMaker → Metabase</b>: o fluxo completo de dados e decisão na nuvem."</p>
       </div>
     </div>
-
     <div class="blk">
-      <div class="blk-tag"><span class="t">0:25</span>~45s<br>Métricas</div>
+      <div class="blk-tag"><span class="t">1:00</span>~1min<br>Slide 11</div>
       <div class="blk-body">
-        <h4>2. Métricas e matriz de confusão</h4>
-        <p class="script">"No conjunto de teste de <b>841 amostras</b>, o <b>MLP sklearn</b> alcançou <b>97,98% de acurácia</b>, <b>97,4% de precisão</b>, <b>83,5% de recall</b> e <b>F1 de 0,899</b>. O hard-code ficou praticamente empatado — o que valida a implementação manual. A matriz de confusão mostra <b>15 falsos negativos</b> e apenas <b>2 falsos positivos</b>: raramente paramos uma máquina saudável, mas ainda existem anomalias sutis que não detectamos."</p>
+        <h4>2. Dev → produção</h4>
+        <p class="script">"O segredo: <b>mesmo código, dois ambientes</b>. Em dev, MinIO e PostgreSQL no Docker; em produção, S3 e Snowflake. A troca é por <b>4 variáveis de ambiente</b> — o endpoint do S3 aponta para a AWS e o banco vira Snowflake — <b>zero mudanças de código</b>. E usamos <b>infraestrutura como código</b> com um template <b>AWS CloudFormation</b> (S3, EC2, rede e segurança), com o registro de <b>custos</b> documentado — cerca de <b>40 dólares por mês</b> no cenário acadêmico."</p>
       </div>
     </div>
-
     <div class="blk">
-      <div class="blk-tag"><span class="t">1:10</span>~60s<br>Demo ao vivo</div>
+      <div class="blk-tag"><span class="t">2:00</span>~1min<br>Slide 12</div>
       <div class="blk-body">
-        <h4>3. Demonstração ao vivo</h4>
-        <p class="script">"Agora a demonstração. <b>Passo 1:</b> carrego o modelo treinado, salvo em pickle — na verdade é um <b>Pipeline completo</b>, com o scaler e a rede juntos. <b>Passo 2:</b> pego um áudio real de bomba, extraio as 96 features com o mesmo pipeline do treinamento e passo pelo modelo. <b>Passo 3:</b> o modelo devolve a <b>probabilidade de anomalia</b> — com threshold 0.5, acima disso é 'anômala', abaixo é 'normal'. Vamos executar: [RODAR CÉLULAS]."</p>
-        <div class="callout info"><span class="ico">▶</span><p>Guarde ~30 s para o notebook rodar e ~30 s para <b>interpretar</b> — a interpretação é o que a banca quer ouvir.</p></div>
-      </div>
-    </div>
-
-    <div class="blk">
-      <div class="blk-tag"><span class="t">2:30</span>~30s<br>Interpretação</div>
-      <div class="blk-body">
-        <h4>4. Interpretação e fechamento</h4>
-        <p class="script">"Reparem que [resultado]. Isso demonstra que o pipeline funciona de ponta a ponta: do áudio bruto à decisão de manutenção, com um modelo <b>exportado e pronto para produção</b>. O projeto entrega o que prometeu: detectar anomalia cedo, reduzir paradas e dar suporte ao engenheiro de manutenção. Obrigado!"</p>
-        <div class="callout warn"><span class="ico">!</span><p><b>Dica de tempo:</b> se a demo demorar, comente em voz alta cada etapa enquanto o notebook roda (nunca fique em silêncio na tela).</p></div>
+        <h4>3. Dashboard e decisão final</h4>
+        <p class="script">"Por fim, o <b>Metabase</b> dá a visão gerencial: KPIs como total de amostras e taxa de anomalia, <b>filtro por modelo de bomba</b>, anomalias por máquina, e a <b>matriz de confusão com as predições que erraram</b>. A regra de decisão é simples: <b>se P(anomalia) &gt; 0,5, o sistema sugere agendar manutenção; senão, a máquina segue operando</b>. O engenheiro recebe o alerta no dashboard e decide com base em dados — áudio, dados, ML e nuvem apoiando a decisão em tempo real. Obrigado!"</p>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ================= 03 · CONCEITOS ================= -->
 <section id="conceitos">
-  <div class="sec-head">
-    <span class="sec-num">03</span>
-    <h2 class="sec-title">Domínio conceitual (nível banca)</h2>
-    <span class="sec-sub">entenda para improvisar</span>
-  </div>
+  <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">Domínio conceitual (nível banca)</h2><span class="sec-sub">entenda para improvisar</span></div>
 
-  <h3 style="margin:0 0 .8rem;">3.1 · Os 3 dashboards do Metabase</h3>
-  <div class="tbl-scroll">
-    <table>
-      <thead><tr><th>Dashboard</th><th>Conteúdo</th><th>Fonte</th></tr></thead>
-      <tbody>
-        <tr>
-          <td class="num">1 · Visão Geral</td>
-          <td>KPIs: total de amostras, taxa de anomalia, duração média + pie (normal/anomalia) + bar por modelo</td>
-          <td class="num">fact_audio_analysis</td>
-        </tr>
-        <tr>
-          <td class="num">2 · Análise de Áudio por Modelo</td>
-          <td>Resumo por modelo, MFCC-1 médio, spectral centroid vs condição, top 10 maior RMS</td>
-          <td class="num">dim_machines + fact</td>
-        </tr>
-        <tr>
-          <td class="num">3 · Resultados do Modelo ML</td>
-          <td>KPI de acurácia, tabela de métricas, matriz de confusão, predições com erro</td>
-          <td class="num">model_metrics + model_predictions</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="callout info"><span class="ico">ℹ</span><p>Os dashboards 1 e 2 têm <b>filtro por modelo de máquina</b>: um parâmetro mapeado via template-tag <code class="inl">{{model_id}}</code> com cláusula SQL opcional <code class="inl">[[AND model_id = {{model_id}}]]</code>. Tudo criado por <code class="inl">scripts/setup_metabase.py</code> via API — <b>re-executável</b> (arquiva versões antigas e recria).</p></div>
+  <h3 style="margin:0 0 .8rem;">3.1 · Papel de cada serviço</h3>
+  <div class="tbl-scroll"><table>
+    <thead><tr><th>Serviço</th><th>Papel</th><th>Substitui (dev)</th></tr></thead>
+    <tbody>
+      <tr><td class="num">S3</td><td>Armazenar o áudio bruto (.wav)</td><td class="num">MinIO</td></tr>
+      <tr><td class="num">EC2</td><td>Rodar Airflow + scripts Python</td><td class="num">Airflow local (Docker)</td></tr>
+      <tr><td class="num">Snowflake</td><td>Data warehouse (camadas dbt)</td><td class="num">PostgreSQL</td></tr>
+      <tr><td class="num">dbt</td><td>Transformação + testes</td><td class="num">dbt local</td></tr>
+      <tr><td class="num">SageMaker</td><td>Treino & inferência do MLP</td><td class="num">treino local</td></tr>
+      <tr><td class="num">Metabase</td><td>Dashboard BI</td><td class="num">Metabase local</td></tr>
+    </tbody>
+  </table></div>
 
-  <h3 style="margin:2rem 0 .8rem;">3.2 · Lendo a matriz de confusão</h3>
-  <div class="grid-2">
-    <div class="card">
-      <h3><span class="k">//</span> Os 4 quadrantes</h3>
-      <table style="font-size:.88rem;">
-        <thead><tr><th></th><th>Predito Normal</th><th>Predito Anomalia</th></tr></thead>
-        <tbody>
-          <tr><th>Real Normal</th><td class="num center" style="color:var(--green);">748 · Verdadeiro Negativo</td><td class="num center" style="color:var(--warn);">2 · Falso Positivo</td></tr>
-          <tr><th>Real Anomalia</th><td class="num center" style="color:var(--red);">15 · Falso Negativo</td><td class="num center" style="color:var(--green);">76 · Verdadeiro Positivo</td></tr>
-        </tbody>
-      </table>
-      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">Total 841 = 748+2+15+76. <b>17 erros</b> no total.</p>
-    </div>
-    <div class="card">
-      <h3><span class="k">//</span> O que cada erro custa</h3>
-      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
-        <li><b>2 falsos positivos</b> → paramos 2 bombas saudáveis para inspeção. Custo baixo (só inspeção).</li>
-        <li><b>15 falsos negativos</b> → 15 anomalias passaram despercebidas. Custo alto (risco de falha/parada).</li>
-        <li>Por isso recall (83,5%) importa mais que precisão aqui — o erro caro é o FN.</li>
-      </ul>
-      <div class="callout danger"><span class="ico">!</span><p>O threshold 0.5 pode ser ajustado: subir reduz FP, descer reduz FN. É a alavanca de calibração em produção.</p></div>
-    </div>
-  </div>
-
-  <h3 style="margin:2rem 0 .8rem;">3.3 · Métricas — cola rápida</h3>
+  <h3 style="margin:2rem 0 .8rem;">3.2 · Como o Snowflake recebe os dados</h3>
   <div class="card">
-    <p style="color:var(--text-muted); font-size:.95rem; margin:0;">No dashboard 3 você só precisa citar: <b>accuracy 97,98%</b>, <b>precision 97,4%</b>, <b>recall 83,5%</b>, <b>F1 0,899</b>. Em uma frase cada: precision = "quando alarmo, acerto"; recall = "pego 83,5% das anomalias reais"; F1 = equilíbrio dos dois. A <b>definição completa</b> e o porquê de a accuracy sozinha enganar (baseline majoritário com recall 0) estão no guia do Daniel, dono do treinamento.</p>
+    <p style="color:var(--text-muted);font-size:.95rem;margin:0;">Os CSVs processados ficam no S3 e o Snowflake lê via <b>external stage + COPY INTO</b> para a tabela <code class="inl">ml_features_raw</code>. Depois o dbt materializa as camadas (staging → dim/fact → mart). O Snowflake é <b>SaaS externo</b> — na prática, é o DW de produção; o Postgres é o espelho local para desenvolvimento.</p>
   </div>
 
-  <h3 style="margin:2rem 0 .8rem;">3.4 · Hard-code vs sklearn</h3>
+  <h3 style="margin:2rem 0 .8rem;">3.3 · Dev → prod com 4 variáveis</h3>
   <div class="grid-2">
-    <div class="card">
-      <h3><span class="k">//</span> Por que as matrizes quase idênticas?</h3>
-      <p style="color:var(--text-muted); font-size:.95rem;">Hard-code: 747/3/15/76. Sklearn: 748/2/15/76. Ambos usam a <b>mesma arquitetura (64→32)</b>, o <b>mesmo split</b> (random_state 42) e as <b>mesmas features</b>.</p>
-      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">As pequenas diferenças vêm dos otimizadores (SGD+momento vs Adam) e da inicialização. O fato de os resultados baterem <b>valida</b> que a implementação manual do forward/backprop está correta.</p>
-    </div>
-    <div class="card">
-      <h3><span class="k">//</span> E o tempo?</h3>
-      <p style="color:var(--text-muted); font-size:.95rem;">Treino: hard-code ~<b>11,3 s</b> vs sklearn ~<b>3,8 s</b> (Adam + código C otimizado ≈ 3x mais rápido).</p>
-      <p style="color:var(--text-muted); font-size:.92rem; margin-bottom:0;">Predição: ~<b>12 ms</b> vs ~<b>3 ms</b> — ambos <b>tempo real</b> para a aplicação industrial.</p>
-    </div>
+    <div class="card"><h3><span class="k">//</span> Dev (.env.local)</h3><p style="color:var(--text-muted);font-size:.92rem;margin:0;"><code class="inl">S3_ENDPOINT=http://minio:9000</code> · <code class="inl">DB_TYPE=postgres</code> → MinIO + Postgres.</p></div>
+    <div class="card"><h3><span class="k">//</span> Prod (.env.prod)</h3><p style="color:var(--text-muted);font-size:.92rem;margin:0;"><code class="inl">S3_ENDPOINT=https://s3.amazonaws.com</code> · <code class="inl">DB_TYPE=snowflake</code> → S3 + Snowflake.</p></div>
   </div>
+  <div class="callout info"><span class="ico">ℹ</span><p>O <code class="inl">boto3</code> usa <code class="inl">endpoint_url</code> e o dbt usa <code class="inl">env_var()</code> nos profiles. Troca = <b>configuração, não código</b>.</p></div>
 
-  <h3 style="margin:2rem 0 .8rem;">3.5 · A demonstração ao vivo (checklist)</h3>
+  <h3 style="margin:2rem 0 .8rem;">3.4 · Infraestrutura como código + segurança</h3>
   <div class="grid-2">
     <div class="card">
-      <h3><span class="k">//</span> O fluxo do notebook</h3>
-      <pre class="code"><span class="k">import</span> pickle
-
-<span class="c"># 1. Carregar o modelo (scaler + MLP juntos)</span>
-with open(<span class="k">'data/processed/models/mlp_sklearn_pipeline.pkl'</span>, 'rb') as f:
-    pipeline = pickle.load(f)
-
-<span class="c"># 2. X_novo: 96 features (mesma ordem de feature_names.pkl)</span>
-X_novo = extrair_features(arquivo.wav)  <span class="c"># mesmo código do treino</span>
-
-<span class="c"># 3. Probabilidade de anomalia</span>
-proba = pipeline.predict_proba(X_novo)[:, 1]
-classe = <span class="k">'anomalia'</span> if proba >= <span class="k">0.5</span> else <span class="k">'normal'</span>
-print(f"P(anomalia) = {proba:.3f} → {classe}")</pre>
-      <ul class="check" style="margin-top:.6rem;">
-        <li>Rodar <code class="inl">make up</code> antes: Postgres, MinIO, Metabase no ar.</li>
-        <li>Testar o notebook <b>todo</b> antes da apresentação.</li>
-        <li>Ter 2-3 áudios de backup (normal + anômala).</li>
-        <li>Print de segurança no caso de erro.</li>
+      <h3><span class="k">//</span> CloudFormation</h3>
+      <ul class="tight" style="color:var(--text-muted);font-size:.92rem;">
+        <li>Template YAML (<code class="inl">infra/cloudformation.yaml</code>) provisiona <b>S3, EC2, VPC, subnets, security groups, IAM roles</b>.</li>
+        <li>Um comando recria a infraestrutura inteira (<code class="inl">aws cloudformation deploy</code>).</li>
       </ul>
     </div>
     <div class="card">
-      <h3><span class="k">//</span> Interpretação da confiança</h3>
-      <ul class="tight" style="color:var(--text-muted); font-size:.95rem;">
-        <li>P(anomalia) <b>próximo de 1</b> (ex.: 0.999) → anomalia clara, alerta imediato.</li>
-        <li>P(anomalia) <b>próximo de 0.5</b> → modelo incerto → inspeção humana.</li>
-        <li>P(anomalia) <b>baixo</b> → normal.</li>
-        <li>No `report_analys.md`, acertos de anomalia chegam a P=1.000; erros têm P entre 0.000 e 0.401.</li>
+      <h3><span class="k">//</span> Segurança</h3>
+      <ul class="tight" style="color:var(--text-muted);font-size:.92rem;">
+        <li><b>IAM com menor privilégio</b>: roles separadas para EC2 e SageMaker, só nos buckets do projeto.</li>
+        <li><b>VPC isolada</b>, SG liberando apenas portas 22 e 8080.</li>
+        <li><b>Credenciais nunca em código</b> — env vars fora do git + parâmetro NoEcho.</li>
       </ul>
-      <div class="callout info"><span class="ico">ℹ</span><p>No dashboard 3, a aba <b>Predições com Erro</b> lista as amostras com <code class="inl">erro_sklearn = 1</code> — ótimo material para a análise qualitativa (por que o modelo errou).</p></div>
     </div>
+  </div>
+
+  <h3 style="margin:2rem 0 .8rem;">3.5 · O dashboard de decisão</h3>
+  <div class="card">
+    <ul class="tight" style="color:var(--text-muted);font-size:.95rem;margin:0;">
+      <li><b>KPIs</b>: total de amostras, taxa de anomalia, duração média.</li>
+      <li><b>Filtro por modelo de máquina</b> (template-tag <code class="inl">{{model_id}}</code>).</li>
+      <li><b>Anomalias por modelo</b> e <b>matriz de confusão com predições que erraram</b>.</li>
+      <li><b>Regra</b>: <code class="inl">P(anomalia) &gt; 0,5</code> → agendar manutenção; senão → continuar operando.</li>
+    </ul>
   </div>
 </section>
 
-<!-- ================= 04 · NÚMEROS ================= -->
 <section id="numeros">
-  <div class="sec-head">
-    <span class="sec-num">04</span>
-    <h2 class="sec-title">Números para decorar</h2>
-    <span class="sec-sub">report_analys.md · 2026-08-11</span>
-  </div>
+  <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">Números para decorar</h2><span class="sec-sub">slides 10, 11 e 12</span></div>
 
   <div class="stat-row" style="margin-bottom:1.4rem;">
-    <div class="stat"><div class="v">97,98%</div><div class="l">acurácia MLP sklearn</div></div>
-    <div class="stat"><div class="v">0,899</div><div class="l">F1-Score sklearn</div></div>
-    <div class="stat"><div class="v">83,5%</div><div class="l">recall (anomalias detectadas)</div></div>
-    <div class="stat"><div class="v">17</div><div class="l">erros no teste (15 FN + 2 FP)</div></div>
+    <div class="stat"><div class="v">6</div><div class="l">serviços (S3, EC2, Snowflake, dbt, SageMaker, Metabase)</div></div>
+    <div class="stat"><div class="v">4</div><div class="l">variáveis de ambiente (dev → prod)</div></div>
+    <div class="stat"><div class="v">~R$40</div><div class="l">custo mensal estimado</div></div>
+    <div class="stat"><div class="v">0,5</div><div class="l">threshold de decisão P(anomalia)</div></div>
   </div>
 
-  <div class="callout info"><span class="ico">📊</span><p>Os números do <b>MLP sklearn</b> (que você mostra) estão acima. A <b>tabela comparativa dos 4 modelos</b> é apresentada pelo Daniel (ele treinou os modelos) e aparece no card "Métricas dos Modelos" do dashboard 3.</p></div>
-
-  <div class="grid-2" style="margin-top:1.2rem;">
+  <div class="grid-2">
     <div>
-      <h3 style="margin:0 0 .6rem;">Matrizes de confusão</h3>
-      <div class="tbl-scroll">
-        <table>
-          <thead><tr><th></th><th>Sklearn</th><th>Hard-Code</th></tr></thead>
-          <tbody>
-            <tr><th>VN (normal ✓)</th><td class="num">748</td><td class="num">747</td></tr>
-            <tr><th>FP (falso alarme)</th><td class="num">2</td><td class="num">3</td></tr>
-            <tr><th>FN (anomalia perdida)</th><td class="num">15</td><td class="num">15</td></tr>
-            <tr><th>VP (anomalia ✓)</th><td class="num">76</td><td class="num">76</td></tr>
-          </tbody>
-        </table>
-      </div>
+      <h3 style="margin:0 0 .6rem;">Custo mensal (acadêmico)</h3>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>Serviço</th><th>US$</th></tr></thead>
+        <tbody>
+          <tr><td class="num">EC2 t3.medium</td><td class="num">~7,30</td></tr>
+          <tr><td class="num">ECS Fargate (Metabase)</td><td class="num">~9,00</td></tr>
+          <tr><td class="num">EBS + S3</td><td class="num">~2,65</td></tr>
+          <tr><td class="num">SageMaker + CloudWatch</td><td class="num">~1,50</td></tr>
+          <tr><td class="num best">Subtotal AWS</td><td class="num best">~20,50</td></tr>
+          <tr><td class="num">Snowflake (SaaS)</td><td class="num">~20,00</td></tr>
+          <tr><td class="num best">Total</td><td class="num best">~40,50</td></tr>
+        </tbody>
+      </table></div>
     </div>
     <div>
-      <h3 style="margin:0 0 .6rem;">Modelos exportados (pickle)</h3>
-      <div class="tbl-scroll">
-        <table>
-          <thead><tr><th>Arquivo</th><th>Conteúdo</th></tr></thead>
-          <tbody>
-            <tr><td class="num">mlp_sklearn_pipeline.pkl</td><td>Pipeline scaler + MLP, pronto para inferência</td></tr>
-            <tr><td class="num">mlp_hardcode.pkl</td><td>Pesos e hiperparâmetros do HardCodedMLP</td></tr>
-            <tr><td class="num">scaler.pkl</td><td>StandardScaler ajustado no treino</td></tr>
-            <tr><td class="num">feature_names.pkl</td><td>Ordem das 96 features esperadas</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p style="color:var(--text-muted); font-size:.92rem; margin:.4rem 0 0;">Todos em <code class="inl">data/processed/models/</code>.</p>
+      <h3 style="margin:0 0 .6rem;">Troca dev → prod</h3>
+      <div class="tbl-scroll"><table>
+        <thead><tr><th>Item</th><th>Dev</th><th>Prod</th></tr></thead>
+        <tbody>
+          <tr><td class="num">Storage</td><td class="num">MinIO</td><td class="num">AWS S3</td></tr>
+          <tr><td class="num">Banco</td><td class="num">PostgreSQL</td><td class="num">Snowflake</td></tr>
+          <tr><td class="num">Orquestração</td><td class="num">Airflow local</td><td class="num">Airflow EC2</td></tr>
+          <tr><td class="num">ML</td><td class="num">treino local</td><td class="num">SageMaker</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout info"><span class="ico">💡</span><p>Desligar fora do horário é a maior alavanca de economia; o tier gratuito cobre parte em cenário acadêmico.</p></div>
     </div>
   </div>
 </section>
 
-<!-- ================= 05 · SIMULADO ================= -->
 <section id="simulado">
-  <div class="sec-head">
-    <span class="sec-num">05</span>
-    <h2 class="sec-title">Simulado da banca</h2>
-    <span class="sec-sub">clique para ver a resposta</span>
-  </div>
-  <p style="color:var(--text-muted); margin-top:0;">Tente responder em voz alta antes de abrir. Grau de dificuldade estimado ao lado de cada pergunta.</p>
+  <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Simulado da banca</h2><span class="sec-sub">clique para ver a resposta</span></div>
+  <p style="color:var(--text-muted);margin-top:0;">Tente responder em voz alta antes de abrir.</p>
 
-  <details>
-    <summary><span class="q">P1</span> O que o Metabase mostra e como foi configurado?</summary>
-    <div class="qa-body">
-      <span class="tag easy">BI</span>
-      <p>Três dashboards: <b>Visão Geral</b> (KPIs do dataset), <b>Análise de Áudio por Modelo</b> (features) e <b>Resultados do Modelo ML</b> (métricas, matriz de confusão, erros). Eles leem os schemas gerados pelo dbt. A configuração é automática: o script <code class="inl">scripts/setup_metabase.py</code> cria a conexão com o Postgres, as perguntas SQL e os dashboards via API REST quando o container sobe.</p>
-    </div>
+  <details><summary><span class="q">P1</span> Qual o papel de cada serviço AWS no fluxo?</summary>
+  <div class="qa-body"><span class="tag easy">cloud</span><p><b>S3</b> guarda os `.wav` brutos; <b>EC2</b> roda Airflow + scripts; <b>Snowflake</b> é o DW; <b>dbt</b> transforma em camadas; <b>SageMaker</b> treina o MLP; <b>Metabase</b> serve o dashboard.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P2</span> Por que 3 dashboards e não 1?</summary>
-    <div class="qa-body">
-      <span class="tag easy">BI</span>
-      <p>Cada um responde a uma pergunta: o <b>1</b> é o negócio (quantas amostras, taxa de anomalia); o <b>2</b> é a engenharia de dados (como as features se comportam por modelo); o <b>3</b> é o resultado do ML (o modelo funciona?). Separar por tema mantém cada tela focada e permite o filtro analítico por modelo nos dashboards 1 e 2.</p>
-    </div>
+  <details><summary><span class="q">P2</span> O que substitui o quê entre local e AWS?</summary>
+  <div class="qa-body"><span class="tag easy">cloud</span><p>MinIO → S3; PostgreSQL → Snowflake; Airflow local → Airflow na EC2; treino local → SageMaker; Metabase local → Metabase na nuvem. O código é o mesmo.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P3</span> Como funciona o filtro por modelo no dashboard?</summary>
-    <div class="qa-body">
-      <span class="tag medium">BI</span>
-      <p>O dashboard tem um <b>parâmetro</b> mapeado para uma template-tag no SQL do card: <code class="inl">{{model_id}}</code> com cláusula <b>opcional</b> <code class="inl">[[AND model_id = {{model_id}}]]</code>. Quando o usuário escolhe um valor, o Metabase injeta o filtro; quando deixa vazio, a cláusula é ignorada — o card mostra tudo.</p>
-    </div>
+  <details><summary><span class="q">P3</span> Por que Snowflake e não Redshift?</summary>
+  <div class="qa-body"><span class="tag medium">cloud</span><p>O projeto exige <b>Snowflake</b> como tecnologia obrigatória; além disso é <b>SaaS</b> (sem gerenciar infra), escala sob demanda e integra com S3 via external stage. O Redshift aparece como alternativa no CloudFormation acadêmico.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P4</span> Como se lê a matriz 748/2/15/76?</summary>
-    <div class="qa-body">
-      <span class="tag easy">métricas</span>
-      <p>748 = normais corretas (VN); 2 = falsos positivos (paramos máquina sã); 15 = falsos negativos (anomalias perdidas); 76 = anomalias detectadas (VP). Total 841. O ponto-chave: <b>2 FP é bom, 15 FN é o problema</b> — o custo de uma anomalia perdida (falha) é muito maior que o de um alarme falso (inspeção).</p>
-    </div>
+  <details><summary><span class="q">P4</span> Como o Snowflake recebe os dados?</summary>
+  <div class="qa-body"><span class="tag medium">cloud</span><p>Os CSVs processados ficam no S3; o Snowflake lê via <b>external stage + COPY INTO</b> para <code class="inl">ml_features_raw</code>. Depois o dbt materializa staging → dim/fact → mart.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P5</span> Por que hard-code e sklearn têm resultados quase iguais?</summary>
-    <div class="qa-body">
-      <span class="tag medium">ML</span>
-      <p>Porque ambos implementam a <b>mesma arquitetura (64→32 ReLU)</b>, treinam com os <b>mesmos dados</b>, o <b>mesmo split estratificado</b> (random_state 42) e as <b>mesmas features escaladas</b>. As pequenas diferenças (1 FP) vêm do otimizador (SGD+momento vs Adam) e da inicialização. Isso <b>valida</b> a implementação manual: se o backprop do hard-code estivesse errado, os resultados divergiriam muito.</p>
-    </div>
+  <details><summary><span class="q">P5</span> Como trocar de dev para produção?</summary>
+  <div class="qa-body"><span class="tag easy">cloud</span><p>Com <b>4 variáveis de ambiente</b>: o endpoint do S3 (MinIO → AWS) e o banco (Postgres → Snowflake). O boto3 usa <code class="inl">endpoint_url</code> e o dbt usa <code class="inl">env_var()</code> — zero mudanças de código.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P6</span> Explique precision, recall e F1 em palavras simples.</summary>
-    <div class="qa-body">
-      <span class="tag easy">métricas</span>
-      <p><b>Precision</b>: de tudo que o modelo chamou de anomalia, quantas eram mesmo? (97,4%). <b>Recall</b>: de todas as anomalias reais, quantas ele pegou? (83,5%). <b>F1</b>: média harmônica dos dois, um único número que equilibra alarmes falsos e anomalias perdidas (0,899). Para este problema, recall/F1 valem mais que accuracy.</p>
-    </div>
+  <details><summary><span class="q">P6</span> O que é CloudFormation / IaC?</summary>
+  <div class="qa-body"><span class="tag medium">infra</span><p><b>Infraestrutura como código</b>: um template YAML descreve a infra (S3, EC2, VPC, IAM, SG) e um comando (<code class="inl">aws cloudformation deploy</code>) a cria/reproduz inteira. Versionável e reproduzível.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P7</span> O baseline majoritário tem accuracy alta e recall 0. O que isso ensina?</summary>
-    <div class="qa-body">
-      <span class="tag medium">métricas</span>
-      <p>Ensina que <b>accuracy em dataset desbalanceado engana</b>. Como 89,2% dos dados são normais, prever "sempre normal" acerta 89,2% — mas nunca detecta uma anomalia (recall 0, precision 0, F1 0). É o <b>piso</b>: qualquer modelo útil precisa superá-lo em recall/F1. Por isso avaliar só accuracy seria um erro grave no nosso contexto.</p>
-    </div>
+  <details><summary><span class="q">P7</span> Qual o papel do SageMaker?</summary>
+  <div class="qa-body"><span class="tag easy">cloud</span><p>Serviço de ML da AWS: o notebook treina o MLP (hard-code e sklearn) e exporta os modelos `.pkl`; as métricas voltam para o S3/Snowflake. É o substituto do treino local em produção.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P8</span> Como o modelo é carregado na demonstração?</summary>
-    <div class="qa-body">
-      <span class="tag easy">deploy</span>
-      <p>Com <b>pickle</b>. O <code class="inl">ml/evaluate.py</code> salva um <b>Pipeline</b> do sklearn (scaler + MLP juntos) em <code class="inl">data/processed/models/mlp_sklearn_pipeline.pkl</code>. Na demo, um <code class="inl">pickle.load()</code> traz o modelo pronto; basta aplicar as 96 features de um novo áudio e chamar <code class="inl">predict_proba()</code>. O hard-code também é salvo (<code class="inl">mlp_hardcode.pkl</code>) e recarregado via <code class="inl">HardCodedMLP.load()</code>.</p>
-    </div>
+  <details><summary><span class="q">P8</span> Por que EC2 self-managed e não MWAA?</summary>
+  <div class="qa-body"><span class="tag hard">custo</span><p>MWAA (Airflow gerenciado) custa ~<b>350 dólares/mês</b> no mínimo — inviável para escala acadêmica. Uma EC2 rodando o Airflow sai por ~7 dólares/mês no uso parcial. Para esse porte, EC2 é a opção econômica correta.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P9</span> O que é o Pipeline salvo no .pkl?</summary>
-    <div class="qa-body">
-      <span class="tag medium">deploy</span>
-      <p>É um <b>Pipeline do scikit-learn</b>: uma sequência encadeada de <code class="inl">StandardScaler</code> + <code class="inl">MLPClassifier</code>. Vantagem: o novo dado passa pelo scaler e pela rede <b>num único objeto</b>, sem risco de esquecer a normalização na inferência. É a forma "pronta para produção" de servir o modelo — recebe 96 números e devolve P(anomalia).</p>
-    </div>
+  <details><summary><span class="q">P9</span> Quais os custos aproximados da solução?</summary>
+  <div class="qa-body"><span class="tag easy">custo</span><p>~<b>20,50 dólares</b> de AWS (EC2, Fargate, S3, EBS, SageMaker, CloudWatch) + ~<b>20 dólares</b> de Snowflake ≈ <b>40,50 dólares/mês</b> no cenário acadêmico (ligado ~8h/dia útil). Desligar fora do horário reduz bastante.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P10</span> Como interpretar P(anomalia) na demo?</summary>
-    <div class="qa-body">
-      <span class="tag medium">interpretação</span>
-      <p>A saída da sigmoid/softmax é uma <b>probabilidade entre 0 e 1</b>. Com o threshold 0.5: ≥0.5 → anômala; <0.5 → normal. A <b>confiança</b> é tão importante quanto a classe: P=0.999 é anomalia clara (alerta), P≈0.5 é incerto (pede inspeção humana). No nosso teste, anomalias bem detectadas chegaram a P=1.000; os erros tinham P entre 0.000 e 0.401.</p>
-    </div>
+  <details><summary><span class="q">P10</span> Como o dashboard apoia a decisão?</summary>
+  <div class="qa-body"><span class="tag easy">negócio</span><p>Mostra KPIs, a condição prevista por bomba e a <b>probabilidade de anomalia</b>. Regra: <b>P(anomalia) &gt; 0,5</b> → agendar manutenção; senão → continuar operando. O engenheiro decide com dados, não por adivinhação.</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P11</span> O que aparece em "Predições com Erro" no dashboard?</summary>
-    <div class="qa-body">
-      <span class="tag medium">BI</span>
-      <p>São as amostras do teste em que <code class="inl">pred_sklearn != y_true</code> (17 no total). O card lista <code class="inl">file_id</code>, modelo, condição real, condição predita e a probabilidade. É o material da <b>análise qualitativa</b>: a maioria é de anomalias sutis com P baixa (0.0-0.4), cujo espectro foge do padrão da própria classe — tipicamente mascaradas pelo ruído de fábrica a 0 dB SNR.</p>
-    </div>
+  <details><summary><span class="q">P11</span> Como se garante segurança na nuvem?</summary>
+  <div class="qa-body"><span class="tag medium">segurança</span><p><b>IAM</b> com menor privilégio (roles separadas para EC2 e SageMaker); <b>VPC</b> isolada com sub-rede pública/privada; <b>Security Groups</b> liberando só 22 e 8080; credenciais fora do código (env vars + NoEcho).</p></div>
   </details>
 
-  <details>
-    <summary><span class="q">P12</span> O que acontece se o Postgres não estiver acessível ao rodar a avaliação?</summary>
-    <div class="qa-body">
-      <span class="tag hard">engenharia</span>
-      <p>Nada quebra. A carga das métricas/predições no Metabase é <b>best-effort</b>: o <code class="inl">ml/evaluate.py</code> tenta conectar e, se falhar, imprime um aviso e segue — os CSVs, matrizes e pickles são salvos de qualquer forma. Por isso, para o dashboard ficar atualizado, os containers precisam estar de pé quando o treino roda.</p>
-    </div>
-  </details>
-
-  <details>
-    <summary><span class="q">P13</span> Plano B se a demonstração falhar ao vivo?</summary>
-    <div class="qa-body">
-      <span class="tag hard">apresentação</span>
-      <p>Três camadas: (1) <b>pré-teste</b> — rodar o notebook inteiro antes, com os mesmos áudios da demo; (2) <b>backups</b> — ter 2-3 áudios alternativos e o screenshot do dashboard do Metabase pronto para mostrar os resultados mesmo sem conexão; (3) <b>discursivo</b> — se falhar na hora, narrar o que o resultado esperado é e mostrar as métricas no dashboard. Nunca deixar o silêncio na tela.</p>
-    </div>
-  </details>
-
-  <details>
-    <summary><span class="q">P14</span> Quais os artefatos que comprovam os resultados?</summary>
-    <div class="qa-body">
-      <span class="tag easy">entrega</span>
-      <p><code class="inl">report_analys.md</code> (relatório completo), <code class="inl">data/processed/model_comparison.csv</code>, <code class="inl">predictions.csv</code> (previsão por amostra), as matrizes de confusão em PNG, os 4 arquivos .pkl e as tabelas <code class="inl">model_metrics</code> / <code class="inl">model_predictions</code> no banco que alimentam o dashboard 3.</p>
-    </div>
+  <details><summary><span class="q">P12</span> O que é o filtro por modelo no dashboard?</summary>
+  <div class="qa-body"><span class="tag easy">BI</span><p>Um parâmetro do dashboard mapeado para a template-tag <code class="inl">{{model_id}}</code> no SQL dos cards. O usuário escolhe um modelo de bomba e todos os cards filtram — cláusula opcional <code class="inl">[[AND model_id = {{model_id}}]]</code>.</p></div>
   </details>
 </section>
 
 </main>
 
-<!-- ================= FOOTER ================= -->
 <footer class="foot">
   <div class="wrap">
-    <span>Guia preparado com base em <code class="inl">report_analys.md</code>, <code class="inl">ml/evaluate.py</code>, <code class="inl">scripts/setup_metabase.py</code> e <code class="inl">.docs-projeto-final/07-Dashboard.md</code>.</span>
-    <span>Série de guias: <a href="guia-apresentacao-guilherme.html">Guilherme</a> · <a href="guia-apresentacao-walber.html">Walber</a> · <a href="guia-apresentacao-daniel.html">Daniel</a> · <a href="guia-apresentacao-david.html">David</a></span>
+    <span>Guia baseado nos slides 10–12 e em <code class="inl">docs/ARQUITETURA_AWS.md</code>, <code class="inl">.docs-projeto-final/10-Infra-AWS.md</code> e <code class="inl">07-Dashboard.md</code>.</span>
+    <span>Série: <a href="guia-apresentacao-guilherme.html">Guilherme</a> · <a href="guia-apresentacao-walber.html">Walber</a> · <a href="guia-apresentacao-daniel.html">Daniel</a> · <a href="guia-apresentacao-david.html">David</a></span>
   </div>
 </footer>
 
 <script>
-  (function () {
-    var root = document.documentElement;
-    var btn = document.getElementById("themeBtn");
-    var stored = null;
-    try { stored = localStorage.getItem("guide-theme"); } catch (e) {}
-    if (stored === "light") { root.setAttribute("data-theme", "light"); }
-
-    btn.addEventListener("click", function () {
-      var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      root.setAttribute("data-theme", next);
-      try { localStorage.setItem("guide-theme", next); } catch (e) {}
-    });
-  })();
+(function(){var root=document.documentElement,btn=document.getElementById("themeBtn"),stored=null;try{stored=localStorage.getItem("guide-theme");}catch(e){}if(stored==="light")root.setAttribute("data-theme","light");
+btn.addEventListener("click",function(){var n=root.getAttribute("data-theme")==="dark"?"light":"dark";root.setAttribute("data-theme",n);try{localStorage.setItem("guide-theme",n);}catch(e){}});})();
 </script>
 </body>
 </html>

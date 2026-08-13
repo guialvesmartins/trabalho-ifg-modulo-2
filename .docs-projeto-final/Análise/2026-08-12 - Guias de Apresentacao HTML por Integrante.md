@@ -14,25 +14,24 @@ tags:
 
 ## O que foi feito
 
-Criados 4 guias de estudo em HTML autocontidos (um por integrante da apresentação), em `report/`, para dominar o conteúdo dos ~3 min de cada um:
+Reconstruídos do zero 4 guias de estudo em HTML autocontidos (um por integrante), em `report/`, **fiéis ao `apresentacao.pptx`** — que organiza a apresentação por pilares:
 
-- `guia-apresentacao-guilherme.html` — Visão Geral e Arquitetura (problema, MIMII, ELT, Airflow, dbt, fluxo até o Metabase)
-- `guia-apresentacao-walber.html` — Processamento e Feature Engineering (metadados, librosa, MFCC/espectrais/temporais, merge)
-- `guia-apresentacao-daniel.html` — Modelagem de ML (hard-code vs sklearn, arquitetura, backprop, SGD+Adam, métricas)
-- `guia-apresentacao-david.html` — Resultados e Demonstração Prática (dashboards Metabase, matriz de confusão, inferência ao vivo)
+- `guia-apresentacao-guilherme.html` — Pilar 1 (slides 2–3): problema de negócio + dataset MIMII
+- `guia-apresentacao-walber.html` — Pilar 1 (slides 4–6): features de áudio + pipeline ELT + Airflow/dbt
+- `guia-apresentacao-daniel.html` — Pilar 2 (slides 7–9): arquitetura MLP, hard-code vs sklearn, resultados/métricas
+- `guia-apresentacao-david.html` — Pilar 3 (slides 10–12): arquitetura AWS, dev→prod, dashboard/decisão
 
 ## Motivo
 
-Cada integrante precisa dominar sua parte e responder bem à banca. Um guia de estudo consistente com o código real do projeto (e não com o slide — que continha imprecisões) reduz risco de erro na apresentação.
+Cada integrante precisa dominar sua parte e responder bem à banca. Os guias seguem a divisão real do slide (por pilares) para que ninguém pise no assunto do outro, e corrigem imprecisões do deck contra o código do projeto.
 
 ## Impacto
 
-- **Design:** série coesa (dark/light, tipografia fluida, assinatura visual própria por integrante); cada guia tem pitch de 30 s, roteiro narrado de 3 min, domínio conceitual, números para decorar e simulado de perguntas da banca.
-- **Correções importantes embutidas:**
-  - Daniel: saída é **Sigmoid(1)** no hard-code (não Softmax(2)) — explicada a equivalência binária.
-  - Walber: StandardScaler é aplicado no **ML**, não no processamento; total real é 4.205 linhas/92 features (não 2.400).
-  - Guilherme: 16 testes dbt e números do dataset real.
-  - David: métricas reais de `report_analys.md` (2026-08-11) e tempos de treino atualizados.
+- **Design:** série coesa (dark/light, tipografia fluida, assinatura visual própria por integrante); cada guia tem pitch de 30 s, roteiro narrado de 3 min, domínio conceitual, números para decorar, simulado da banca e um bloco "🎯 foco / 👥 colegas" para delimitar cada parte.
+- **Correções slide × código embutidas:**
+  - Daniel: saída é **Sigmoid(1)** no hard-code (não Softmax(2)); slide diz "6,7× mais rápido", relatório mostra ~3×.
+  - Walber: slide diz "11 espectrais" e "14 testes dbt"; o código tem **10 espectrais** e **16 testes** (`schema.yml`).
+  - David: conteúdo passou de "resultados + demo" para **Cloud + dashboard** (demo ao vivo removida por decisão do grupo).
 - Arquivos afetados: `report/guia-apresentacao-{guilherme,walber,daniel,david}.html`
 
 ## Relacionado
