@@ -90,7 +90,7 @@ projeto-final/
 ├── ml/
 │   ├── evaluate.py           # Baselines + hard-code vs sklearn + export pickle + report_analys.md
 │   ├── hard_code/
-│   │   └── neural_network_hardcode.py  # MLP binário do zero com NumPy (com save/load pickle)
+│   │   └── neural_network_hardcode.py  # MLP binário do zero com NumPy (procedural, com save/load pickle)
 │   └── library/
 │       └── neural_network_sklearn.py   # MLPClassifier do sklearn
 │
@@ -220,7 +220,7 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 ```
 
 ### Hard-Code (NumPy puro) — `ml/hard_code/neural_network_hardcode.py`
-- **Classe:** `HardCodedMLP`
+- **Estilo:** funções procedurais (`treinar()`, `prever()`, `prever_probabilidade()`, `salvar_modelo()`, `carregar_modelo()`) — sem classe, no estilo "escrito à mão"
 - **Inicialização:** He initialization (`sqrt(2/fan_in)`)
 - **Forward pass:** ReLU nas hidden layers, Sigmoid na saída
 - **Backward pass:** Backpropagation manual com gradientes analíticos
@@ -238,7 +238,7 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 
 ### Comparação Hard-Code vs Sklearn
 - Ambos produzem resultados idênticos (validando a implementação manual)
-- Sklearn é ~6.7x mais rápido no treino (Adam + código C otimizado)
+- Sklearn é ~3x mais rápido no treino (Adam + código C otimizado, 11,3 s vs 3,8 s)
 - Hard-code é mais lento mas didático (SGD com momento em Python puro)
 - O hard-code implementa 100% do forward/backward pass com operações matriciais do NumPy — sem usar autograd, TensorFlow ou PyTorch
 
@@ -293,12 +293,12 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 3. Split 80/20 com stratify (garante proporção normal/anomalia)
 4. StandardScaler
 5. Treina **baselines**: DummyClassifier (classe majoritária) + Regressão Logística
-6. Treina HardCodedMLP (300 épocas)
+6. Treina o hard-code via `treinar()` (300 épocas)
 7. Treina MLPClassifier (sklearn)
 8. Compara métricas dos 4 modelos: Accuracy, Precision, Recall, F1-Score
 9. Gera matrizes de confusão (PNG) e `model_comparison.csv`
 10. Salva `predictions.csv` (predição por amostra do teste — rastreabilidade)
-11. **Exporta modelos via pickle** em `data/processed/models/`: `mlp_sklearn_pipeline.pkl` (Pipeline scaler+MLP pronto para inferência), `mlp_hardcode.pkl` (pesos, recarregável via `HardCodedMLP.load()`), `scaler.pkl`, `feature_names.pkl`
+11. **Exporta modelos via pickle** em `data/processed/models/`: `mlp_sklearn_pipeline.pkl` (Pipeline scaler+MLP pronto para inferência), `mlp_hardcode.pkl` (pesos, recarregável via `carregar_modelo()`), `scaler.pkl`, `feature_names.pkl`
 12. Gera **`report_analys.md`** (raiz do projeto): relatório completo com métricas, análise qualitativa de acertos/erros com possíveis causas, features mais discriminativas e limitações
 13. Se o Postgres estiver acessível, carrega `model_metrics` e `model_predictions` para o dashboard do Metabase (best-effort)
 
@@ -427,7 +427,7 @@ make ml-train       # 7. Treina modelo
 | Precision | 0% | 95,71% | 96,20% | **97,44%** |
 | Recall | 0% | 73,63% | **83,52%** | **83,52%** |
 | F1-Score | 0 | 0,832 | 0,894 | **0,899** |
-| Tempo Treino | ~0 ms | ~15 ms | ~2.600 ms | ~425 ms |
+| Tempo Treino | ~0 ms | ~604 ms | ~11,3 s | ~3,8 s |
 
 O baseline majoritário atinge 89% de accuracy só pelo desbalanceamento, mas recall 0 (inútil). Os MLPs superam a regressão logística principalmente em recall da classe anomalia (+10 p.p.).
 
@@ -452,7 +452,7 @@ Com o dataset real, as features mais discriminativas são os **MFCCs** (perfil t
 ## Observações Importantes
 
 ### Para a banca avaliadora
-1. **Hard-code do zero:** O `HardCodedMLP` implementa forward pass, backpropagation, SGD com momento e binary cross-entropy inteiramente com NumPy — sem frameworks de deep learning.
+1. **Hard-code do zero:** O `treinar()`/`prever()` implementam forward pass, backpropagation, SGD com momento e binary cross-entropy inteiramente com NumPy — sem frameworks de deep learning. Estilo procedural, "escrito à mão", fácil de explicar.
 2. **Comparação justa:** Mesmo dataset, mesmo split, mesmo scaler, métricas idênticas para ambos.
 3. **Dataset real:** O pipeline roda sobre o MIMII real do Zenodo (7,87 GB, 4.205 arquivos, 0 dB SNR) — os resultados e o `report_analys.md` refletem dados de bombas industriais reais com ruído de fábrica.
 4. **Pipeline reprodutível:** Qualquer pessoa com Docker pode rodar `make up && make ingest && make process && make load-db && make dbt-run && make dbt-test && make ml-train` e obter os mesmos resultados.

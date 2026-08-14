@@ -65,6 +65,6 @@
 
 ## Observações (correções das guias frente à divisão antiga)
 
-- **Daniel**: saída é **1 neurônio sigmoid**, não "Output(2, Softmax)"; rapidez real ~**3×**, não 6,7×.
+- **Daniel**: saída é **1 neurônio sigmoid**, não "Output(2, Softmax)"; o hard-code agora é **procedural** (`treinar()`/`prever()` em NumPy, sem classe) e o sklearn é ~**3×** mais rápido (11,3 s vs 3,8 s).
 - **Walber**: **10** features espectrais (não 11 — sem flatness) e **16** testes dbt (não 14).
 - **Guilherme**: ficou com problema + dataset; o pipeline ELT/arquitetura/DW foi para o Walber.

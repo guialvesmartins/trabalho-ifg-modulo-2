@@ -54,10 +54,10 @@ Tudo isso é orquestrado pela DAG `dags/etl_pipeline.py` no Airflow, e os result
 
 Rede neural **MLP binária** (entrada de 96 features → 64 neurônios ReLU → 32 ReLU → 1 sigmoid = probabilidade de anomalia), em **duas implementações**:
 
-- **Hard-code** (`ml/hard_code/neural_network_hardcode.py`): 100% NumPy — forward pass, backpropagation e SGD com momento escritos do zero, sem frameworks.
+- **Hard-code** (`ml/hard_code/neural_network_hardcode.py`): 100% NumPy — funções `treinar()`/`prever()` com forward pass, backpropagation e SGD com momento escritos do zero, sem frameworks.
 - **Sklearn** (`ml/library/neural_network_sklearn.py`): `MLPClassifier` com a mesma arquitetura.
 
-Ambos são comparados com dois baselines (DummyClassifier e Regressão Logística), usando o mesmo split e scaler. **Resultado:** os dois MLPs atingem 100% de accuracy, precision, recall e F1 no teste (0 falsos positivos, 0 falsos negativos); o sklearn treina ~6,7x mais rápido. As features que mais separam normal de anomalia são as espectrais (rolloff, centroid, bandwidth) — máquinas com defeito produzem sons mais agudos.
+Ambos são comparados com dois baselines (DummyClassifier e Regressão Logística), usando o mesmo split e scaler. **Resultado:** o MLP sklearn atinge ~98% de acurácia (F1 0,899, recall da anomalia 83,5%) e o hard-code praticamente empata (97,86%, F1 0,894) — validando a implementação manual; o sklearn treina ~3x mais rápido. As features que mais separam normal de anomalia são os **MFCCs** (`mfcc_35_mean`, `mfcc_31_mean`, `mfcc_10_mean`, `mfcc_3_mean`).
 
 ## 7. Como rodar
 

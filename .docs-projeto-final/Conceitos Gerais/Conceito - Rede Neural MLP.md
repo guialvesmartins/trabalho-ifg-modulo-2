@@ -46,11 +46,11 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 
 ## Como foi implementado no projeto
 
-**Hard-code** (`ml/hard_code/neural_network_hardcode.py`): implementamos 100% do forward/backward com operações matriciais do NumPy — sem autograd, TensorFlow ou PyTorch. Inicialização **He** (`sqrt(2/fan_in)`), threshold 0.5 na sigmoid.
+**Hard-code** (`ml/hard_code/neural_network_hardcode.py`): implementamos 100% do forward/backward com operações matriciais do NumPy — sem autograd, TensorFlow ou PyTorch. Estilo procedural (`treinar()`/`prever()`, sem classe), inicialização **He** (`sqrt(2/fan_in)`), threshold 0.5 na sigmoid.
 
 **Sklearn** (`ml/library/neural_network_sklearn.py`): `MLPClassifier(hidden_layer_sizes=(64, 32))` com os mesmos dados, split e scaler.
 
-**Comparação** (`ml/evaluate.py`): ambos atingem resultados idênticos (validando a implementação manual); o sklearn é ~6.7x mais rápido no treino. O MLP supera a regressão logística principalmente no **recall da classe anomalia** (+10 p.p.).
+**Comparação** (`ml/evaluate.py`): ambos atingem resultados idênticos (validando a implementação manual); o sklearn é ~3x mais rápido no treino (11,3 s vs 3,8 s). O MLP supera a regressão logística principalmente no **recall da classe anomalia** (+10 p.p.).
 
 > [!warning] Desbalanceamento
 > O dataset tem ~8:1 (normal:anomalia). O split usa `stratify` e a avaliação prioriza recall/F1 da classe minoritária.

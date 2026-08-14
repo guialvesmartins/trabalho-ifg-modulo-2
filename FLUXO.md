@@ -128,7 +128,7 @@ Antes dos MLPs, dois baselines são avaliados no mesmo split para contextualizar
 - `report_analys.md` — relatório completo do treinamento: métricas, análise qualitativa com exemplos de acertos e erros (e possíveis causas), features mais discriminativas e limitações
 - `data/processed/model_comparison.csv` — tabela comparativa
 - `data/processed/predictions.csv` — predição por amostra do teste (rastreabilidade dado → predição)
-- `data/processed/models/*.pkl` — modelos exportados via **pickle**: pipeline sklearn (scaler + MLP) pronto para inferência e pesos do hard-code (recarregáveis com `HardCodedMLP.load()`)
+- `data/processed/models/*.pkl` — modelos exportados via **pickle**: pipeline sklearn (scaler + MLP) pronto para inferência e pesos do hard-code (recarregáveis com `carregar_modelo()`)
 - `data/processed/hardcode_cm.png` — matriz de confusão hard-code
 - `data/processed/sklearn_cm.png` — matriz de confusão sklearn
 

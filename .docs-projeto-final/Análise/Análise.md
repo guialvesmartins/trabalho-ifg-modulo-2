@@ -23,6 +23,7 @@ aliases:
 
 %% Registros serão adicionados automaticamente pelo agente abaixo desta linha %%
 
+- [[2026-08-14 - Reescrita do Hard-Code MLP para Estilo Manual]] — Hard-code MLP reescrito de classe para funções procedurais (treinar/prever), slide 8 corrigido para ~3× e números harmonizados nos artefatos
 - [[2026-08-12 - Guias de Apresentacao HTML por Integrante]] — 4 guias de estudo HTML (Guilherme, Walber, Daniel, David) com roteiro, conceitos, números e simulado da banca
 - [[2026-08-11 - Atualizacao do Vault para o Projeto MIMII Pump]] — Reescrita de todo o vault (projeto antigo de vendas → MIMII Pump) e limpeza de conceitos/dúvidas obsoletos
 - [[2026-08-11 - Remocao de Emojis dos Nomes no Vault]] — Renomeação de pastas/arquivos com emoji para ASCII puro + atualização de todos os links

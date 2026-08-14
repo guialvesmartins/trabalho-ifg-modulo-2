@@ -93,7 +93,7 @@ Imagens: `data/processed/hardcode_cm.png` e `data/processed/sklearn_cm.png`.
 | Arquivo | Conteúdo |
 |---|---|
 | `data/processed/models/mlp_sklearn_pipeline.pkl` | Pipeline sklearn (StandardScaler + MLPClassifier) pronto para inferência |
-| `data/processed/models/mlp_hardcode.pkl` | Pesos e hiperparâmetros do HardCodedMLP (`HardCodedMLP.load()`) |
+| `data/processed/models/mlp_hardcode.pkl` | Pesos e hiperparâmetros do hard-code (`carregar_modelo()`) |
 | `data/processed/models/scaler.pkl` | StandardScaler ajustado no treino (para o hard-code) |
 | `data/processed/models/feature_names.pkl` | Ordem das features esperada pelos modelos |
 
