@@ -230,7 +230,7 @@ Acessar http://localhost:8080, ativar a DAG e disparar manualmente. Todas as tar
 
 ### 6.1 Hard-Code MLP
 
-**Arquivo:** `ml/hard_code/neural_network_hardcode.py` — classe `HardCodedMLP`
+**Arquivo:** `ml/hard_code/neural_network_hardcode.py` — funções procedurais `treinar()`/`prever()` (sem classe, estilo "escrito à mão")
 - Arquitetura: 96 → 64 (ReLU) → 32 (ReLU) → 1 (Sigmoid)
 - He initialization, backprop manual, Binary Cross-Entropy
 - Mini-batch SGD com momento (lr=0.01, momentum=0.9), 300 épocas, batch 32

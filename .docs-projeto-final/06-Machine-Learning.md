@@ -85,7 +85,7 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 
 | Componente | Configuração |
 |------------|--------------|
-| Classe | `HardCodedMLP` |
+| Estilo | Funções procedurais (`treinar()`, `prever()`, `prever_probabilidade()`, `salvar_modelo()`, `carregar_modelo()`) — sem classe, "escrito à mão" |
 | Inicialização | He initialization (`sqrt(2/fan_in)`) |
 | Forward pass | ReLU nas hidden layers, Sigmoid na saída |
 | Backward pass | Backpropagation manual com gradientes analíticos |
@@ -109,7 +109,7 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 ### Hard-Code vs Sklearn
 
 - Ambos produzem resultados idênticos (validando a implementação manual)
-- Sklearn é ~6.7x mais rápido no treino (Adam + código C otimizado)
+- Sklearn é ~3x mais rápido no treino (Adam + código C otimizado, 11,3 s vs 3,8 s)
 - Hard-code é mais lento mas didático (SGD com momento em Python puro)
 
 ---
@@ -135,7 +135,7 @@ Output (1 neurônio, Sigmoid) → P(anomalia)
 | Precision | 0% | 95,71% | 96,20% | **97,44%** |
 | Recall | 0% | 73,63% | **83,52%** | **83,52%** |
 | F1-Score | 0 | 0,832 | 0,894 | **0,899** |
-| Tempo Treino | ~0 ms | ~15 ms | ~2.600 ms | ~425 ms |
+| Tempo Treino | ~0 ms | ~604 ms | ~11,3 s | ~3,8 s |
 
 > [!warning] Baseline majoritária
 > Atinge 89% de accuracy só pelo desbalanceamento, mas recall 0 (inútil). Os MLPs superam a regressão logística principalmente em recall da classe anomalia (+10 p.p.).

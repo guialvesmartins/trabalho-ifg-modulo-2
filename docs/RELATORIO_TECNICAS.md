@@ -42,7 +42,7 @@ Mesma arquitetura (96 → 64 → 32 → 1, ReLU nas ocultas, sigmoid na saída),
 
 ### 2.2 O que é diferente
 
-| Aspecto | Hard-Code (`HardCodedMLP`) | Sklearn (`MLPClassifier`) |
+| Aspecto | Hard-Code (funções `treinar()`/`prever()`) | Sklearn (`MLPClassifier`) |
 |---|---|---|
 | **Otimizador** | Mini-batch **SGD com momento** (lr=0,01, momentum=0,9, batch=32) | **Adam** (lr=0,001, momentos adaptativos por parâmetro) |
 | **Regularização** | Nenhuma | **L2 (alpha=0,0001)** por padrão |
@@ -50,7 +50,7 @@ Mesma arquitetura (96 → 64 → 32 → 1, ReLU nas ocultas, sigmoid na saída),
 | **Inicialização** | He (normal, √(2/fan_in)) | Glorot escalonada (uniforme) |
 | **Aleatoriedade** | `np.random.seed(42)` — sequência própria de shuffles | `random_state=42` — gerador e ordem de consumo diferentes |
 | **Implementação** | Loop Python + NumPy | Cython/BLAS otimizado |
-| **Tempo de treino** | ~2.625 ms | ~425 ms (~6× mais rápido) |
+| **Tempo de treino** | ~11,3 s | ~3,8 s (~3× mais rápido) |
 
 Mesmo com "seed 42" nos dois, os geradores produzem **pesos iniciais e ordens de batch diferentes** — a seed igual não sincroniza nada entre as duas implementações.
 
@@ -68,7 +68,7 @@ Camada de saída   :   1 neurônio  — ativação Sigmoid     (32×1  + 1 bias 
 
 **Funções de ativação:**
 
-- **ReLU** (`max(0, z)`) nas duas camadas ocultas — não satura para valores positivos (evita gradientes que desaparecem), derivada trivial (0 ou 1) e combina com a inicialização He. No hard-code, forward e derivada estão em `_relu`/`_relu_derivative`; no sklearn, `activation="relu"`.
+- **ReLU** (`max(0, z)`) nas duas camadas ocultas — não satura para valores positivos (evita gradientes que desaparecem), derivada trivial (0 ou 1) e combina com a inicialização He. No hard-code, forward e derivada estão em `relu`/`derivada_relu`; no sklearn, `activation="relu"`.
 - **Sigmoid** (`1/(1+e^{-z})`) na camada de saída — comprime a saída para (0, 1), interpretável como P(anomalia), par natural da loss binary cross-entropy (a derivada combinada simplifica para `ŷ − y`). No sklearn é aplicada automaticamente em classificação binária (`out_activation_ = "logistic"`, verificado no modelo treinado).
 
 **Taxa de aprendizado:**
@@ -116,7 +116,7 @@ Importante: **não é ruído de arredondamento**. Nos 9 casos de discordância a
 
 ### 2.6 Conclusão
 
-A concordância de 98,9% nas decisões e a diferença de uma única amostra nas métricas **validam a implementação manual**: forward pass, backpropagation e SGD do `HardCodedMLP` reproduzem o comportamento de uma biblioteca consolidada. A pequena vantagem do sklearn (1 FP a menos, 6× mais rápido) vem de refinamentos de engenharia — Adam, L2 e early stopping — e não de qualquer diferença conceitual do modelo. Esses refinamentos estão listados como melhorias futuras do hard-code.
+A concordância de 98,9% nas decisões e a diferença de uma única amostra nas métricas **validam a implementação manual**: forward pass, backpropagation e SGD do hard-code (`treinar()`/`prever()`) reproduzem o comportamento de uma biblioteca consolidada. A pequena vantagem do sklearn (1 FP a menos, ~3× mais rápido) vem de refinamentos de engenharia — Adam, L2 e early stopping — e não de qualquer diferença conceitual do modelo. Esses refinamentos estão listados como melhorias futuras do hard-code.
 
 ---
 

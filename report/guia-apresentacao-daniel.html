@@ -180,7 +180,7 @@
       <div class="blk-body">
         <h4>2. Hard-code vs sklearn</h4>
         <p class="script">"No <b>hard-code</b>, escrevi tudo do zero em NumPy: o forward com ReLU e sigmoid, o <b>backpropagation</b> com gradientes analíticos, o <b>SGD com momento</b> (taxa 0,01, momento 0,9), a <b>binary cross-entropy</b> e <b>300 épocas</b> — sem TensorFlow, PyTorch ou autograd. No <b>sklearn</b>, usei o <b>MLPClassifier</b> com a <b>mesma arquitetura</b>, otimizador <b>Adam</b>, regularização L2 e código C otimizado, bem mais rápido. O ponto: <b>os dois chegam ao mesmo resultado</b>, o que valida a implementação manual."</p>
-        <div class="callout warn"><span class="ico">!</span><p><b>Armadilha:</b> o slide diz "~6,7× mais rápido". O relatório atual mostra ~<b>3×</b> (11,3 s vs 3,8 s). Cite 3× se perguntarem.</p></div>
+        <div class="callout info"><span class="ico">ℹ</span><p><b>Número atual:</b> o relatório (<code class="inl">report_analys.md</code>) mostra treino ~11,3 s (hard-code) vs ~3,8 s (sklearn) → <b>~3× mais rápido</b>. O slide já diz 3×.</p></div>
       </div>
     </div>
     <div class="blk">
@@ -274,7 +274,7 @@
     </tbody>
   </table></div>
 
-  <div class="callout warn"><span class="ico">!</span><p><b>Números antigos:</b> o slide 8 diz "6,7× mais rápido", mas o relatório atual (<code class="inl">report_analys.md</code>) mostra treino ~11,3 s (hard-code) vs ~3,8 s (sklearn) → ~<b>3×</b>. Prefira o relatório.</p></div>
+  <div class="callout info"><span class="ico">ℹ</span><p><b>Velocidade:</b> o slide 8 e o relatório concordam — o sklearn treina ~<b>3×</b> mais rápido (11,3 s vs 3,8 s). Se a banca perguntar "quanto mais rápido?", responda <b>3×</b>.</p></div>
 </section>
 
 <section id="simulado">
@@ -342,7 +342,7 @@
 
 <footer class="foot">
   <div class="wrap">
-    <span>Guia baseado nos slides 7–9 e em <code class="inl">ml/evaluate.py</code>, <code class="inl">ml/hard_code/neural_network_hardcode.py</code> e <code class="inl">report_analys.md</code>.</span>
+    <span>Guia baseado nos slides 7–9 e em <code class="inl">ml/evaluate.py</code>, <code class="inl">ml/hard_code/neural_network_hardcode.py</code> (funções <code class="inl">treinar()</code> e <code class="inl">prever()</code>) e <code class="inl">report_analys.md</code>.</span>
     <span>Série: <a href="guia-apresentacao-guilherme.html">Guilherme</a> · <a href="guia-apresentacao-walber.html">Walber</a> · <a href="guia-apresentacao-daniel.html">Daniel</a> · <a href="guia-apresentacao-david.html">David</a></span>
   </div>
 </footer>

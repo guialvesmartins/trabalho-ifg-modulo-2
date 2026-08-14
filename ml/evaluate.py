@@ -36,7 +36,12 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from ml.hard_code.neural_network_hardcode import HardCodedMLP
+from ml.hard_code.neural_network_hardcode import (
+    prever,
+    prever_probabilidade,
+    salvar_modelo,
+    treinar,
+)
 
 matplotlib.use("Agg")
 
@@ -259,7 +264,7 @@ def write_report(context):
     add("| Arquivo | Conteúdo |")
     add("|---|---|")
     add("| `data/processed/models/mlp_sklearn_pipeline.pkl` | Pipeline sklearn (StandardScaler + MLPClassifier) pronto para inferência |")
-    add("| `data/processed/models/mlp_hardcode.pkl` | Pesos e hiperparâmetros do HardCodedMLP (`HardCodedMLP.load()`) |")
+    add("| `data/processed/models/mlp_hardcode.pkl` | Pesos e hiperparâmetros do hard-code (`carregar_modelo()`) |")
     add("| `data/processed/models/scaler.pkl` | StandardScaler ajustado no treino (para o hard-code) |")
     add("| `data/processed/models/feature_names.pkl` | Ordem das features esperada pelos modelos |")
     add("")
@@ -364,8 +369,19 @@ def main():
     results["logreg"] = train_and_eval(logreg, X_train_s, y_train, X_test_s, y_test)
 
     print("[3/4] MLP Hard-Code (NumPy)...")
-    hard_model = HardCodedMLP()
-    results["hardcode"] = train_and_eval(hard_model, X_train_s, y_train, X_test_s, y_test)
+    start = time.time()
+    hard_model = treinar(X_train_s, y_train)
+    train_ms = (time.time() - start) * 1000
+
+    start = time.time()
+    y_pred_hard = prever(hard_model, X_test_s)
+    pred_ms = (time.time() - start) * 1000
+
+    metrics_hard = compute_metrics(y_test, y_pred_hard)
+    metrics_hard["train_ms"] = train_ms
+    metrics_hard["pred_ms"] = pred_ms
+    metrics_hard["y_pred"] = np.asarray(y_pred_hard).astype(int).flatten()
+    results["hardcode"] = metrics_hard
 
     print("[4/4] MLP Sklearn...")
     sk_model = MLPClassifier(
@@ -421,7 +437,7 @@ def main():
     # ------------------------------------------------------------------
     # Registro das predicoes por amostra (rastreabilidade dado -> predicao)
     # ------------------------------------------------------------------
-    proba_hard = hard_model.predict_proba(X_test_s)
+    proba_hard = prever_probabilidade(hard_model, X_test_s)
     proba_sk = sk_model.predict_proba(X_test_s)[:, 1]
 
     predictions_df = pd.DataFrame({
@@ -447,7 +463,7 @@ def main():
     with open(MODELS_DIR / "mlp_sklearn_pipeline.pkl", "wb") as f:
         pickle.dump(sk_pipeline, f)
 
-    hard_model.save(MODELS_DIR / "mlp_hardcode.pkl")
+    salvar_modelo(hard_model, MODELS_DIR / "mlp_hardcode.pkl")
 
     with open(MODELS_DIR / "scaler.pkl", "wb") as f:
         pickle.dump(scaler, f)
