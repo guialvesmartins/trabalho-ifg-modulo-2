@@ -117,7 +117,7 @@
       <h1>O Modelo <span class="hl">MLP</span> e os Resultados.</h1>
       <p class="lead">Sua parte: a arquitetura da rede (96→64→32→1), a implementação <b>hard-code vs sklearn</b>, e os <b>resultados/métricas</b> — a prova de que o modelo funciona.</p>
       <div class="chips">
-        <span class="chip">⏱ <b>3 min</b> de fala</span><span class="chip">📄 <b>3</b> slides</span><span class="chip">❓ <b>14</b> perguntas</span><span class="chip">🧠 <b>64→32</b> ReLU</span><span class="chip">🎯 <b>97,98%</b></span>
+        <span class="chip">⏱ <b>3 min</b> de fala</span><span class="chip">📄 <b>3</b> slides</span><span class="chip">❓ <b>18</b> perguntas</span><span class="chip">🧠 <b>64→32</b> ReLU</span><span class="chip">🎯 <b>97,98%</b></span>
       </div>
     </div>
     <div>
@@ -149,17 +149,17 @@
 <section id="pitch">
   <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">O pitch de 30 segundos</h2><span class="sec-sub">diga isto no aquecimento</span></div>
 
-  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> o modelo MLP, a implementação hard-code vs sklearn e as métricas de avaliação. <b>👥 Colegas:</b> Guilherme (problema + dataset), Walber (features + ELT), David (nuvem + dashboard).</p></div>
+  <div class="callout info"><span class="ico">🎯</span><p><b>Seu foco:</b> o modelo MLP, a implementação hard-code vs sklearn e as métricas de avaliação. <b>👥 Etapas:</b> problema + dataset, features + ELT, nuvem + dashboard.</p></div>
 
   <div class="grid-2">
     <div class="card">
-      <h3><span class="k">//</span> O que eu mostro, em uma frase</h3>
-      <p style="font-size:1.1rem;line-height:1.5;"><b>"Treino uma <span style="color:var(--amber)">rede neural MLP</span> para classificar cada bomba como <span style="color:var(--cyan)">normal ou anômala</span>. Ela recebe 96 features do áudio e devolve a <b>probabilidade de anomalia</b>. Implementei <b>de duas formas</b> — hard-code em NumPy e com scikit-learn — e ambas chegam a ~<b>98% de acurácia</b>."</b></p>
+      <h3><span class="k">//</span> O que mostramos, em uma frase</h3>
+      <p style="font-size:1.1rem;line-height:1.5;"><b>"Treinamos uma <span style="color:var(--amber)">rede neural MLP</span> para classificar cada bomba como <span style="color:var(--cyan)">normal ou anômala</span>. Ela recebe 96 features do áudio e devolve a <b>probabilidade de anomalia</b>. Implementamos <b>de duas formas</b> — hard-code em NumPy e com scikit-learn — e ambas chegam a ~<b>98% de acurácia</b>."</b></p>
     </div>
     <div class="card">
       <h3><span class="k">//</span> A pergunta que o modelo responde</h3>
       <p style="color:var(--text-muted);font-size:.95rem;">"Esta bomba está com anomalia?" → <b>P(anomalia) ∈ [0,1]</b> → se ≥ 0,5, anômala.</p>
-      <div class="callout info"><span class="ico">ℹ</span><p>É <b>classificação binária</b>: 0 = normal, 1 = anomalia. As features já vêm limpas do Walber; a nuvem e o dashboard são do David.</p></div>
+      <div class="callout info"><span class="ico">ℹ</span><p>É <b>classificação binária</b>: 0 = normal, 1 = anomalia. As features já vêm limpas da etapa de <b>extração de features/ELT</b>; a nuvem e o dashboard pertencem à etapa de <b>Cloud Computing</b>.</p></div>
     </div>
   </div>
 </section>
@@ -179,7 +179,7 @@
       <div class="blk-tag"><span class="t">1:00</span>~1min<br>Slide 8</div>
       <div class="blk-body">
         <h4>2. Hard-code vs sklearn</h4>
-        <p class="script">"No <b>hard-code</b>, escrevi tudo do zero em NumPy: o forward com ReLU e sigmoid, o <b>backpropagation</b> com gradientes analíticos, o <b>SGD com momento</b> (taxa 0,01, momento 0,9), a <b>binary cross-entropy</b> e <b>300 épocas</b> — sem TensorFlow, PyTorch ou autograd. No <b>sklearn</b>, usei o <b>MLPClassifier</b> com a <b>mesma arquitetura</b>, otimizador <b>Adam</b>, regularização L2 e código C otimizado, bem mais rápido. O ponto: <b>os dois chegam ao mesmo resultado</b>, o que valida a implementação manual."</p>
+        <p class="script">"No <b>hard-code</b>, escrevemos tudo do zero em NumPy (<code class="inl">ml/hard_code/neural_network_hardcode.py</code>): o forward com ReLU e sigmoid, o <b>backpropagation</b> com gradientes analíticos, o <b>SGD com momento</b> (taxa 0,01, momento 0,9), a <b>binary cross-entropy</b> e <b>300 épocas</b> — sem TensorFlow, PyTorch ou autograd. No <b>sklearn</b>, usamos o <b>MLPClassifier</b> (<code class="inl">ml/library/neural_network_sklearn.py</code>) com a <b>mesma arquitetura</b>, otimizador <b>Adam</b>, regularização L2 e código C otimizado, bem mais rápido. O ponto: <b>os dois chegam ao mesmo resultado</b>, o que valida a implementação manual."</p>
         <div class="callout info"><span class="ico">ℹ</span><p><b>Número atual:</b> o relatório (<code class="inl">report_analys.md</code>) mostra treino ~11,3 s (hard-code) vs ~3,8 s (sklearn) → <b>~3× mais rápido</b>. O slide já diz 3×.</p></div>
       </div>
     </div>
@@ -334,7 +334,23 @@
   </details>
 
   <details><summary><span class="q">P14</span> Como o modelo vira decisão em produção?</summary>
-  <div class="qa-body"><span class="tag easy">deploy</span><p>O áudio passa pelo mesmo pipeline de features, é escalado e entra no modelo; a saída é P(anomalia). Com threshold 0,5, dispara o alerta no dashboard. O modelo é exportado via pickle (<code class="inl">mlp_sklearn_pipeline.pkl</code> e <code class="inl">mlp_hardcode.pkl</code>) — o David mostra isso na nuvem/dashboard.</p></div>
+  <div class="qa-body"><span class="tag easy">deploy</span><p>O áudio passa pelo mesmo pipeline de features, é escalado e entra no modelo; a saída é P(anomalia). Com threshold 0,5, dispara o alerta no dashboard. O modelo é exportado via pickle (<code class="inl">mlp_sklearn_pipeline.pkl</code> e <code class="inl">mlp_hardcode.pkl</code>) — e isso é demonstrado na etapa de Cloud Computing/dashboard.</p></div>
+  </details>
+
+  <details><summary><span class="q">P15</span> Por que a arquitetura é 96→64→32→1?</summary>
+  <div class="qa-body"><span class="tag hard">arquitetura</span><p>A <b>entrada (96)</b> e a <b>saída (1)</b> são fixadas pelo problema: 96 features do áudio e 1 neurônio com sigmoid (probabilidade de anomalia). As camadas ocultas <b>64 → 32</b> seguem a heurística clássica de <b>camadas que encolhem</b>: a cada camada a rede comprime as 96 features em representações mais densas e abstratas. Duas camadas dão capacidade de aprender não-linearidades sem explodir o número de parâmetros — o dataset tem só 4.205 amostras. Neurônios demais → overfit; de menos → underfit. Não há fórmula mágica para 64/32: é escolha heurística típica; o refinamento futuro seria otimizar com validação cruzada.</p></div>
+  </details>
+
+  <details><summary><span class="q">P16</span> O que é F1-score?</summary>
+  <div class="qa-body"><span class="tag easy">métricas</span><p>É a <b>média harmônica entre precision e recall</b>: <b>F1 = 2 × (P × R) / (P + R)</b>, indo de 0 a 1 (1 = perfeito). Ele equilibra os dois lados: só é alto se você não erra ao alarmar (precision) <b>e</b> não deixa anomalia passar (recall). Por isso, em dados desbalanceados como o nosso (~8:1), é mais honesto que a accuracy — o baseline majoritário tem accuracy de 89% mas F1 = 0. Nosso F1 de 0,899 fica abaixo da precision (0,974): a média harmônica puxa o valor para baixo por causa do recall (0,835).</p></div>
+  </details>
+
+  <details><summary><span class="q">P17</span> O que é recall?</summary>
+  <div class="qa-body"><span class="tag easy">métricas</span><p>Recall (sensibilidade) = <b>anomalias detectadas / anomalias reais</b> = TP/(TP+FN). Responde: <b>"de todas as bombas realmente com anomalia, quantas o modelo pegou?"</b> No nosso caso, 76/91 = <b>83,5%</b>. O que falta (15) são os <b>falsos negativos</b> — anomalias que passaram e virariam falha no campo, o erro mais caro da manutenção preditiva. Por isso recall alto importa mais que accuracy aqui.</p></div>
+  </details>
+
+  <details><summary><span class="q">P18</span> O que é a matriz de confusão e para que serve?</summary>
+  <div class="qa-body"><span class="tag easy">métricas</span><p>É uma <b>tabela real × predito</b> que mostra onde o modelo acerta e onde erra. Com 2 classes tem 4 células: <b>verdadeiros positivos</b> (anomalia certa, 76), <b>verdadeiros negativos</b> (normal certa, 748), <b>falsos positivos</b> (alarmou à toa, 2) e <b>falsos negativos</b> (perdeu anomalia, 15). Serve para enxergar <b>qual tipo de erro</b> o modelo comete — a accuracy esconde isso. É dela que saem precision, recall e F1, e dá para medir o custo de cada erro: um falso negativo (falha no campo) é muito mais caro que um falso positivo (uma inspeção à toa).</p></div>
   </details>
 </section>
 
