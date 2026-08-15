@@ -57,3 +57,4 @@ package-lock.json
 # Report PDFs
 report/*.pdf
 report/slides/
+report/~$apresentacao.pptx
