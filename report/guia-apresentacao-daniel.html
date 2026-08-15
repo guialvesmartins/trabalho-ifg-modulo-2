@@ -172,7 +172,7 @@
       <div class="blk-tag"><span class="t">0:00</span>~1min<br>Slide 7</div>
       <div class="blk-body">
         <h4>1. A arquitetura da rede</h4>
-        <p class="script">"O modelo é uma <b>rede neural MLP</b>. Entram <b>96 features</b> do áudio, passam por <b>duas camadas ocultas</b> — <b>64 neurônios com ReLU</b> e <b>32 com ReLU</b> — e saem num único neurônio com <b>sigmoid</b>, que devolve a <b>probabilidade de anomalia entre 0 e 1</b>. Com o <b>threshold 0,5</b>, isso vira a decisão binária: normal ou anômala. A mesma rede foi implementada <b>de duas formas</b>: hard-code em NumPy e com scikit-learn."</p>
+        <p class="script">"O modelo é uma <b>rede neural MLP</b>. Entram <b>96 features</b> do áudio (<code class="inl">processing/extract_audio_features.py:28-59</code> — as features do áudio; <code class="inl">ml/hard_code/neural_network_hardcode.py:8-11</code> — a entrada de 96 no modelo), passam por <b>duas camadas ocultas</b> — <b>64 neurônios com ReLU</b> e <b>32 com ReLU</b> — e saem num único neurônio com <b>sigmoid</b>, que devolve a <b>probabilidade de anomalia entre 0 e 1</b>. Com o <b>threshold 0,5</b>, isso vira a decisão binária: normal ou anômala. A mesma rede foi implementada <b>de duas formas</b>: hard-code em NumPy e com scikit-learn."</p>
       </div>
     </div>
     <div class="blk">
