@@ -606,9 +606,9 @@
             <tr><td>Implementação</td><td><b>NumPy puro</b></td><td><code>MLPClassifier</code></td></tr>
             <tr><td>Otimizador</td><td>SGD + momento</td><td>Adam</td></tr>
             <tr><td>lr</td><td>0,01</td><td>0,001 (adaptativo)</td></tr>
-            <tr><td>Épocas</td><td>300 (fixas)</td><td>~58 (parada cedo)</td></tr>
+            <tr><td>Épocas</td><td>300 (fixas)</td><td>max_iter 500</td></tr>
             <tr><td>Regularização</td><td>nenhuma</td><td>L2 (alpha=1e-4)</td></tr>
-            <tr><td>Tempo treino</td><td>~3.512 ms</td><td>~719 ms</td></tr>
+            <tr><td>Tempo treino</td><td>~11.337 ms</td><td>~3.787 ms</td></tr>
           </table>
         </div>
         <p style="font-size:12.5px; color:var(--muted); margin-top:8px">Forward/backprop/SGD do hard-code implementados 100% com operações matriciais — sem autograd/TensorFlow/PyTorch.</p>
@@ -906,7 +906,7 @@ DB_HOST=localhost                      DB_ACCOUNT=&lt;snowflake_account&gt;</cod
           <div class="body">O <b>Multilayer Perceptron</b> é uma rede de camadas totalmente conectadas. No <b>forward pass</b> os dados fluem entrada→saída; na <b>loss</b> (binary cross-entropy) medimos o erro; no <b>backpropagation</b> usamos a regra da cadeia para calcular os gradientes e atualizar pesos via <b>SGD</b>. O projeto implementa tudo com NumPy.</div>
         </details>
         <details><summary>SGD + momento × Adam</summary>
-          <div class="body"><b>SGD com momento</b>: atualiza pesos na direção do gradiente com "inércia" (momento 0,9), lr fixo. <b>Adam</b>: mantém médias exponenciais do gradiente e do quadrado do gradiente, adaptando a taxa por parâmetro. É por isso que o sklearn converge mais rápido (~58 épocas) e a <b>função de custo não-convexa</b> leva a mínimos equivalentes porém ligeiramente diferentes.</div>
+          <div class="body"><b>SGD com momento</b>: atualiza pesos na direção do gradiente com "inércia" (momento 0,9), lr fixo. <b>Adam</b>: mantém médias exponenciais do gradiente e do quadrado do gradiente, adaptando a taxa por parâmetro. É por isso que o sklearn converge mais rápido (até max_iter 500) e a <b>função de custo não-convexa</b> leva a mínimos equivalentes porém ligeiramente diferentes.</div>
         </details>
         <details><summary>StandardScaler e vazamento de dados</summary>
           <div class="body">Padroniza cada feature para média 0 e desvio 1 (z-score). Crítico para o MLP (inicialização He assume entradas padronizadas). <b>Nunca ajustar no teste</b>: o scaler é treinado apenas no split de treino e depois aplicado no teste, evitando <i>data leakage</i>. O scaler é exportado para a inferência em produção.</div>
